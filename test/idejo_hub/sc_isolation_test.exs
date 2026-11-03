@@ -1,0 +1,94 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+defmodule IdejoHub.SCIsolationTest do
+  @moduledoc """
+  SC-01, SC-05, SC-06, SC-09: checks that the Hub keeps forums apart from each other and from
+  itself. Each test is tagged with its requirement.
+  """
+  use IdejoHubWeb.ConnCase, async: true
+
+  alias IdejoHub.Hosting.ForumContainer
+
+  @params %{
+    slug: "sc-tennis",
+    version: "0.1.0",
+    env: %{"PHX_HOST" => "sc-tennis.idejo.test"},
+    memory_mb: 384,
+    cpus: 0.5
+  }
+
+  @compose Path.expand("../../deploy/docker-compose.yml", __DIR__)
+
+  @tag req: "SC-01"
+  test "SC-01 the Hub's own session cookie is host-only (no Domain)", %{conn: conn} do
+    conn = get(conn, ~p"/sign-in")
+    cookie = conn.resp_cookies["_idejo_hub_key"]
+    refute Map.has_key?(cookie, :domain)
+    # Forums' cookies are Idejo's SP-10 (host-only, guarded by Idejo's own test); the Hub
+    # sets no variable that could change it.
+    refute Enum.any?(ForumContainer.spec(@params)["Env"], &(&1 =~ ~r/COOKIE|DOMAIN/i))
+  end
+
+  @tag req: "SC-05"
+  test "SC-05 every container the Hub makes has memory and CPU limits" do
+    for spec <- [
+          ForumContainer.spec(@params),
+          ForumContainer.one_off_spec(@params, ["/app/bin/idejo-admin", "backup"])
+        ] do
+      assert spec["HostConfig"]["Memory"] == 384 * 1024 * 1024
+      assert spec["HostConfig"]["NanoCpus"] == 500_000_000
+    end
+  end
+
+  @tag req: "SC-06"
+  test "SC-06 the Hub runs only Idejo's documented commands, never a way into a forum" do
+    source =
+      Path.wildcard(Path.expand("../../lib/**/*.ex", __DIR__))
+      |> Enum.map_join("\n", &File.read!/1)
+
+    # Commands the Hub gives idejo-admin: setup, backup, restore, rotate-push-keys.
+    used = Regex.scan(~r/@admin,\s*"([a-z-]+)"|"\/app\/bin\/idejo-admin",\s*"([a-z-]+)"/, source)
+    used = used |> Enum.flat_map(&tl/1) |> Enum.reject(&(&1 == "")) |> Enum.uniq() |> Enum.sort()
+    assert used == ["backup", "restore", "rotate-push-keys", "setup"]
+
+    # No owner-password reset, no remote shell into a forum's node.
+    for forbidden <- ["reset-owner-password", "\"rpc\"", "\"remote\"", "\"eval\""] do
+      refute source =~ forbidden, forbidden
+    end
+  end
+
+  @tag req: "SC-09"
+  test "SC-09 every operator page needs a signed-in operator", %{conn: conn} do
+    open = [
+      "/sign-in",
+      "/sign-in/two-factor",
+      "/internal/caddy/ask",
+      "/internal/forum-unavailable"
+    ]
+
+    for %{verb: :get, path: path} <- IdejoHubWeb.Router.__routes__(),
+        path not in open,
+        not String.starts_with?(path, "/dev"),
+        not String.starts_with?(path, "/live") do
+      url = String.replace(path, ~r/:[a-z_]+/, "1")
+      response = get(recycle(conn), url)
+      assert response.status == 302 and redirected_to(response) == "/sign-in", "#{path} is open"
+    end
+  end
+
+  @tag req: "SC-09"
+  test "SC-09 forums get no Hub secret and cannot reach Docker" do
+    env = ForumContainer.spec(@params)["Env"]
+    refute Enum.any?(env, &(&1 =~ ~r/^(HUB_|DOCKER_|IDEJO_HUB_)/))
+
+    {:ok, compose} = YamlElixir.read_from_file(@compose)
+    services = compose["services"]
+    # docker-guard is only on the internal `docker` network, which forums never join.
+    assert services["docker-guard"]["networks"] == ["docker"]
+    assert services["socket-proxy"]["network_mode"] == "none"
+    assert compose["networks"]["docker"]["internal"] == true
+    refute "docker" in (services["caddy"]["networks"] || [])
+    refute "docker" in (services["db"]["networks"] || [])
+  end
+end
