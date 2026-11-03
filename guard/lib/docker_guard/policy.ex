@@ -184,8 +184,10 @@ defmodule DockerGuard.Policy do
 
   defp image(_image, _config), do: {:deny, :image}
 
+  # The tag follows the last ":" after the last "/", so a registry with a port
+  # (`registry.example:5000/idejo:0.1.0`) is read right.
   defp tagged_image(repo_and_tag, repo) do
-    with [^repo, tag] <- String.split(repo_and_tag, ":", parts: 2),
+    with [_, ^repo, tag] <- Regex.run(~r{\A(.+):([^:/]+)\z}, repo_and_tag),
          true <- Regex.match?(@version_tag, tag) do
       :ok
     else

@@ -149,6 +149,26 @@ defmodule IdejoHub.Hosting.ForumContainer do
   end
 
   @doc """
+  OP-04: replaces the forum's container with one made from `params` (another image version),
+  keeping its volumes: stops and removes the old container, creates the new one (not
+  started). The volumes are never touched here, whatever fails.
+  """
+  @spec recreate(params()) :: {:ok, Docker.id()} | {:error, Docker.error()}
+  def recreate(%{slug: slug} = params) do
+    with :ok <- ok_if_missing(Docker.stop_container(name(slug))),
+         :ok <- ok_if_missing(Docker.remove_container(name(slug))) do
+      Docker.create_container(name(slug), spec(params))
+    end
+  end
+
+  @doc "Pulls the image of an Idejo version (a missing version says so)."
+  @spec pull_version(String.t()) :: :ok | {:error, term()}
+  def pull_version(version), do: pull(image(version))
+
+  defp ok_if_missing({:error, :not_found}), do: :ok
+  defp ok_if_missing(result), do: result
+
+  @doc """
   Removes the forum's container and, with `volumes: true`, its volumes (uploads and local
   backups are gone then). Missing pieces are not an error, so a half-created forum can be
   removed too.

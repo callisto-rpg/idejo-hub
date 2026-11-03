@@ -28,6 +28,8 @@ defmodule IdejoHub.Hosting.Docker.Fake do
           execs: [],
           runs: [],
           files: %{},
+          copied: [],
+          runs_seen: [],
           calls: []
         }
       end)
@@ -100,7 +102,18 @@ defmodule IdejoHub.Hosting.Docker.Fake do
   end
 
   @impl true
-  def start_container(id), do: set_running(:start_container, id, true)
+  def start_container(id) do
+    with :ok <- set_running(:start_container, id, true), do: update(&note_run(&1, id))
+  end
+
+  # One-off containers (an idejo-admin command) are noted when started, in order.
+  defp note_run(s, id) do
+    cmd = get_in(s, [:containers, id, "Spec", "Cmd"]) || []
+
+    if match?(["/app/bin/idejo-admin" | _], cmd),
+      do: Map.update!(s, :runs_seen, &(&1 ++ [{id, cmd}])),
+      else: s
+  end
 
   @impl true
   def stop_container(id, _timeout), do: set_running(:stop_container, id, false)
@@ -197,6 +210,25 @@ defmodule IdejoHub.Hosting.Docker.Fake do
       File.write!(dest, content)
       {:ok, dest}
     end
+  end
+
+  # Records `{container, dest path, content}`.
+  # sobelow_skip ["Traversal.FileModule"]
+  @impl true
+  def copy_to(id, file, dest_dir) do
+    content = File.read!(file)
+
+    call(:copy_to, fn s ->
+      if Map.has_key?(s.containers, id),
+        do:
+          {:ok,
+           Map.update!(
+             s,
+             :copied,
+             &(&1 ++ [{id, Path.join(dest_dir, Path.basename(file)), content}])
+           )},
+        else: {{:error, :not_found}, s}
+    end)
   end
 
   defp run_rule(rules, container) do

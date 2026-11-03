@@ -194,6 +194,29 @@ defmodule DockerGuard.HN04PolicyTest do
     end
   end
 
+  describe "an image from a registry with a port" do
+    @local %{image: "registry.idejo.test:5000/idejo", network: "idejo-forums"}
+
+    test "is read with its tag after the last colon" do
+      body = create_body(%{"Image" => "registry.idejo.test:5000/idejo:0.2.0"})
+
+      req = %{
+        method: "POST",
+        path: ["containers", "create"],
+        query: %{"name" => "idejo-forum-tennis"},
+        body: body
+      }
+
+      assert Policy.check(req, @local, @lookup) == :ok
+
+      bad = put_in(req, [:body, "Image"], "registry.idejo.test:5000/other:0.2.0")
+      assert Policy.check(bad, @local, @lookup) == {:deny, :image}
+
+      no_tag = put_in(req, [:body, "Image"], "registry.idejo.test:5000/idejo")
+      assert Policy.check(no_tag, @local, @lookup) == {:deny, :image}
+    end
+  end
+
   describe "existing containers" do
     test "forum containers can be driven" do
       for {method, action} <- [

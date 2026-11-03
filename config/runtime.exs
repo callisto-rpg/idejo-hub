@@ -127,7 +127,10 @@ if config_env() == :prod do
     ]
 
   config :idejo_hub, IdejoHub.Operations,
-    backups_kept: String.to_integer(env_or.("IDEJO_HUB_BACKUPS_KEPT", "14"))
+    backups_kept: String.to_integer(env_or.("IDEJO_HUB_BACKUPS_KEPT", "14")),
+    # OP-04: seconds an upgraded forum has to answer /health before it is rolled back.
+    upgrade_health_timeout:
+      String.to_integer(env_or.("IDEJO_HUB_UPGRADE_HEALTH_SECONDS", "300")) * 1000
 
   # FL-06: forum exports (the `exports` volume, deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Forums.Export, dir: "/data/exports"
