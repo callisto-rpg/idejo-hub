@@ -81,7 +81,12 @@ defmodule IdejoHubWeb.ForumListLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_operator={@current_operator} wide>
-      <h1 class="text-2xl font-semibold">Forums</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Forums</h1>
+        <.link navigate={~p"/forums/new"} id="new-forum-link" class="btn btn-primary btn-sm">
+          New forum
+        </.link>
+      </div>
 
       <nav aria-label="Filter by status" id="status-filter" class="flex flex-wrap gap-2">
         <.link

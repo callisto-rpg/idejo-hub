@@ -232,7 +232,8 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `Forums.subscribe/0` (`{:forum_changed, forum}`, broadcast by `update_state/2` and
   `create_forum/3`). HA-01 forum list at `/` (`ForumListLive`): filter `?status=`, sort
   `?sort=`; members are not shown (no contract for it; never the forum's database), size is
-  the latest backup's.
+  the latest backup's. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
+  checked while typing (FL-03 rules and free), created as the signed-in operator's email.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
