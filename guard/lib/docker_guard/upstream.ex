@@ -67,12 +67,28 @@ defmodule DockerGuard.Upstream do
         {:ok, conn}
 
       {:ok, %Req.Response{} = resp} ->
-        {:ok, conn |> copy_headers(resp) |> send_resp(resp.status, "")}
+        {:ok, conn |> answer_conn() |> copy_headers(resp) |> send_resp(resp.status, "")}
 
       {:error, reason} ->
         {:error, reason}
     end
   end
+
+  @body_conn {__MODULE__, :body_conn}
+
+  @doc false
+  # The conn after the request body was read (see DockerGuard.Router's body_stream/1).
+  def put_body_conn(conn) do
+    Process.put(@body_conn, conn)
+    :ok
+  end
+
+  @doc false
+  # Bandit serves a connection's requests one after another in one process: forget the last.
+  def clear_body_conn, do: Process.delete(@body_conn)
+
+  # The conn to answer on: the one after the body was read, if it was streamed.
+  defp answer_conn(conn), do: Process.get(@body_conn) || conn
 
   # First chunk: send status and headers, then stream every chunk as it arrives (exec
   # output, logs and archives are not buffered).
@@ -80,7 +96,7 @@ defmodule DockerGuard.Upstream do
     conn =
       case resp.private do
         %{conn: sent} -> sent
-        _first -> conn |> copy_headers(resp) |> send_chunked(resp.status)
+        _first -> conn |> answer_conn() |> copy_headers(resp) |> send_chunked(resp.status)
       end
 
     case chunk(conn, data) do

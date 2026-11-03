@@ -137,4 +137,33 @@ defmodule DockerGuard.HN04RouterTest do
     assert conn.status == 200
     assert_received {:put, ["5000"], 5000}
   end
+
+  test "the answer to an upload goes out on the conn that read its body, and only for it" do
+    Req.Test.stub(DockerGuard.Upstream, fn conn ->
+      case {conn.method, conn.path_info} do
+        {"GET", [_v, "containers", "idejo-forum-tennis", "json"]} ->
+          Req.Test.json(conn, %{"Config" => %{"Labels" => %{"org.idejo.hub.forum" => "tennis"}}})
+
+        _ ->
+          {:ok, _body, conn} = read_body(conn)
+          send_resp(conn, 200, "done")
+      end
+    end)
+
+    upload =
+      :put
+      |> conn("/v1.44/containers/idejo-forum-tennis/archive?path=/data/backups", "tar")
+      |> put_req_header("content-length", "3")
+      |> Router.call([])
+
+    # The test adapter's state records the body as read on the conn that answered.
+    {Plug.Adapters.Test.Conn, state} = upload.adapter
+    assert state.req_body == ""
+    assert upload.resp_body == "done"
+
+    # A later request in the same process answers on its own conn.
+    later = Router.call(conn(:post, "/v1.44/containers/idejo-forum-tennis/start"), [])
+    assert later.status == 200
+    assert later.request_path == "/v1.44/containers/idejo-forum-tennis/start"
+  end
 end
