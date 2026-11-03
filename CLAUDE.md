@@ -239,6 +239,11 @@ Design points (Implementation Prompt, Part B, milestone 2):
   or to new, delete with grace or now with the subdomain typed, cancel, owner's link once),
   archives, audit log. Downloads: `GET /forums/:forum_id/archives/:id` (`ArchiveController`,
   audited `forum.archive.download`, only that forum's archives).
+  HA-04 server page at `/server` (`ServerLive`, `Operations.Server.snapshot/0`, every 10 s):
+  load and memory from `/proc`, disk from `df` on the exports volume, PostgreSQL sizes from
+  `hub_database_sizes()` (`deploy/postgres-init/03-database-sizes.sh`: superuser-owned,
+  names and sizes only) or the databases the role may connect to, forum containers through
+  docker-guard. A reading that fails shows as unavailable.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
