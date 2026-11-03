@@ -108,6 +108,27 @@ if config_env() == :prod do
         """),
     default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.1.0")
 
+  # OP-01: when forums are backed up (cron, UTC) and how many backups are kept per forum.
+  # Empty means the default.
+  env_or = fn name, default ->
+    case System.get_env(name, "") |> String.trim() do
+      "" -> default
+      value -> value
+    end
+  end
+
+  config :idejo_hub, Oban,
+    plugins: [
+      Oban.Plugins.Pruner,
+      {Oban.Plugins.Cron,
+       crontab: [
+         {env_or.("IDEJO_HUB_BACKUP_CRON", "0 2 * * *"), IdejoHub.Operations.BackupScheduler}
+       ]}
+    ]
+
+  config :idejo_hub, IdejoHub.Operations,
+    backups_kept: String.to_integer(env_or.("IDEJO_HUB_BACKUPS_KEPT", "14"))
+
   # FL-06: forum exports (the `exports` volume, deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Forums.Export, dir: "/data/exports"
 

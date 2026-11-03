@@ -19,7 +19,11 @@ config :idejo_hub,
 config :idejo_hub, Oban,
   repo: IdejoHub.Repo,
   queues: [lifecycle: 2, operations: 2],
-  plugins: [Oban.Plugins.Pruner]
+  plugins: [
+    Oban.Plugins.Pruner,
+    # OP-01: daily backups of every running forum (IDEJO_HUB_BACKUP_CRON in production).
+    {Oban.Plugins.Cron, crontab: [{"0 2 * * *", IdejoHub.Operations.BackupScheduler}]}
+  ]
 
 # Docker access (HN-04, steward decision 2026-11-03): the Hub reaches Docker only through
 # docker-guard and the socket proxy, never the socket itself. Forums run the official image on
@@ -42,6 +46,9 @@ config :idejo_hub, IdejoHub.Forums,
   # FL-05: days between a deletion and the purge.
   deletion_grace_days: 30,
   source_url_base: "https://github.com/callisto-rpg/Idejo/tree/v"
+
+# OP-01: scheduled backups kept per forum.
+config :idejo_hub, IdejoHub.Operations, backups_kept: 14
 
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)
