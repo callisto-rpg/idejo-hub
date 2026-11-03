@@ -22,7 +22,12 @@ config :idejo_hub, Oban,
   plugins: [
     Oban.Plugins.Pruner,
     # OP-01: daily backups of every running forum (IDEJO_HUB_BACKUP_CRON in production).
-    {Oban.Plugins.Cron, crontab: [{"0 2 * * *", IdejoHub.Operations.BackupScheduler}]}
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 2 * * *", IdejoHub.Operations.BackupScheduler},
+       # HA-01: forum figures (idejo-admin stats).
+       {"*/15 * * * *", IdejoHub.Operations.StatsWorker}
+     ]}
   ]
 
 # Docker access (HN-04, steward decision 2026-11-03): the Hub reaches Docker only through

@@ -42,7 +42,7 @@ Idejo Hub; never read or write a forum's database.** That contract is:
   `IDEJO_UPLOADS_DIR`, `IDEJO_BACKUP_DIR`, `IDEJO_SOURCE_URL`, `IDEJO_SMTP_*`,
   `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`;
 - `bin/idejo-admin` (Idejo AD-09, AD-14): `setup`, `backup`, `restore FILE --yes`, `health`,
-  with exit codes;
+  `stats` (JSON counts and sizes; Idejo after 0.1.0), `rotate-push-keys --yes`, with exit codes;
 - `GET /health` (Idejo AD-15): 200 or 503 with `{status, version, checks}`;
 - OpenID Connect (Idejo AC-09), with the Hub as provider;
 - Docker: the official Idejo image, one container per forum.
@@ -231,8 +231,9 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `<Layouts.app current_operator={@current_operator}>` (`wide` for tables). They follow
   `Forums.subscribe/0` (`{:forum_changed, forum}`, broadcast by `update_state/2` and
   `create_forum/3`). HA-01 forum list at `/` (`ForumListLive`): filter `?status=`, sort
-  `?sort=`; members are not shown (no contract for it; never the forum's database), size is
-  the latest backup's. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
+  `?sort=`; members and disk use (database + uploads) come from each forum's `idejo-admin stats`
+  (Idejo AD-09), kept on the forum by `Operations.StatsWorker` every 15 minutes (cron);
+  without them (Idejo before `stats`) members show "—" and the size is the latest backup's. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
   checked while typing (FL-03 rules and free), created as the signed-in operator's email.
   HA-03 forum page at `/forums/:id` (`ForumShowLive`): health (`start_async`), actions
   through `Forums` as the operator (suspend, resume, back up, export, upgrade, restore here

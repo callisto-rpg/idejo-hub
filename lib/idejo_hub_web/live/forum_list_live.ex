@@ -8,15 +8,15 @@ defmodule IdejoHubWeb.ForumListLive do
   address (`?status=`, `?sort=`), so a view can be bookmarked. Changes show live
   (`Forums.subscribe/0`).
 
-  Members are not shown: the Hub never reads a forum's database (CLAUDE.md, The one rule) and
-  Idejo's contract has no count yet. The size is the latest backup's, which holds the
-  forum's database and uploads.
+  Members and disk use come from the forum itself (`idejo-admin stats`, kept by
+  `Operations.StatsWorker` every 15 minutes), never its database. Without them (an Idejo
+  before `stats`), members show "—" and the size is the latest backup's.
   """
   use IdejoHubWeb, :live_view
 
   alias IdejoHub.Forums
 
-  @sorts ~w(subdomain name status version backup size)
+  @sorts ~w(subdomain name status version members backup size)
 
   @impl true
   def mount(_params, _session, socket) do
@@ -103,6 +103,27 @@ defmodule IdejoHubWeb.ForumListLive do
     ~p"/?#{query}"
   end
 
+  # Disk use: the forum's own figures (database + uploads) when it gave them, else the size
+  # of its latest backup (which holds both).
+  defp disk(%{database_bytes: db, uploads_bytes: up}, _backup)
+       when is_integer(db) and is_integer(up),
+       do: db + up
+
+  defp disk(_forum, backup), do: backup && backup.size
+
+  defp size_title(%{database_bytes: db}, _backup) when is_integer(db),
+    do: "database and uploads, from the forum"
+
+  defp size_title(_forum, nil), do: "no figures yet"
+  defp size_title(_forum, _backup), do: "size of the latest backup"
+
+  defp members_title(%{stats_at: %DateTime{} = at}),
+    do: "as of #{Calendar.strftime(at, "%H:%M")} UTC"
+
+  defp members_title(_forum),
+    do:
+      "not reported yet (needs an Idejo with idejo-admin stats; the Hub never reads a forum's database)"
+
   defp size(nil), do: "—"
   defp size(bytes) when bytes < 1_048_576, do: "#{max(div(bytes, 1024), 1)} KB"
   defp size(bytes) when bytes < 1_073_741_824, do: "#{Float.round(bytes / 1_048_576, 1)} MB"
@@ -162,7 +183,7 @@ defmodule IdejoHubWeb.ForumListLive do
                 {nil, "Owner"},
                 {"status", "Status"},
                 {"version", "Version"},
-                {nil, "Members"},
+                {"members", "Members"},
                 {"backup", "Last backup"},
                 {"size", "Size"}
               ]
@@ -189,14 +210,14 @@ defmodule IdejoHubWeb.ForumListLive do
               <span :if={f.error} class="text-sm text-error" title={f.error}>error</span>
             </td>
             <td>{f.idejo_version}</td>
-            <td title="Not available: the Hub does not read a forum's database">—</td>
+            <td title={members_title(f)}>{if f.members, do: f.members, else: "—"}</td>
             <td>
               <time :if={b} datetime={DateTime.to_iso8601(b.inserted_at)}>
                 {Calendar.strftime(b.inserted_at, "%Y-%m-%d %H:%M")} UTC
               </time>
               <span :if={!b}>never</span>
             </td>
-            <td>{size(b && b.size)}</td>
+            <td title={size_title(f, b)}>{size(disk(f, b))}</td>
           </tr>
         </tbody>
       </table>
