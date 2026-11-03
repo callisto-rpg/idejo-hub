@@ -40,6 +40,23 @@ defmodule IdejoHubWeb.OperatorAuth do
     end
   end
 
+  @doc """
+  LiveView side (`live_session ... on_mount: {IdejoHubWeb.OperatorAuth, :require_operator}`):
+  the same session token, checked again when the socket connects.
+  """
+  def on_mount(:require_operator, _params, session, socket) do
+    case Operators.get_operator_by_session(session["operator_token"]) do
+      nil ->
+        {:halt,
+         socket
+         |> Phoenix.LiveView.put_flash(:error, "Sign in first.")
+         |> Phoenix.LiveView.redirect(to: "/sign-in")}
+
+      operator ->
+        {:cont, Phoenix.Component.assign(socket, :current_operator, operator)}
+    end
+  end
+
   @doc "After the password: remembers who is half signed in."
   def put_pending(conn, operator) do
     conn
