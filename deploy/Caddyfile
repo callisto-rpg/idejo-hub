@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Automatic HTTPS for the Hub's own host. Forum subdomains, on-demand TLS and the Hub's
+# "ask" endpoint come with HN-02 (milestone 2).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$IDEJO_HUB_DOMAIN} {
+	encode zstd gzip
+
+	tls {
+		protocols tls1.2 tls1.3
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy hub:4000
+}

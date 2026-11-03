@@ -4,7 +4,7 @@ Idejo Hub runs several independent [Idejo](https://idejo.org) forums on one serv
 
 Every forum is an ordinary, unmodified Idejo instance with its own database. The Hub creates, backs up, upgrades and suspends them from the outside, through Idejo's documented interfaces only, so any forum can leave the Hub as a normal standalone install with all its data.
 
-**Status:** specification only. No code yet; work starts with the Foundations milestone while Idejo builds its milestone M6 ("Ready for Idejo Hub").
+**Status:** Foundations only: an empty Phoenix app, CI and the Compose bundle for the Hub itself. Forum management starts with milestone 2, once an Idejo release with milestone M6 ("Ready for Idejo Hub") exists.
 
 ## Read first
 

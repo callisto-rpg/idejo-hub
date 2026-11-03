@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Local development services. Start with: docker compose up -d
+# The Hub itself runs on your machine with `mix phx.server`.
+# PostgreSQL is published on 5433, so it can run beside Idejo's development database (5432).
+# The production bundle (Hub + PostgreSQL + Caddy, HN-08) lives in deploy/.
+
+name: idejo-hub-dev
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<major>/docker
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

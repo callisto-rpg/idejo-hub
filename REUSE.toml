@@ -1,0 +1,37 @@
+version = 1
+SPDX-PackageName = "Idejo Hub"
+SPDX-PackageSupplier = "Mariano Pictet"
+SPDX-PackageDownloadLocation = "https://idejo.org"
+
+# Files that cannot carry an SPDX comment header (LI-01).
+[[annotations]]
+path = [
+  "**/*.md",
+  "NOTICE",
+  ".sobelow-conf",
+  ".tool-versions",
+  ".gitattributes",
+  ".gitignore",
+  "mix.lock",
+  "REUSE.toml",
+  "**/*.json",
+  "**/*.pot",
+  "**/*.po",
+  "priv/static/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Mariano Pictet and contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Third-party files bundled by the Phoenix generator.
+[[annotations]]
+path = "assets/vendor/topbar.js"
+precedence = "override"
+SPDX-FileCopyrightText = "2024 Buu Nguyen"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "assets/vendor/heroicons.js"
+precedence = "override"
+SPDX-FileCopyrightText = "2014 Chris McCord"
+SPDX-License-Identifier = "MIT"
