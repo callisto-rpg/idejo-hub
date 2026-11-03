@@ -307,12 +307,14 @@ reuse lint                   # SPDX headers (LI-01)
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 ```
 
-Production bundle (HN-08; the install script comes with milestone 2):
+Production bundle (HN-08), on Ubuntu 24.04, step by step in `docs/deploying.md`:
 
 ```sh
-cp deploy/.env.example deploy/.env    # then fill it in
-docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+sudo deploy/install.sh    # asks for the domains; writes deploy/.env once; starts it all
 ```
+
+`deploy/install.sh` never replaces a value already in `deploy/.env` (secrets above all). A new
+setting the installer should fill goes into its `env_fill` list and `docs/deploying.md`.
 
 ## Steward decisions
 

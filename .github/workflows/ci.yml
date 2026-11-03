@@ -134,6 +134,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Check the install script (HN-08)
+        run: docker run --rm -v "$PWD/deploy:/d:ro" koalaman/shellcheck:v0.10.0 /d/install.sh
       - name: Validate deploy/docker-compose.yml
         run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config --quiet
       - name: Build the Hub image
