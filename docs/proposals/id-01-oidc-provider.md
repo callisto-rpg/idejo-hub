@@ -1,7 +1,8 @@
 # Proposal: the OpenID Connect provider (ID-01 to ID-09)
 
-Status: **waiting for the steward's decision.** No milestone-3 code is written until it is
-made (Implementation Prompt, Decisions: "OIDC provider: not decided").
+Status: **decided by the steward on 2026-11-03: B, Zitadel beside the Hub** (most secure and
+least resource-intensive open-source option, after the comparison below), at
+`id.<hub domain>`. See "Decision" at the end.
 
 ## What the provider must do
 
@@ -64,10 +65,21 @@ not exist yet:
 2. **ID-05** "leave a forum": the same command (leaving deletes the forum account), or a
    lighter "unlink" that keeps the account but ends the link; which one is your call.
 
-## What I need from you
+## Decision (2026-11-03)
 
-1. A, B or C.
-2. Whether "leave a forum" (ID-05) deletes the forum account or only unlinks the identity.
-3. Agreement to add the Idejo command(s) above (a contract addition, reviewed in Idejo).
-4. The identity provider's address: a host of its own (for example `id.<hub domain>`, as the
-   spec's example), or the Hub's own host.
+1. **B: Zitadel** beside the Hub. Asked for the most secure and least resource-intensive
+   open-source option: sign-in code from a project dedicated to it, over code of our own
+   (A) or a JVM at 552 MiB (C).
+2. **Address**: `id.<hub domain>`, its own host behind the bundle's Caddy.
+3. **Leaving a forum (ID-05)**: the person chooses. **Delete** their account there (their
+   messages then show "Deleted user", Idejo's AC-07), or **leave**: the account and its
+   messages stay theirs, and joining again with the same identity gets them back.
+4. **Idejo commands** for both are agreed (contract additions, reviewed in Idejo).
+
+Measured again with Zitadel v4's separate login container (its sign-in pages run apart since
+v4): **core 78 MiB + login 93 MiB = about 171 MiB** idle, plus its tables in the shared
+PostgreSQL. Still far inside 4 GB with four forums (1325 MiB at the milestone-2 exit check).
+
+Open, to settle while building: **consent on first join (ID-09)**. Zitadel shows no
+per-application consent screen as far as its documentation and forums say; checked against a
+running instance before ID-09 is built, and brought back to the steward if needed.
