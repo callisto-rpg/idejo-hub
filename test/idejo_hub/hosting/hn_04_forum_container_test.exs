@@ -113,8 +113,11 @@ defmodule IdejoHub.Hosting.HN04ForumContainerTest do
     end
 
     test "a failed pull creates nothing" do
-      Fake.fail(:pull_image)
-      assert {:error, _} = ForumContainer.provision(@params)
+      Fake.fail(:pull_image, :not_found)
+
+      assert {:error, {:image_unavailable, "ghcr.io/callisto-rpg/idejo:0.1.0"}} =
+               ForumContainer.provision(@params)
+
       assert Fake.state().calls == [:pull_image]
     end
   end

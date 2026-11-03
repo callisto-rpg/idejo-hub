@@ -87,7 +87,7 @@ defmodule IdejoHub.Hosting.ForumContainer do
     labels = %{@label => slug}
 
     steps = [
-      {fn -> Docker.pull_image(image(version)) end, fn -> :ok end},
+      {fn -> pull(image(version)) end, fn -> :ok end},
       {fn -> Docker.create_volume(volumes(slug).uploads, labels) end,
        fn -> Docker.remove_volume(volumes(slug).uploads) end},
       {fn -> Docker.create_volume(volumes(slug).backups, labels) end,
@@ -117,6 +117,16 @@ defmodule IdejoHub.Hosting.ForumContainer do
         error -> {:halt, error}
       end
     end)
+  end
+
+  # A version that does not exist (or cannot be fetched) says so.
+  defp pull(image) do
+    case Docker.pull_image(image) do
+      :ok -> :ok
+      {:error, :not_found} -> {:error, {:image_unavailable, image}}
+      {:error, {:status, _status, _message}} -> {:error, {:image_unavailable, image}}
+      error -> error
+    end
   end
 
   defp run([], [{{:ok, id}, _undo} | _done]), do: {:ok, id}

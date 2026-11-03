@@ -30,6 +30,17 @@ config :idejo_hub, IdejoHub.Hosting,
   forum_image: "ghcr.io/callisto-rpg/idejo",
   forum_network: "idejo-forums"
 
+# Forums (FL): the domain whose subdomains forums get (`<subdomain>.<domain>`), the database
+# server's name on the forum network, and defaults for new forums. LB-03: each forum's
+# IDEJO_SOURCE_URL is source_url_base followed by its exact version.
+config :idejo_hub, IdejoHub.Forums,
+  domain: "idejo.test",
+  db_host: "db",
+  default_version: "0.1.0",
+  default_memory_mb: 384,
+  default_cpus: 0.5,
+  source_url_base: "https://github.com/callisto-rpg/Idejo/tree/v"
+
 # Configure the endpoint
 config :idejo_hub, IdejoHubWeb.Endpoint,
   url: [host: "localhost"],
