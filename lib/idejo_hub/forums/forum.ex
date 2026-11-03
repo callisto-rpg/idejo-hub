@@ -38,6 +38,10 @@ defmodule IdejoHub.Forums.Forum do
     field :database_bytes, :integer
     field :uploads_bytes, :integer
     field :stats_at, :utc_datetime
+    field :oidc_app_id, :string
+    field :oidc_client_id, :string
+    field :oidc_client_secret_enc, :binary, redact: true
+    field :local_accounts, :boolean, default: true
 
     timestamps(type: :utc_datetime)
   end
@@ -55,7 +59,8 @@ defmodule IdejoHub.Forums.Forum do
       :idejo_version,
       :memory_mb,
       :cpus,
-      :mail_from
+      :mail_from,
+      :local_accounts
     ])
     |> update_change(:subdomain, &(&1 |> String.trim() |> String.downcase()))
     |> update_change(:owner_email, &String.trim/1)
@@ -110,7 +115,11 @@ defmodule IdejoHub.Forums.Forum do
       :messages,
       :database_bytes,
       :uploads_bytes,
-      :stats_at
+      :stats_at,
+      :oidc_app_id,
+      :oidc_client_id,
+      :oidc_client_secret_enc,
+      :local_accounts
     ])
     |> validate_inclusion(:status, @statuses)
   end

@@ -256,19 +256,35 @@ defmodule IdejoHub.Forums do
   HA-05 / HN-07: remakes a running or suspended forum's container from the current settings
   (same version, volumes and database kept). Queues `RecreateWorker`.
   """
-  @spec recreate_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
-  def recreate_forum(%Forum{} = forum, actor) do
-    start_action(
-      forum,
-      actor,
-      ["running", "suspended"],
-      "recreating",
-      "forum.recreate",
-      RecreateWorker,
-      %{
-        "was" => forum.status
-      }
-    )
+  @spec recreate_forum(Forum.t(), String.t(), keyword()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state}
+  def recreate_forum(%Forum{} = forum, actor, opts \\ []) do
+    action = Keyword.get(opts, :action, "forum.recreate")
+
+    start_action(forum, actor, ["running", "suspended"], "recreating", action, RecreateWorker, %{
+      "was" => forum.status,
+      "rotate_secret" => Keyword.get(opts, :rotate_secret, false)
+    })
+  end
+
+  @doc """
+  ID-01: a new client secret for the forum at the identity provider, then its container
+  made again with it (the old secret stops working at once). Audited `forum.identity.rotate`.
+  """
+  @spec rotate_identity(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def rotate_identity(%Forum{} = forum, actor),
+    do: recreate_forum(forum, actor, rotate_secret: true, action: "forum.identity.rotate")
+
+  @doc """
+  ID-07: whether the forum also allows local accounts (people without an Idejo identity).
+  Takes effect when its container is made again, which this queues.
+  """
+  @spec set_local_accounts(Forum.t(), boolean(), String.t()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state}
+  def set_local_accounts(%Forum{} = forum, allowed?, actor) when is_boolean(allowed?) do
+    with {:ok, forum} <- update_state(forum, %{local_accounts: allowed?}) do
+      recreate_forum(forum, actor, action: "forum.local_accounts")
+    end
   end
 
   @doc """
@@ -458,13 +474,16 @@ defmodule IdejoHub.Forums do
   def context(subdomain, field), do: "forum:#{subdomain}:#{field}"
 
   @doc "Decrypts one of a forum's secrets."
-  @spec secret(Forum.t(), :secret_key_base | :db_password) ::
+  @spec secret(Forum.t(), :secret_key_base | :db_password | :oidc_client_secret) ::
           {:ok, String.t()} | {:error, :invalid}
   def secret(%Forum{secret_key_base_enc: stored} = forum, :secret_key_base),
     do: decrypt(stored, forum, :secret_key_base)
 
   def secret(%Forum{db_password_enc: stored} = forum, :db_password),
     do: decrypt(stored, forum, :db_password)
+
+  def secret(%Forum{oidc_client_secret_enc: stored} = forum, :oidc_client_secret),
+    do: decrypt(stored, forum, :oidc_client_secret)
 
   defp decrypt(nil, _forum, _field), do: {:error, :invalid}
 
@@ -498,9 +517,73 @@ defmodule IdejoHub.Forums do
              "IDEJO_SOURCE_URL" => source_url(forum)
            }
            |> Map.merge(Mail.env(forum.mail_from))
+           |> Map.merge(identity_env(forum))
        }}
     end
   end
+
+  # ID-01, ID-07 (Idejo AC-09): the identity provider as the forum's sign-in, when the forum
+  # has a client there; local accounts as the forum is set.
+  defp identity_env(%Forum{oidc_client_id: nil} = forum),
+    do: %{"IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum)}
+
+  defp identity_env(forum) do
+    {:ok, secret} = secret(forum, :oidc_client_secret)
+
+    %{
+      "IDEJO_OIDC_ISSUER" => IdejoHub.Identity.issuer(),
+      "IDEJO_OIDC_CLIENT_ID" => forum.oidc_client_id,
+      "IDEJO_OIDC_CLIENT_SECRET" => secret,
+      "IDEJO_OIDC_LABEL" => IdejoHub.Identity.label(),
+      "IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum)
+    }
+  end
+
+  # Without a client there is no other way in: local accounts stay on.
+  defp local_accounts(%Forum{oidc_client_id: nil}), do: "on"
+  defp local_accounts(%Forum{local_accounts: true}), do: "on"
+  defp local_accounts(_forum), do: "off"
+
+  @doc """
+  ID-01: registers the forum at the identity provider (when the Hub has one and the forum is
+  not registered yet) and keeps its client, the secret encrypted. Returns the forum.
+  """
+  @spec ensure_identity_client(Forum.t()) :: {:ok, Forum.t()} | {:error, term()}
+  def ensure_identity_client(%Forum{oidc_app_id: app} = forum) when is_binary(app),
+    do: {:ok, forum}
+
+  def ensure_identity_client(forum) do
+    if IdejoHub.Identity.enabled?() do
+      with {:ok, client} <- IdejoHub.Identity.create_client(host(forum)) do
+        update_state(forum, %{
+          oidc_app_id: client.app_id,
+          oidc_client_id: client.client_id,
+          oidc_client_secret_enc:
+            Secrets.encrypt(client.client_secret, context(forum.subdomain, :oidc_client_secret))
+        })
+      end
+    else
+      {:ok, forum}
+    end
+  end
+
+  @doc "ID-01: a new client secret at the provider, kept encrypted. Returns the forum."
+  @spec rotate_identity_secret(Forum.t()) :: {:ok, Forum.t()} | {:error, term()}
+  def rotate_identity_secret(%Forum{oidc_app_id: nil} = forum), do: ensure_identity_client(forum)
+
+  def rotate_identity_secret(forum) do
+    with {:ok, secret} <- IdejoHub.Identity.rotate_secret(forum.oidc_app_id) do
+      update_state(forum, %{
+        oidc_client_secret_enc:
+          Secrets.encrypt(secret, context(forum.subdomain, :oidc_client_secret))
+      })
+    end
+  end
+
+  @doc "ID-01: removes the forum's client at the provider (purge, failed creation)."
+  @spec remove_identity_client(Forum.t()) :: :ok | {:error, term()}
+  def remove_identity_client(%Forum{oidc_app_id: nil}), do: :ok
+  def remove_identity_client(forum), do: IdejoHub.Identity.delete_client(forum.oidc_app_id)
 
   @doc "The forum's public host: `<subdomain>.<forum domain>`."
   @spec host(Forum.t()) :: String.t()

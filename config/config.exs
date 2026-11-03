@@ -57,7 +57,12 @@ config :idejo_hub, IdejoHub.Forums,
 config :idejo_hub, IdejoHub.Operations, backups_kept: 14, upgrade_health_timeout: 300_000
 
 # ID-01: the identity provider (Zitadel) at its own host; the Hub's API token file.
-config :idejo_hub, IdejoHub.Identity, domain: "id.idejo.test", token_file: nil
+config :idejo_hub, IdejoHub.Identity,
+  adapter: nil,
+  domain: "id.idejo.test",
+  api_url: "http://zitadel:8080",
+  token_file: nil,
+  label: "Idejo ID"
 
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)
