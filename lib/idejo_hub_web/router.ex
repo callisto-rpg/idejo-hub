@@ -44,6 +44,8 @@ defmodule IdejoHubWeb.Router do
     live_session :operator, on_mount: {IdejoHubWeb.OperatorAuth, :require_operator} do
       # HA-01
       live "/", ForumListLive, :index
+      # HA-02
+      live "/forums/new", ForumNewLive, :new
     end
   end
 
