@@ -24,6 +24,7 @@ defmodule IdejoHub.Forums do
     ExportWorker,
     Forum,
     Mail,
+    RecreateWorker,
     ResumeWorker,
     Subdomain,
     SuspendWorker
@@ -248,6 +249,56 @@ defmodule IdejoHub.Forums do
     else
       :error -> {:error, :invalid_version}
       _not_greater -> {:error, :not_newer}
+    end
+  end
+
+  @doc """
+  HA-05 / HN-07: remakes a running or suspended forum's container from the current settings
+  (same version, volumes and database kept). Queues `RecreateWorker`.
+  """
+  @spec recreate_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def recreate_forum(%Forum{} = forum, actor) do
+    start_action(
+      forum,
+      actor,
+      ["running", "suspended"],
+      "recreating",
+      "forum.recreate",
+      RecreateWorker,
+      %{
+        "was" => forum.status
+      }
+    )
+  end
+
+  @doc """
+  HA-05: applies the current settings to every running or suspended forum not busy with
+  another action (`recreate_forum/2` each). Returns those queued and those skipped (busy).
+  """
+  @spec recreate_all(String.t()) :: %{queued: [String.t()], busy: [String.t()]}
+  def recreate_all(actor) do
+    results =
+      for forum <- list_forums(), forum.status in ["running", "suspended"] do
+        {forum.subdomain, recreate_forum(forum, actor)}
+      end
+
+    %{
+      queued: for({s, {:ok, _}} <- results, do: s),
+      busy: for({s, {:error, _}} <- results, do: s)
+    }
+  end
+
+  @doc """
+  FL-06: a forum's `SECRET_KEY_BASE`, for the operator restoring its export on a standalone
+  Idejo: Idejo encrypts its secret settings (push keys, a panel SMTP password) with it, so
+  without it they are lost. Audited each time (`forum.secret_key_base.reveal`, SC-06); kept
+  by the Hub (the forum still needs it), deleted forums included (their final export).
+  """
+  @spec reveal_secret_key_base(Forum.t(), String.t()) :: {:ok, String.t()} | {:error, :invalid}
+  def reveal_secret_key_base(%Forum{} = forum, actor) do
+    with {:ok, key} <- secret(forum, :secret_key_base) do
+      {:ok, _} = Audit.record(actor, "forum.secret_key_base.reveal", "ok", forum)
+      {:ok, key}
     end
   end
 

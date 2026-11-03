@@ -18,6 +18,27 @@ defmodule IdejoHubWeb.SettingsLive do
   end
 
   @impl true
+  # HA-05: the new settings reach running and suspended forums only when their containers
+  # are made again (Forums.recreate_all/1).
+  def handle_event("apply_all", _params, socket) do
+    %{queued: queued, busy: busy} =
+      IdejoHub.Forums.recreate_all(socket.assigns.current_operator.email)
+
+    message =
+      case {queued, busy} do
+        {[], []} ->
+          "No forum to apply them to."
+
+        {queued, []} ->
+          "Recreating #{Enum.join(queued, ", ")} with the current settings."
+
+        {queued, busy} ->
+          "Recreating #{Enum.join(queued, ", ")}. Busy, try again later: #{Enum.join(busy, ", ")}."
+      end
+
+    {:noreply, put_flash(socket, :info, message)}
+  end
+
   def handle_event("save", %{"settings" => params}, socket) do
     case Settings.update(params, socket.assigns.current_operator.email) do
       {:ok, _} ->
@@ -80,7 +101,8 @@ defmodule IdejoHubWeb.SettingsLive do
           <p class="text-sm">
             A server here replaces <code>HUB_SMTP_*</code>
             (now: {if @env_smtp, do: @env_smtp[:host], else: "none"}).
-            It reaches a forum when its container is made: created, upgraded or restored.
+            It reaches a forum when its container is made: created, upgraded, restored or
+            recreated ("Apply to all forums now", below the form).
             Each forum's owner can still set its own in the forum's Admin → Email.
           </p>
           <.field
@@ -156,6 +178,20 @@ defmodule IdejoHubWeb.SettingsLive do
 
         <button class="btn btn-primary">Save</button>
       </form>
+
+      <section id="apply-all" class="space-y-2">
+        <p class="text-sm">
+          Changed the email settings? Running forums keep the old ones until their containers are
+          made again.
+        </p>
+        <button
+          phx-click="apply_all"
+          class="btn btn-sm"
+          data-confirm="Recreate every running and suspended forum with the current settings? Each running forum is briefly unavailable."
+        >
+          Apply to all forums now
+        </button>
+      </section>
     </Layouts.app>
     """
   end

@@ -90,3 +90,26 @@ $H logs -f hub                                     # the Hub's log
 | `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` | How long an upgraded forum has to become healthy before it is rolled back (300) |
 
 `deploy/.env.example` explains each one.
+
+## Moving a forum to a standalone Idejo (FL-06)
+
+A forum's export is a standard Idejo backup. To run it on its own server:
+
+1. On the forum's page in the Hub: **Export**, then **Download** the export.
+2. Still there: **Show the key for a standalone restore** (recorded in the audit log). Idejo
+   encrypts its push keys, and an SMTP password set in the forum's Admin → Email, with
+   `SECRET_KEY_BASE`: without the same key they cannot be read.
+3. Install Idejo on the new server (Idejo's own `docs/deploying.md`), and put that key in its
+   `deploy/.env` as `SECRET_KEY_BASE` before the first start.
+4. Copy the export into its backups volume and restore it with the app stopped:
+   `bin/idejo-admin restore FILE --yes` (Idejo after 0.1.0 restores onto a new install
+   directly; with 0.1.0, start the app once first so its database is migrated).
+
+Without the key the forum's data still restores; push notifications then need
+`bin/idejo-admin rotate-push-keys` and an SMTP password set in the forum must be entered again.
+
+## Applying changed settings to forums
+
+A forum's container gets its environment when it is made. After changing email settings in
+the Hub (**Settings**), use **Apply to all forums now** there, or **Recreate (apply settings)**
+on one forum's page: the container is made again on the same Idejo version, with its data.

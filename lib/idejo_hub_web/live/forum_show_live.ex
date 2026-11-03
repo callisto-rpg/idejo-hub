@@ -24,7 +24,7 @@ defmodule IdejoHubWeb.ForumShowLive do
 
     {:ok,
      socket
-     |> assign(page_title: forum.subdomain, owner_link: nil, health: nil)
+     |> assign(page_title: forum.subdomain, owner_link: nil, health: nil, secret_key_base: nil)
      |> load(forum)
      |> check_health()}
   end
@@ -117,6 +117,16 @@ defmodule IdejoHubWeb.ForumShowLive do
         Forums.cancel_deletion(forum, actor),
         "Deletion cancelled; the forum is suspended."
       )
+
+  defp run("recreate", _p, forum, actor, socket),
+    do: done(socket, Forums.recreate_forum(forum, actor), "Recreating with the current settings.")
+
+  defp run("secret_key_base", _p, forum, actor, socket) do
+    case Forums.reveal_secret_key_base(forum, actor) do
+      {:ok, key} -> socket |> assign(secret_key_base: key) |> load(Forums.get_forum!(forum.id))
+      {:error, _} -> put_flash(socket, :error, "The forum's key could not be read.")
+    end
+  end
 
   defp run("owner_link", _p, forum, actor, socket) do
     case Forums.take_owner_link(forum, actor) do
@@ -220,6 +230,15 @@ defmodule IdejoHubWeb.ForumShowLive do
             phx-click="export"
             class="btn btn-sm"
           >Export</button>
+          <button
+            :if={@forum.status in ["running", "suspended"]}
+            id="recreate"
+            phx-click="recreate"
+            class="btn btn-sm"
+            data-confirm="Remake this forum's container with the current settings (same version, data kept)? A running forum is briefly unavailable."
+          >
+            Recreate (apply settings)
+          </button>
           <button
             :if={@forum.status == "deleting"}
             id="cancel-deletion"
@@ -327,6 +346,24 @@ defmodule IdejoHubWeb.ForumShowLive do
           <label>to a new subdomain <input name="subdomain" class="input input-sm" required /></label>
           <button class="btn btn-sm">Restore to new</button>
         </form>
+
+        <div :if={@archives != []} id="standalone-key" class="space-y-1">
+          <p class="text-sm">
+            Restoring an export on a standalone Idejo? Give that install this forum's <code>SECRET_KEY_BASE</code>, or its push keys and any SMTP password set in the
+            forum can't be read (see the deployment guide).
+          </p>
+          <button
+            :if={!@secret_key_base}
+            phx-click="secret_key_base"
+            class="btn btn-sm"
+            data-confirm="Show this forum's SECRET_KEY_BASE? It is a secret: the reveal is recorded in the audit log."
+          >
+            Show the key for a standalone restore
+          </button>
+          <p :if={@secret_key_base}>
+            <code id="secret-key-base-value" class="break-all">{@secret_key_base}</code>
+          </p>
+        </div>
       </section>
 
       <section id="audit" aria-labelledby="audit-title">

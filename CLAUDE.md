@@ -249,7 +249,13 @@ Design points (Implementation Prompt, Part B, milestone 2):
   (`Settings.shared_smtp/0`: set here, it replaces `HUB_SMTP_*` whole; reaches a forum when
   its container is made), alert email (for OP-08), extra reserved subdomains (refused by
   `Forum.create_changeset/2`). Forum domain and backup storage are shown, not edited.
-  Audited `settings.update` (keys only).
+  Audited `settings.update` (keys only). Changed settings reach forums when their containers
+  are made again: `Forums.recreate_forum/2` (`RecreateWorker`: same version, volumes kept;
+  running ones marked, restarted and health-checked, suspended ones left stopped) and
+  `recreate_all/1` ("Apply to all forums now" in Settings; "Recreate" on a forum's page).
+- **Standalone key** (FL-06): `Forums.reveal_secret_key_base/2` hands the operator a forum's
+  `SECRET_KEY_BASE` for a standalone restore of its export (Idejo encrypts its secret
+  settings with it), audited `forum.secret_key_base.reveal` each time, kept by the Hub.
   The forum list also starts OP-05 (`#upgrade-all`, `Operations.upgrade_all/2`).
 - **Isolation checks** (`test/idejo_hub/sc_isolation_test.exs`): SC-01 host-only cookies,
   SC-05 limits on every container spec, SC-06 the only `idejo-admin` commands the Hub runs
