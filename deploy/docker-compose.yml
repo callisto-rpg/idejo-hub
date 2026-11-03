@@ -17,7 +17,9 @@
 # only from the Hub, on the internal `docker` network. The Hub never sees the socket.
 # Forum containers join the `idejo-forums` network with PostgreSQL, Caddy and the Hub.
 #
-# Not here yet: on-demand TLS for forum subdomains (HN-02) and the install script (HN-08).
+# Caddy (HN-02): the Hub's host, and every forum subdomain with on-demand TLS (deploy/Caddyfile).
+#
+# Not here yet: the install script (HN-08).
 
 name: idejo-hub
 
@@ -84,6 +86,7 @@ services:
     restart: unless-stopped
     environment:
       IDEJO_HUB_DOMAIN: ${IDEJO_HUB_DOMAIN}
+      IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
     ports:
       - "80:80"

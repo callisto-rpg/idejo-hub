@@ -131,8 +131,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   the Hub database. Every value is bound to a context, `"forum:<slug>:<field>"`, so it cannot
   be moved to another forum or field. Store only `encrypt/2` output, never plain secrets; the
   Hub refuses to boot without a valid key. Dev and test have fixed keys in their config.
-- **Caddy**: the `ask` endpoint says yes only for existing, non-deleted forums and the Hub's
-  own hosts (HN-02). Routes are re-applied on boot.
+- **Caddy** (HN-02, `deploy/Caddyfile`): on-demand TLS for every host; `ask`
+  (`GET /internal/caddy/ask`, `CaddyController`, `Forums.certificate_allowed?/1`) says yes
+  only for existing, non-deleted forums and the Hub's own host. No per-forum routes: the
+  wildcard site sends `<subdomain>.IDEJO_FORUM_DOMAIN` to `idejo-forum-<subdomain>:4000`
+  (so nothing to re-apply on boot), with `strict_sni_host` so the Host must match the
+  certificate. 502/503/504 go to `GET /internal/forum-unavailable` (being set up, paused,
+  unavailable, or 404). `/internal/*` is refused from outside by Caddy and excluded from the
+  Hub's `force_ssl` (Caddy calls it over plain http).
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
   from the start (SC-07 shows them in milestone 4): `IdejoHub.Audit.record/5` (actor, action
   such as `forum.create`, outcome `requested`/`ok`/`failed`, forum, details without secrets
