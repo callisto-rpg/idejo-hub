@@ -64,6 +64,145 @@ defmodule IdejoHub.Identity.Zitadel do
     end
   end
 
+  @impl true
+  def create_person(person) do
+    body = %{
+      "username" => person.email,
+      "profile" => %{
+        "givenName" => person.given_name,
+        "familyName" => person.family_name,
+        "displayName" => person.display_name,
+        "preferredLanguage" => person.language
+      },
+      "email" => %{"email" => person.email}
+    }
+
+    case request(:post, "/v2/users/human", body) do
+      {:ok, %{"userId" => id}} ->
+        {:ok, id}
+
+      # gRPC code 6: already exists (the email or username is taken).
+      {:error, {:status, 409, _}} ->
+        {:error, :exists}
+
+      {:error, {:status, _, message}} = error ->
+        if message =~ ~r/already exists/i, do: {:error, :exists}, else: error
+
+      error ->
+        error
+    end
+  end
+
+  # Zitadel's invite: verify the email, then choose a password or a passkey, on its login pages.
+  @impl true
+  def send_invite(user_id) do
+    template =
+      "https://#{Identity.config(:domain)}/ui/v2/login/verify" <>
+        "?code={{.Code}}&userId={{.UserID}}&organization={{.OrgID}}&invite=true"
+
+    with {:ok, _} <-
+           request(:post, "/v2/users/#{user_id}/invite_code", %{
+             "sendCode" => %{"urlTemplate" => template, "applicationName" => Identity.label()}
+           }),
+         do: :ok
+  end
+
+  @impl true
+  def configure(smtp, sender) do
+    with :ok <- login_policy(), do: smtp(smtp, sender)
+  end
+
+  # ID-02: only the Hub's sign-up page makes people (Zitadel's own form off); ID-08: passkeys
+  # allowed, one-time codes and security keys as second factors.
+  defp login_policy do
+    wanted = %{"allowRegister" => false, "passwordlessType" => "PASSWORDLESS_TYPE_ALLOWED"}
+
+    with {:ok, %{"policy" => policy}} <- request(:get, "/admin/v1/policies/login", nil),
+         :ok <- put_policy_if_needed(policy, wanted) do
+      factors(policy)
+    end
+  end
+
+  # Zitadel's JSON leaves out false booleans: a missing field is false.
+  defp put_policy_if_needed(policy, wanted) do
+    current = Map.new(wanted, fn {key, _} -> {key, Map.get(policy, key, false)} end)
+    if current == wanted, do: :ok, else: put_policy(policy, wanted)
+  end
+
+  @policy_fields ~w(allowUsernamePassword allowRegister allowExternalIdp forceMfa passwordlessType
+                    hidePasswordReset ignoreUnknownUsernames defaultRedirectUri passwordCheckLifetime
+                    externalLoginCheckLifetime mfaInitSkipLifetime secondFactorCheckLifetime
+                    multiFactorCheckLifetime allowDomainDiscovery disableLoginWithEmail
+                    disableLoginWithPhone forceMfaLocalOnly)
+
+  defp put_policy(policy, wanted) do
+    body = policy |> Map.take(@policy_fields) |> Map.merge(wanted)
+    with {:ok, _} <- request(:put, "/admin/v1/policies/login", body), do: :ok
+  end
+
+  defp factors(policy) do
+    second = policy["secondFactors"] || []
+
+    ["SECOND_FACTOR_TYPE_OTP", "SECOND_FACTOR_TYPE_U2F"]
+    |> Enum.reject(&(&1 in second))
+    |> Enum.reduce_while(:ok, fn type, :ok ->
+      case request(:post, "/admin/v1/policies/login/second_factors", %{"type" => type}) do
+        {:ok, _} -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  @description "Idejo Hub"
+
+  # Zitadel sends invites through the Hub's SMTP (Settings or HUB_SMTP_*): its configuration
+  # named "Idejo Hub" is replaced when it differs, and removed when the Hub has none.
+  defp smtp(smtp, sender) do
+    with {:ok, existing} <- request(:post, "/admin/v1/smtp/_search", %{}) do
+      ours = for c <- existing["result"] || [], c["description"] == @description, do: c
+      wanted = smtp && smtp_body(smtp, sender)
+
+      if up_to_date?(ours, wanted), do: :ok, else: replace_smtp(ours, wanted)
+    end
+  end
+
+  defp up_to_date?([], nil), do: true
+  defp up_to_date?([current], wanted) when is_map(wanted), do: same?(current, wanted)
+  defp up_to_date?(_ours, _wanted), do: false
+
+  defp smtp_body(smtp, sender) do
+    port = smtp[:port] |> to_string() |> then(&if(&1 == "", do: "587", else: &1))
+
+    %{
+      "description" => @description,
+      "senderAddress" => sender,
+      "senderName" => Identity.label(),
+      "tls" => smtp[:security] in [nil, "", "tls", "starttls"],
+      "host" => "#{smtp[:host]}:#{port}",
+      "user" => to_string(smtp[:username] || ""),
+      "password" => to_string(smtp[:password] || "")
+    }
+  end
+
+  # Zitadel never returns the password: compare the rest.
+  defp same?(current, wanted) do
+    Map.take(current, ~w(senderAddress senderName tls host user)) ==
+      Map.take(wanted, ~w(senderAddress senderName tls host user)) and
+      current["state"] == "SMTP_CONFIG_ACTIVE"
+  end
+
+  defp replace_smtp(ours, wanted) do
+    for c <- ours, do: request(:delete, "/admin/v1/smtp/#{c["id"]}", nil)
+
+    if wanted do
+      with {:ok, %{"id" => id}} <- request(:post, "/admin/v1/smtp", wanted),
+           {:ok, _} <- request(:post, "/admin/v1/smtp/#{id}/_activate", %{}),
+           do: :ok
+    else
+      :ok
+    end
+  end
+
   # The forums' project, found by name, made the first time.
   defp project_id do
     query = %{

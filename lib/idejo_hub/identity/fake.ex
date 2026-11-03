@@ -9,7 +9,11 @@ defmodule IdejoHub.Identity.Fake do
 
   @doc "Starts empty for the calling test (and the processes it starts)."
   def start do
-    {:ok, pid} = Agent.start_link(fn -> %{clients: %{}, failures: %{}} end)
+    {:ok, pid} =
+      Agent.start_link(fn ->
+        %{clients: %{}, failures: %{}, people: %{}, invites: [], configured: []}
+      end)
+
     Process.put(@key, pid)
     pid
   end
@@ -19,6 +23,31 @@ defmodule IdejoHub.Identity.Fake do
 
   @doc "The clients registered, by app id."
   def clients, do: Agent.get(server(), & &1.clients)
+
+  @doc "People made, by user id; invites sent (user ids); configurations applied."
+  def people, do: Agent.get(server(), & &1.people)
+  def invites, do: Agent.get(server(), & &1.invites)
+  def configured, do: Agent.get(server(), & &1.configured)
+
+  @impl true
+  def create_person(person) do
+    call(:create_person, fn s ->
+      if Enum.any?(Map.values(s.people), &(&1.email == person.email)) do
+        {{:error, :exists}, s}
+      else
+        id = "user-#{map_size(s.people) + 1}"
+        {{:ok, id}, put_in(s, [:people, id], person)}
+      end
+    end)
+  end
+
+  @impl true
+  def send_invite(user_id),
+    do: call(:send_invite, fn s -> {:ok, %{s | invites: s.invites ++ [user_id]}} end)
+
+  @impl true
+  def configure(smtp, sender),
+    do: call(:configure, fn s -> {:ok, %{s | configured: s.configured ++ [{smtp, sender}]}} end)
 
   @impl true
   def create_client(host) do

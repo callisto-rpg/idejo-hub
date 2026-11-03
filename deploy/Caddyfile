@@ -67,6 +67,11 @@
 		reverse_proxy zitadel-login:3000
 	}
 
+	# ID-02: members' pages (sign-up, and later their forums) are the Hub's.
+	handle /account* {
+		reverse_proxy hub:4000
+	}
+
 	handle {
 		# Zitadel's API speaks gRPC too: HTTP/2 to it, without TLS on the inside.
 		reverse_proxy h2c://zitadel:8080

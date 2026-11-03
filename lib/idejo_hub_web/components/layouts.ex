@@ -40,13 +40,18 @@ defmodule IdejoHubWeb.Layouts do
 
   attr :wide, :boolean, default: false, doc: "a wide column, for tables"
 
+  attr :title, :string,
+    default: "Idejo Hub",
+    doc: "the header's name (\"Idejo ID\" on members' pages)"
+
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
     <header class="navbar px-4 sm:px-6 lg:px-8">
       <div class="flex-1 flex items-center gap-4">
-        <a href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
+        <a :if={@title == "Idejo Hub"} href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
+        <span :if={@title != "Idejo Hub"} class="text-lg font-semibold">{@title}</span>
         <nav :if={@current_operator} aria-label="Hub" class="flex gap-3 text-sm">
           <.link navigate={~p"/"}>Forums</.link>
           <.link navigate={~p"/server"}>Server</.link>

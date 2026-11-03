@@ -1,0 +1,87 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash} title="Idejo ID">
+  <h1 class="text-2xl font-semibold">Create your Idejo ID</h1>
+  <p>One sign-in for every forum on this server. Each forum keeps its own profile and roles.</p>
+
+  <p :if={!@open?} id="signup-closed">
+    Sign-up is not open yet: this server cannot send email. Please try again later.
+  </p>
+
+  <p :if={@errors["form"]} id="signup-error" class="text-error">{@errors["form"]}</p>
+
+  <form :if={@open?} id="signup" action={~p"/account/sign-up"} method="post" class="space-y-4">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <label class="block">
+      <span class="block font-medium">Email</span>
+      <input
+        type="email"
+        name="signup[email]"
+        value={@form[:email].value}
+        required
+        autocomplete="email"
+        class="input w-full"
+      />
+      <span :if={@errors["email"]} class="text-sm text-error">{@errors["email"]}</span>
+    </label>
+    <label class="block">
+      <span class="block font-medium">Display name</span>
+      <span class="block text-sm">The name people see on the forums you join.</span>
+      <input
+        type="text"
+        name="signup[display_name]"
+        value={@form[:display_name].value}
+        required
+        maxlength="100"
+        autocomplete="nickname"
+        class="input w-full"
+      />
+      <span :if={@errors["display_name"]} class="text-sm text-error">{@errors["display_name"]}</span>
+    </label>
+
+    <div>
+      <input
+        type="checkbox"
+        id="signup-names-toggle"
+        class="peer checkbox"
+        checked={
+          (@form[:given_name].value || "") != "" or (@form[:family_name].value || "") != ""
+        }
+      />
+      <label for="signup-names-toggle">Add my first and last name (optional)</label>
+      <div id="signup-names" class="hidden peer-checked:block space-y-2 mt-2">
+        <label class="block">
+          <span class="block font-medium">First name</span>
+          <input
+            type="text"
+            name="signup[given_name]"
+            value={@form[:given_name].value}
+            maxlength="200"
+            autocomplete="given-name"
+            class="input w-full"
+          />
+          <span :if={@errors["given_name"]} class="text-sm text-error">{@errors["given_name"]}</span>
+        </label>
+        <label class="block">
+          <span class="block font-medium">Last name</span>
+          <input
+            type="text"
+            name="signup[family_name]"
+            value={@form[:family_name].value}
+            maxlength="200"
+            autocomplete="family-name"
+            class="input w-full"
+          />
+          <span :if={@errors["family_name"]} class="text-sm text-error">{@errors["family_name"]}</span>
+        </label>
+      </div>
+    </div>
+
+    <p class="text-sm">
+      We email you a link to confirm the address and choose a password or a passkey.
+    </p>
+    <button class="btn btn-primary">Create my Idejo ID</button>
+  </form>
+</Layouts.app>
