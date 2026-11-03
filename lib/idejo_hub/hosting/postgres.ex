@@ -36,7 +36,7 @@ defmodule IdejoHub.Hosting.Postgres do
   @spec provision(String.t(), keyword()) :: {:ok, credentials()} | {:error, term()}
   def provision(slug, opts \\ []) do
     name = name(slug)
-    password = Base.url_encode64(:crypto.strong_rand_bytes(32), padding: false)
+    password = IdejoHub.Secrets.random(32)
 
     with_conn(opts, fn conn ->
       # As the role's creator, the Hub becomes a member of it, so it can drop the forum's

@@ -88,6 +88,16 @@ if config_env() == :prod do
       Set it to the Hub's own host name, for example: hub.example.org
       """
 
+  # SC-04: encrypts forum secrets stored in the Hub database. Losing it means the Hub can no
+  # longer recreate forum containers; keep a copy with the Hub's backups.
+  config :idejo_hub, IdejoHub.Secrets,
+    key:
+      System.get_env("HUB_SECRETS_KEY") ||
+        raise("""
+        environment variable HUB_SECRETS_KEY is missing.
+        Generate one with: openssl rand -base64 32
+        """)
+
   # HN-04: docker-guard's address, and the image and network every forum uses.
   config :idejo_hub, IdejoHub.Hosting,
     docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),

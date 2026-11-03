@@ -48,3 +48,7 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# SC-04: the key that encrypts forum secrets in the Hub database. Test only, never in
+# production (there it comes from HUB_SECRETS_KEY, config/runtime.exs).
+config :idejo_hub, IdejoHub.Secrets, key: "fcjlnmVauctvHV2aRFqBHgQaZIAaJpWxxfs8xi4Eu5c="
