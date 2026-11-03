@@ -8,9 +8,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Read this file before every task. Update it in the same pull request whenever a change
 affects architecture, conventions, commands or milestone status (DV-01).
 
-This is the starting version, written before any code exists. The Foundations pull request
-completes it (stack details, real commands, architecture as built), modelled on Idejo's
-`CLAUDE.md`.
+`AGENTS.md` holds the generic Phoenix and LiveView usage rules from the generator; this file
+wins wherever the two differ.
 
 ## What the Hub is
 
@@ -62,12 +61,36 @@ Oban for scheduled and lifecycle jobs, Caddy in front of everything (on-demand T
 shipped as Docker Compose with an install script (HN-08). Elixir and Erlang versions are the
 same as Idejo's, pinned in `.tool-versions` (DV-04).
 
-## Architecture (planned; the Foundations PR confirms it)
+As built by Foundations:
+
+- Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
+  Node), no mailer yet (alerts, OP, add Swoosh when needed).
+- Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a
+  test runs them (`testing: :manual`). Migration `priv/repo/migrations/*_add_oban_jobs.exs`.
+- `IdejoHubWeb.Plugs.ContentSecurityPolicy`: strict CSP with per-request script and style
+  nonces (as Idejo); inline `<script>`/`<style>` must carry `@script_csp_nonce` /
+  `@style_csp_nonce`.
+- Production refuses to start without `PHX_HOST`, `DATABASE_URL` and `SECRET_KEY_BASE`
+  (`config/runtime.exs`); an empty `POOL_SIZE` means the default, 10.
+- Release `idejo_hub` (`mix release`) ships `LICENSE`, `NOTICE` and `LICENSES/` at its root
+  (`copy_licence/1` in `mix.exs`); `rel/overlays/bin/{server,migrate}` from
+  `mix phx.gen.release`. `Dockerfile` pins the Elixir/Erlang/Debian base images.
+- Development PostgreSQL (root `docker-compose.yml`) is published on **5433**, so it runs
+  beside Idejo's development database on 5432; `config/dev.exs`, `config/test.exs` and CI use
+  5433.
+
+## Architecture
 
 ```
 lib/idejo_hub/        business logic (contexts) — no web code
 lib/idejo_hub_web/    web layer — operator interface (LiveView), Caddy "ask" endpoint, identity pages
+  plugs/              ContentSecurityPolicy
+deploy/               production bundle (HN-08): docker-compose.yml, Caddyfile, .env.example,
+                      postgres-init/ (creates the Hub's CREATEDB/CREATEROLE role, never superuser)
+docker-compose.yml    development PostgreSQL only (port 5433)
 ```
+
+The context folders below are created by the first PR that needs them.
 
 | Prefix | Context folder | Notes |
 | --- | --- | --- |
@@ -95,9 +118,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
 
 ## Conventions
 
+<!-- REUSE-IgnoreStart -->
 - **SPDX header** on every source file (LI-01): `SPDX-FileCopyrightText: 2026 Mariano Pictet
   and contributors`, `SPDX-License-Identifier: AGPL-3.0-only` (steward decision, 2026-11-02;
-  may change after legal review, LB-02). `reuse lint` must pass.
+  may change after legal review, LB-02). `reuse lint` must pass. Files that cannot carry a
+  header are listed in `REUSE.toml`, as are the generator's vendored MIT files.
+<!-- REUSE-IgnoreEnd -->
 - Never hard-code a domain. Development and tests use `*.idejo.test`; the production domain is
   still open (LB-05).
 - Contexts expose plain functions returning `{:ok, _} | {:error, _}`; LiveViews stay thin.
@@ -110,6 +136,11 @@ Design points (Implementation Prompt, Part B, milestone 2):
 - One requirement per pull request (DV-05), ID in the PR title; tests named and tagged after
   the ID (DV-02).
 - Commits made with Claude Code end with the trailer `Assisted-by: Claude Code` (LI-08).
+- CLA (LI-05): `.github/workflows/cla.yml` asks every contributor to sign Idejo's CLA (same
+  steward); signatures go to the `cla-signatures` branch.
+- CI (`.github/workflows/ci.yml`): REUSE lint; format, compile warnings, credo `--strict`,
+  sobelow, `deps.audit`, `hex.audit`, unused deps; Dialyzer (dev env); tests against
+  PostgreSQL 18; the Compose bundle is validated and the image built.
 - A person reviews every PR. Identity, secrets, Docker access and anything touching sign-in
   get an extra careful human review (DV-06) — flag them in the PR description. Every OIDC
   change is in that group.
@@ -117,9 +148,23 @@ Design points (Implementation Prompt, Part B, milestone 2):
 
 ## Commands
 
-None yet. The Foundations PR adds them (expected: `mise install`, `docker compose up -d`,
-`mix setup`, `mix phx.server`, `mix test`, `mix test --only req:FL-01`, `mix precommit`,
-`reuse lint`).
+```sh
+mise install                 # Elixir and Erlang from .tool-versions
+docker compose up -d         # development PostgreSQL on 127.0.0.1:5433
+mix setup                    # deps, database, assets
+mix phx.server               # http://localhost:4000 (LiveDashboard at /dev/dashboard)
+mix test                     # all tests
+mix test --only req:FL-01    # one requirement's tests
+mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
+reuse lint                   # SPDX headers (LI-01)
+```
+
+Production bundle (HN-08; the install script comes with milestone 2):
+
+```sh
+cp deploy/.env.example deploy/.env    # then fill it in
+docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+```
 
 ## Steward decisions
 
@@ -134,7 +179,7 @@ None yet. The Foundations PR adds them (expected: `mise install`, `docker compos
 
 - [ ] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. No Hub
   code beyond Foundations until an Idejo release with M6 exists.
-- [ ] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
+- [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).
 - [ ] 2 — Hub alpha — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
@@ -144,5 +189,6 @@ None yet. The Foundations PR adds them (expected: `mise install`, `docker compos
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-07 to FL-10, HN-03.
 
-Current milestone: **Foundations**, while Idejo builds M6. Exit checks for each milestone are
+Current milestone: **1 — Base Idejo ready** (Idejo M6). Foundations is done; no milestone-2
+work until an Idejo release with M6 exists. Exit checks for each milestone are
 in the Implementation Prompt, Part B.

@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# CI (DV-02, DV-03, DV-06, LI-01), as in Idejo. Every job must pass before a merge.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  MIX_ENV: test
+
+jobs:
+  licence-headers:
+    name: SPDX headers (REUSE)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: fsfe/reuse-action@v5
+
+  checks:
+    name: Format, lint, security, audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-checks-${{ runner.os }}-${{ hashFiles('.tool-versions', 'mix.lock') }}
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix compile --warnings-as-errors
+      - run: mix credo --strict
+      - run: mix sobelow --config --exit
+      - run: mix deps.audit
+      - run: mix hex.audit
+      - run: mix deps.unlock --check-unused
+
+  dialyzer:
+    name: Type checks (Dialyzer)
+    runs-on: ubuntu-24.04
+    env:
+      MIX_ENV: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+            priv/plts
+          key: mix-dialyzer-${{ runner.os }}-${{ hashFiles('.tool-versions', 'mix.lock') }}
+      - run: mix deps.get
+      - run: mix dialyzer --format github
+
+  test:
+    name: Tests
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        # The same port as the root docker-compose.yml (config/test.exs).
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-test-${{ runner.os }}-${{ hashFiles('.tool-versions', 'mix.lock') }}
+      - run: mix deps.get
+      - run: mix test --warnings-as-errors
+
+  compose:
+    name: Compose bundle (HN-08)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate deploy/docker-compose.yml
+        run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config --quiet
+      - name: Build the Hub image
+        run: docker build -t idejo-hub:ci .

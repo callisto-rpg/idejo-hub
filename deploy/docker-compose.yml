@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Production bundle for the Hub itself (HN-08): Hub app + PostgreSQL + Caddy.
+#
+#   cp deploy/.env.example deploy/.env    # then fill it in
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+#
+# PostgreSQL is the server the forums will share (one database and one login role each,
+# HN-05). The Hub connects as `idejo_hub`, a role with CREATEDB and CREATEROLE and never
+# superuser (postgres-init/01-hub-role.sh).
+#
+# Not here yet, by design: the Docker socket (milestone 2 first proposes how to limit it,
+# for example a socket proxy) and on-demand TLS for forum subdomains (HN-02). The install
+# script (HN-08) comes with milestone 2.
+
+name: idejo-hub
+
+services:
+  hub:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # Run pending migrations, then start the server (both scripts come from phx.gen.release).
+    command: ["sh", "-c", "/app/bin/migrate && /app/bin/server"]
+    environment:
+      PHX_SERVER: "true"
+      PHX_HOST: ${IDEJO_HUB_DOMAIN}
+      PORT: "4000"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATABASE_URL: ecto://idejo_hub:${HUB_DB_PASSWORD}@db/idejo_hub
+      POOL_SIZE: ${POOL_SIZE:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "4000"
+    # Healthy once the server accepts connections. The image has no curl or wget, so bash's
+    # /dev/tcp checks the port.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4000"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      # Migrations run before the server starts.
+      start_period: 60s
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      # The superuser is used only by the init script below, never by the Hub.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      HUB_DB_PASSWORD: ${HUB_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+      # Runs once, on an empty data directory.
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d idejo_hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    environment:
+      IDEJO_HUB_DOMAIN: ${IDEJO_HUB_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # certificates — keep this volume
+      - caddy_config:/config
+    depends_on:
+      hub:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
