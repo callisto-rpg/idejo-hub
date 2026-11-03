@@ -151,7 +151,13 @@ defmodule IdejoHub.Hosting.Docker.Fake do
     call(:list_forum_containers, fn s ->
       {{:ok,
         Enum.map(s.containers, fn {id, c} ->
-          %{"Id" => id, "Names" => [c["Name"]], "Labels" => c["Spec"]["Labels"]}
+          %{
+            "Id" => id,
+            "Names" => [c["Name"]],
+            "Labels" => c["Spec"]["Labels"],
+            "State" => if(c["Running"], do: "running", else: "exited"),
+            "Status" => if(c["Running"], do: "Up", else: "Exited (0)")
+          }
         end)}, s}
     end)
   end

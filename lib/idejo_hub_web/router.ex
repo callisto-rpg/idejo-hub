@@ -48,6 +48,8 @@ defmodule IdejoHubWeb.Router do
       live "/forums/new", ForumNewLive, :new
       # HA-03
       live "/forums/:id", ForumShowLive, :show
+      # HA-04
+      live "/server", ServerLive, :show
     end
 
     # HA-03: archive download (audited).
