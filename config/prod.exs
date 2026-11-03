@@ -17,7 +17,9 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
   force_ssl: [
     rewrite_on: [:x_forwarded_proto],
     exclude: [
-      # paths: ["/health"],
+      # HN-02: Caddy calls these over plain http on the internal network (the Caddyfile
+      # refuses /internal/* from outside).
+      paths: ["/internal/caddy/ask", "/internal/forum-unavailable"],
       hosts: ["localhost", "127.0.0.1"]
     ]
   ]
