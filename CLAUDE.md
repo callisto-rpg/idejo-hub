@@ -101,7 +101,7 @@ The context folders below are created by the first PR that needs them.
 
 | Prefix | Context folder | Notes |
 | --- | --- | --- |
-| FL | `lib/idejo_hub/forums/` | Forum records and lifecycle; each action an Oban job with clear states |
+| FL | `lib/idejo_hub/forums/` | Forum records and lifecycle; each action an Oban job with clear states. `Forums.Subdomain` (FL-03): the subdomain is also the slug every name derives from |
 | HN | `lib/idejo_hub/hosting/` | Docker adapter (with a fake for tests), PostgreSQL provisioning, Caddy routes, `ask` endpoint |
 | OP | `lib/idejo_hub/operations/` | Backups, restore, upgrades and rollback, health polling, alerts |
 | ID | `lib/idejo_hub/identity/` | OpenID Connect provider (milestone 3; provider choice still open) |
