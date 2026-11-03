@@ -94,7 +94,8 @@ defmodule IdejoHub.Forums.Forum do
       :db_password_enc,
       :owner_invite,
       :owner_link_enc,
-      :purge_at
+      :purge_at,
+      :idejo_version
     ])
     |> validate_inclusion(:status, @statuses)
   end

@@ -48,7 +48,8 @@ config :idejo_hub, IdejoHub.Forums,
   source_url_base: "https://github.com/callisto-rpg/Idejo/tree/v"
 
 # OP-01: scheduled backups kept per forum.
-config :idejo_hub, IdejoHub.Operations, backups_kept: 14
+# OP-04: how long an upgraded forum has to answer /health (its migrations run first).
+config :idejo_hub, IdejoHub.Operations, backups_kept: 14, upgrade_health_timeout: 300_000
 
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)

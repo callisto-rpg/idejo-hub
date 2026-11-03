@@ -5,7 +5,8 @@ defmodule IdejoHub.Forums.Export do
   @moduledoc """
   An export the Hub keeps (FL-06): a standard Idejo backup (`idejo-YYYYMMDD-HHMMSS.tar`),
   stored under `<exports dir>/<subdomain>/`. `kind` is `export` (asked for), `final`
-  (made before a deletion, FL-05) or `backup` (scheduled, OP-01; pruned to the newest 14).
+  (made before a deletion, FL-05), `backup` (scheduled, OP-01; pruned to the newest 14) or
+  `upgrade` (made before an upgrade, OP-04; never pruned).
   """
   use Ecto.Schema
   import Ecto.Changeset
@@ -27,7 +28,7 @@ defmodule IdejoHub.Forums.Export do
     %__MODULE__{}
     |> cast(attrs, [:forum_id, :subdomain, :kind, :file_name, :size, :sha256])
     |> validate_required([:forum_id, :subdomain, :kind, :file_name, :size, :sha256])
-    |> validate_inclusion(:kind, ~w(export final backup))
+    |> validate_inclusion(:kind, ~w(export final backup upgrade))
   end
 
   @doc "Where an export's file is."

@@ -196,6 +196,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   Idejo's secret settings are encrypted with `SECRET_KEY_BASE`: a deleted source's key moves
   with its data; a live source's is never shared (SC-04), so the new forum gets its own and
   a one-off `rotate-push-keys --yes`, and a panel SMTP password must be entered again.
+- **Upgrade** (OP-04, `Operations.UpgradeWorker`): `Forums.upgrade_forum/3` (running, a newer
+  exact version only): mark the host, `idejo-admin backup` in the container kept as kind
+  `upgrade` (never pruned), pull the image (failures so far change nothing), then
+  `ForumContainer.recreate/1` (stop, remove, create on the new version; volumes never
+  touched) with `IDEJO_SOURCE_URL` following `forums.idejo_version` (LB-03), start, `/health`
+  within `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` (300). Failure: recreate on the old version,
+  restore the pre-upgrade backup in a one-off, start, health → `running` on the old version,
+  audited `rolled_back: true`; if that fails too, stopped and marked as `suspended`.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

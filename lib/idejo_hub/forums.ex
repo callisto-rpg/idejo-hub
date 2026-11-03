@@ -14,7 +14,7 @@ defmodule IdejoHub.Forums do
 
   alias IdejoHub.{Audit, Repo, Secrets}
   alias IdejoHub.Hosting.Postgres
-  alias IdejoHub.Operations.{BackupWorker, RestoreWorker}
+  alias IdejoHub.Operations.{BackupWorker, RestoreWorker, UpgradeWorker}
 
   alias IdejoHub.Forums.{
     CreateWorker,
@@ -228,6 +228,25 @@ defmodule IdejoHub.Forums do
     end
   end
 
+  @doc """
+  OP-04: upgrades a running forum to a newer exact Idejo version, rolling back to its
+  current version and a pre-upgrade backup if the new one is not healthy in time. Queues
+  `Operations.UpgradeWorker`.
+  """
+  @spec upgrade_forum(Forum.t(), String.t(), String.t()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state | :invalid_version | :not_newer}
+  def upgrade_forum(%Forum{} = forum, version, actor) do
+    with {:ok, to} <- Version.parse(version),
+         :gt <- Version.compare(to, Version.parse!(forum.idejo_version)) do
+      start_action(forum, actor, "running", "upgrading", "forum.upgrade", UpgradeWorker, %{
+        "version" => version
+      })
+    else
+      :error -> {:error, :invalid_version}
+      _not_greater -> {:error, :not_newer}
+    end
+  end
+
   @doc "A forum's exports, newest first."
   @spec list_exports(Forum.t()) :: [Export.t()]
   def list_exports(%Forum{id: id}) do
@@ -320,10 +339,11 @@ defmodule IdejoHub.Forums do
 
   @doc false
   # Ends a lifecycle job that failed: state unchanged, step cleared, the error kept.
-  def fail_action(forum, actor, action, error) do
+  def fail_action(forum, actor, action, error, opts \\ []) do
     message = Errors.describe(error)
     {:ok, forum} = update_state(forum, %{step: nil, error: message})
-    {:ok, _} = Audit.record(actor, action, "failed", forum, %{"error" => message})
+    details = Map.merge(%{"error" => message}, Keyword.get(opts, :details, %{}))
+    {:ok, _} = Audit.record(actor, action, "failed", forum, details)
     {:error, message}
   end
 

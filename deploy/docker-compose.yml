@@ -47,6 +47,8 @@ services:
       # OP-01: forum backups (cron, UTC) and how many are kept per forum.
       IDEJO_HUB_BACKUP_CRON: ${IDEJO_HUB_BACKUP_CRON:-0 2 * * *}
       IDEJO_HUB_BACKUPS_KEPT: ${IDEJO_HUB_BACKUPS_KEPT:-14}
+      # OP-04: seconds an upgraded forum has to become healthy before it is rolled back.
+      IDEJO_HUB_UPGRADE_HEALTH_SECONDS: ${IDEJO_HUB_UPGRADE_HEALTH_SECONDS:-300}
       # HN-07: optional SMTP shared by every forum.
       HUB_SMTP_HOST: ${HUB_SMTP_HOST:-}
       HUB_SMTP_PORT: ${HUB_SMTP_PORT:-}
