@@ -108,6 +108,9 @@ if config_env() == :prod do
         """),
     default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.1.0")
 
+  # FL-04: the volume Caddy reads (deploy/docker-compose.yml).
+  config :idejo_hub, IdejoHub.Hosting.Maintenance, dir: "/data/forum-state/suspended"
+
   # HN-07: optional SMTP server shared by every forum (passed to them as IDEJO_SMTP_*).
   # A forum's own SMTP is set in its Admin → Email and wins over this.
   shared_smtp =

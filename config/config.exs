@@ -41,6 +41,10 @@ config :idejo_hub, IdejoHub.Forums,
   default_cpus: 0.5,
   source_url_base: "https://github.com/callisto-rpg/Idejo/tree/v"
 
+# FL-04: where suspended forums are marked for Caddy (a volume shared with it in deploy/).
+config :idejo_hub, IdejoHub.Hosting.Maintenance,
+  dir: Path.expand("../tmp/forum-state/suspended", __DIR__)
+
 # Configure the endpoint
 config :idejo_hub, IdejoHubWeb.Endpoint,
   url: [host: "localhost"],
