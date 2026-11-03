@@ -21,6 +21,15 @@ config :idejo_hub, Oban,
   queues: [lifecycle: 2, operations: 2],
   plugins: [Oban.Plugins.Pruner]
 
+# Docker access (HN-04, steward decision 2026-11-03): the Hub reaches Docker only through
+# docker-guard and the socket proxy, never the socket itself. Forums run the official image on
+# their own network. Production values come from config/runtime.exs.
+config :idejo_hub, IdejoHub.Hosting,
+  docker_adapter: IdejoHub.Hosting.Docker.Engine,
+  docker_url: "http://localhost:2375",
+  forum_image: "ghcr.io/callisto-rpg/idejo",
+  forum_network: "idejo-forums"
+
 # Configure the endpoint
 config :idejo_hub, IdejoHubWeb.Endpoint,
   url: [host: "localhost"],
