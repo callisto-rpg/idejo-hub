@@ -17,6 +17,7 @@ defmodule IdejoHub.Forums do
 
   alias IdejoHub.Forums.{
     CreateWorker,
+    DeleteWorker,
     Errors,
     Export,
     ExportWorker,
@@ -154,6 +155,54 @@ defmodule IdejoHub.Forums do
     )
   end
 
+  @doc """
+  FL-05: deletes a forum in two steps. `DeleteWorker` makes a final export first (nothing
+  is deleted without it), then the forum shows the maintenance page and stops; it is purged
+  after the grace period (30 days), or right away with `immediate: true`, which needs the
+  operator to type the forum's subdomain as `confirm:`.
+  """
+  @spec delete_forum(Forum.t(), String.t(), keyword()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state | :confirmation_required}
+  def delete_forum(%Forum{} = forum, actor, opts \\ []) do
+    immediate? = Keyword.get(opts, :immediate, false)
+
+    if immediate? and Keyword.get(opts, :confirm) != forum.subdomain do
+      {:error, :confirmation_required}
+    else
+      start_action(
+        forum,
+        actor,
+        ["running", "suspended", "failed"],
+        "deleting",
+        "forum.delete",
+        DeleteWorker,
+        %{"immediate" => immediate?}
+      )
+    end
+  end
+
+  @doc """
+  FL-05: cancels a deletion during its grace period. The forum becomes `suspended` (still
+  showing the maintenance page; resume it with `resume_forum/2`) and its purge is cancelled.
+  """
+  @spec cancel_deletion(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def cancel_deletion(%Forum{} = forum, actor) do
+    Repo.transaction(fn ->
+      locked = Repo.one!(from f in Forum, where: f.id == ^forum.id, lock: "FOR UPDATE")
+      if locked.status != "deleting" or locked.step != nil, do: Repo.rollback(:invalid_state)
+
+      Oban.cancel_all_jobs(
+        from j in Oban.Job,
+          where: j.worker == "IdejoHub.Forums.PurgeWorker",
+          where: fragment("?->>'forum_id' = ?", j.args, ^to_string(forum.id))
+      )
+
+      {:ok, forum} = update_state(locked, %{status: "suspended", purge_at: nil})
+      {:ok, _} = Audit.record(actor, "forum.delete.cancel", "ok", forum)
+      forum
+    end)
+  end
+
   @doc "FL-04: resumes a suspended forum. Queues `ResumeWorker`."
   @spec resume_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
   def resume_forum(%Forum{} = forum, actor),
@@ -161,7 +210,7 @@ defmodule IdejoHub.Forums do
 
   # One action at a time per forum: the row is locked, and a forum whose `step` is set is
   # already being worked on.
-  defp start_action(forum, actor, from_status, step, action, worker) do
+  defp start_action(forum, actor, from_status, step, action, worker, extra_args \\ %{}) do
     Repo.transaction(fn ->
       locked = Repo.one!(from f in Forum, where: f.id == ^forum.id, lock: "FOR UPDATE")
 
@@ -170,7 +219,12 @@ defmodule IdejoHub.Forums do
 
       {:ok, forum} = update_state(locked, %{step: step, error: nil})
       {:ok, _} = Audit.record(actor, action, "requested", forum)
-      {:ok, _} = Oban.insert(worker.new(%{"forum_id" => forum.id, "actor" => actor}))
+
+      {:ok, _} =
+        Oban.insert(
+          worker.new(Map.merge(%{"forum_id" => forum.id, "actor" => actor}, extra_args))
+        )
+
       forum
     end)
   end
@@ -196,9 +250,12 @@ defmodule IdejoHub.Forums do
   @spec get_forum!(integer()) :: Forum.t()
   def get_forum!(id), do: Repo.get!(Forum, id)
 
-  @doc "A forum by subdomain, or nil."
+  @doc "A forum by subdomain (not deleted), or nil."
   @spec get_by_subdomain(String.t()) :: Forum.t() | nil
-  def get_by_subdomain(subdomain), do: Repo.get_by(Forum, subdomain: subdomain)
+  # Deleted forums keep their row, and their subdomain may be used again (FL-05).
+  def get_by_subdomain(subdomain) do
+    Repo.one(from f in Forum, where: f.subdomain == ^subdomain and f.status != "deleted")
+  end
 
   @doc "All forums but deleted ones, by subdomain."
   @spec list_forums() :: [Forum.t()]
@@ -266,8 +323,8 @@ defmodule IdejoHub.Forums do
   end
 
   @doc """
-  The forum a public host belongs to (`<subdomain>.<forum domain>`, one label), deleted ones
-  included, or nil.
+  The forum a public host belongs to (`<subdomain>.<forum domain>`, one label), or nil
+  (deleted forums have none).
   """
   @spec for_host(String.t()) :: Forum.t() | nil
   def for_host(host) when is_binary(host) do

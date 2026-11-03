@@ -168,6 +168,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `forum_exports` row (kind `export` or `final`, size, SHA-256; no foreign key, kept after
   deletion). Restores on a standalone install with `idejo-admin restore FILE --yes` (on a
   migrated database).
+- **Delete** (FL-05): `Forums.delete_forum/3` (running, suspended or failed; `immediate:
+  true` needs `confirm:` the subdomain) queues `DeleteWorker`: a final export
+  (`ExportWorker.export/2`, kind `final`; nothing is deleted without it), the maintenance
+  mark, the container stopped, `deleting` with `purge_at` (`deletion_grace_days`, 30, or
+  now), and `PurgeWorker` scheduled then (snoozes if early; does nothing unless still
+  `deleting`): container, volumes, database, role, mark and stored secrets removed,
+  `deleted`. Exports stay. `cancel_deletion/2` → `suspended`, purge job cancelled. A failed
+  forum is just marked `deleted`. Deleted rows stay; their subdomain is free again (partial
+  unique index), and `get_by_subdomain/1` / `for_host/1` ignore them.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

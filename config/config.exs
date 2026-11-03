@@ -39,6 +39,8 @@ config :idejo_hub, IdejoHub.Forums,
   default_version: "0.1.0",
   default_memory_mb: 384,
   default_cpus: 0.5,
+  # FL-05: days between a deletion and the purge.
+  deletion_grace_days: 30,
   source_url_base: "https://github.com/callisto-rpg/Idejo/tree/v"
 
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
