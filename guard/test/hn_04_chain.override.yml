@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Test only (guard/test/hn_04_chain.sh): publishes docker-guard on the host loopback.
+services:
+  docker-guard:
+    ports: ["127.0.0.1:23750:2375"]
+    networks: [docker, outside]
+networks:
+  outside:

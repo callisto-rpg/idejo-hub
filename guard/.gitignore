@@ -1,0 +1,4 @@
+/_build/
+/deps/
+/priv/plts/
+erl_crash.dump

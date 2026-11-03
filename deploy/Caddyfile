@@ -1,0 +1,98 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# HN-02. The Hub's own host gets a certificate as usual. Forum subdomains get theirs on
+# demand: Caddy asks the Hub first (/internal/caddy/ask), which says yes only for existing,
+# non-deleted forums. Every forum subdomain goes to the container named after it,
+# idejo-forum-<subdomain>, on the idejo-forums network, so there is no per-forum route to add,
+# remove or re-apply after a restart. When that container does not answer, the Hub tells the
+# visitor why (being set up, paused, unavailable).
+
+{
+	email {$ACME_EMAIL}
+
+	on_demand_tls {
+		ask http://hub:4000/internal/caddy/ask
+	}
+
+	servers {
+		# The Host header must match the certificate's name (TLS SNI), so a visitor cannot
+		# reach a container through another forum's connection.
+		strict_sni_host on
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
+
+{$IDEJO_HUB_DOMAIN} {
+	encode zstd gzip
+
+	# On demand too (the ask endpoint always allows the Hub's host): when the Hub's host is
+	# under the forum domain, Caddy would otherwise leave it to the wildcard site's policy.
+	tls {
+		on_demand
+		protocols tls1.2 tls1.3
+	}
+
+	import security_headers
+
+	# Only Caddy may call the Hub's internal endpoints, over the internal network.
+	handle /internal/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy hub:4000
+	}
+}
+
+*.{$IDEJO_FORUM_DOMAIN} {
+	encode zstd gzip
+
+	tls {
+		on_demand
+		protocols tls1.2 tls1.3
+	}
+
+	import security_headers
+
+	# FL-04: a suspended forum gets a static page from Caddy itself, so it shows even while the
+	# Hub is down. The Hub marks it with an empty file named after the host (strict_sni_host
+	# keeps {host} to names the ask endpoint approved).
+	@suspended file {
+		root /srv/forum-state/suspended
+		try_files /{host}
+	}
+	handle @suspended {
+		root * /srv/maintenance
+		rewrite * /index.html
+		header Cache-Control no-store
+		header Retry-After 3600
+		file_server {
+			status 503
+		}
+	}
+
+	# The subdomain names the container (one label: the site address matches one only).
+	@forum vars_regexp forum {host} ^([a-z0-9-]+)\.
+	handle @forum {
+		reverse_proxy idejo-forum-{re.forum.1}:4000
+	}
+
+	handle {
+		respond 404
+	}
+
+	# Container stopped, missing or starting: the Hub's page says why.
+	handle_errors 502 503 504 {
+		rewrite * /internal/forum-unavailable
+		reverse_proxy hub:4000 {
+			header_up X-Idejo-Forum-Host {host}
+		}
+	}
+}
