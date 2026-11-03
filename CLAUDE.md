@@ -177,6 +177,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `deleted`. Exports stay. `cancel_deletion/2` → `suspended`, purge job cancelled. A failed
   forum is just marked `deleted`. Deleted rows stay; their subdomain is free again (partial
   unique index), and `get_by_subdomain/1` / `for_host/1` ignore them.
+- **Scheduled backups** (OP-01, `lib/idejo_hub/operations/`): Oban cron
+  (`IDEJO_HUB_BACKUP_CRON`, default `0 2 * * *` UTC) runs `BackupScheduler`, which calls
+  `Forums.backup_forum/2` for every running forum (skipping busy ones, logged); each
+  `BackupWorker` execs `idejo-admin backup` inside the running container and
+  `Forums.Archives.collect/4` copies the named file into the Hub's store as kind `backup`;
+  `Archives.prune/3` keeps the newest `IDEJO_HUB_BACKUPS_KEPT` (14) per forum. Idejo's own
+  `backup` keeps 7 in the forum volume, so the 14 live in the Hub's `exports` volume.
+  Audited `forum.backup` (actor `schedule`). Exports, final exports and backups all share
+  `forum_exports` and `Archives`.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
