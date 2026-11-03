@@ -1,6 +1,7 @@
 # Proposal: limiting the Hub's Docker access (HN-04)
 
-Status: **waiting for the steward's decision.** No Docker code is written until it is approved
+Status: **approved by the steward on 2026-11-03: option B.** wollomatic/socket-proxy (MIT) is
+accepted under LI-06, and `docker-guard` lives in this repository as a second release
 (Implementation Prompt, Part B, milestone 2 → "Docker access").
 
 ## The problem
@@ -94,13 +95,11 @@ problem the prompt asks us to solve. Why not C as the default: it changes client
 resource limits in ways that break SP-05 and SC-05 on a standard install. It can be
 documented later as an extra layer for operators who want it, on top of B.
 
-## What I need from you
+## Decision (2026-11-03)
 
-1. Approve B, or choose A or C.
-2. Confirm that adding wollomatic/socket-proxy (MIT) as a container in the Hub bundle is
-   acceptable under LI-06.
-3. Confirm that `docker-guard` may live in this repository as a second release. The
-   alternative is a separate repository.
+1. Option B.
+2. wollomatic/socket-proxy (MIT) is accepted as a container in the Hub bundle (LI-06).
+3. `docker-guard` lives in this repository as a second release.
 
-Once you answer, the next PR builds the adapter and the guard (HN-04). That PR touches Docker
+The next PR builds the adapter and the guard (HN-04). That PR touches Docker
 access and is flagged for extra careful review (DV-06).

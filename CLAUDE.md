@@ -104,9 +104,8 @@ The context folders below are created by the first PR that needs them.
 
 Design points (Implementation Prompt, Part B, milestone 2):
 
-- **Docker** behind one adapter module. Mounting the socket gives root on the host: the first
-  milestone-2 PR proposes how to limit it (for example a socket proxy), with its licence, and
-  waits for approval.
+- **Docker** behind one adapter module, through `docker-guard` and the socket proxy (steward
+  decision 2026-11-03, below). The Hub never mounts the Docker socket.
 - **PostgreSQL**: the Hub's role has `CREATEDB` and `CREATEROLE`, never superuser. One
   database and one login role per forum, that role able to reach only its own database
   (HN-05). Generated passwords and `SECRET_KEY_BASE` are stored encrypted (SC-04).
@@ -173,22 +172,26 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 - 2026-11-02 — Licence: AGPL-3.0-only headers for now, same steward and CLA as Idejo.
 - 2026-11-02 — OIDC provider (built in or existing open-source beside it): **open.** Before
   milestone 3, write a one-page proposal (licence, memory, maintenance, passkeys) and wait.
+- 2026-11-03 — Docker access (HN-04): option B of `docs/proposals/hn-04-docker-access.md`.
+  Only wollomatic/socket-proxy (MIT, pinned by digest) mounts the socket, read-only, and it
+  allows only the listed method/path pairs. `docker-guard` (a second release from this
+  repository) checks every create/exec body in front of it. The Hub reaches Docker only
+  through `IdejoHub.Hosting.Docker` and never mounts the socket.
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)
 
-- [ ] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. No Hub
-  code beyond Foundations until an Idejo release with M6 exists.
+- [x] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. Done
+  2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).
-- [ ] 2 — Hub alpha — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
+- [ ] **2 — Hub alpha** — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
   SC-01, SC-04 to SC-06, SC-08, SC-09; separate accounts per forum.
 - [ ] 3 — Shared identity — ID-01 to ID-09, forums switched to Idejo's OIDC client.
 - [ ] 4 — Hub 1.0 — OP-02, OP-06 to OP-10, SC-02, SC-03, SC-07, SC-10, HA-06 to HA-09, HN-06,
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-07 to FL-10, HN-03.
 
-Current milestone: **1 — Base Idejo ready** (Idejo M6). Foundations is done; no milestone-2
-work until an Idejo release with M6 exists. Exit checks for each milestone are
+Current milestone: **2 — Hub alpha**. Exit checks for each milestone are
 in the Implementation Prompt, Part B.
