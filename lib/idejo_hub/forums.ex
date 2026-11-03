@@ -14,7 +14,7 @@ defmodule IdejoHub.Forums do
 
   alias IdejoHub.{Audit, Repo, Secrets}
   alias IdejoHub.Hosting.Postgres
-  alias IdejoHub.Operations.BackupWorker
+  alias IdejoHub.Operations.{BackupWorker, RestoreWorker}
 
   alias IdejoHub.Forums.{
     CreateWorker,
@@ -51,9 +51,12 @@ defmodule IdejoHub.Forums do
   FL-01: records a new forum and queues its creation. `actor` names who asked (the operator;
   operator accounts come with SC-08). Returns the forum as `creating`.
   """
-  @spec create_forum(map(), String.t()) :: {:ok, Forum.t()} | {:error, Ecto.Changeset.t()}
-  def create_forum(attrs, actor) do
+  @spec create_forum(map(), String.t(), keyword()) ::
+          {:ok, Forum.t()} | {:error, Ecto.Changeset.t()}
+  def create_forum(attrs, actor, opts \\ []) do
     changeset = change_new_forum(attrs)
+    secret_key_base = Keyword.get_lazy(opts, :secret_key_base, &Secrets.new_secret_key_base/0)
+    job_args = Keyword.get(opts, :job_args, %{})
 
     changeset =
       case Ecto.Changeset.fetch_field(changeset, :subdomain) do
@@ -61,7 +64,7 @@ defmodule IdejoHub.Forums do
           changeset
           |> Ecto.Changeset.put_change(
             :secret_key_base_enc,
-            Secrets.encrypt(Secrets.new_secret_key_base(), context(subdomain, :secret_key_base))
+            Secrets.encrypt(secret_key_base, context(subdomain, :secret_key_base))
           )
           |> put_default_mail_from(subdomain)
 
@@ -76,7 +79,9 @@ defmodule IdejoHub.Forums do
              |> audit_request(actor)
              |> Repo.insert(),
            {:ok, _job} <-
-             Oban.insert(CreateWorker.new(%{"forum_id" => forum.id, "actor" => actor})) do
+             Oban.insert(
+               CreateWorker.new(Map.merge(%{"forum_id" => forum.id, "actor" => actor}, job_args))
+             ) do
         forum
       else
         {:error, %Ecto.Changeset{data: %Forum{}} = changeset} -> Repo.rollback(changeset)
@@ -155,6 +160,73 @@ defmodule IdejoHub.Forums do
   @spec backup_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
   def backup_forum(%Forum{} = forum, actor),
     do: start_action(forum, actor, "running", "backing_up", "forum.backup", BackupWorker)
+
+  @doc """
+  OP-03: restores a running or suspended forum from one of its own kept archives (scheduled
+  backup, export or final export). Queues `Operations.RestoreWorker`.
+  """
+  @spec restore_forum(Forum.t(), Export.t(), String.t(), keyword()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state | :not_its_archive}
+  def restore_forum(%Forum{} = forum, %Export{} = export, actor, opts \\ []) do
+    if export.forum_id != forum.id and not Keyword.get(opts, :new_forum, false) do
+      {:error, :not_its_archive}
+    else
+      start_action(
+        forum,
+        actor,
+        ["running", "suspended"],
+        "restoring",
+        "forum.restore",
+        RestoreWorker,
+        %{
+          "export_id" => export.id,
+          "was" => forum.status,
+          "rotate_push_keys" => Keyword.get(opts, :rotate_push_keys, false)
+        }
+      )
+    end
+  end
+
+  @doc """
+  OP-03: restores an archive to a new subdomain. The new forum is created (FL-01) without
+  headless setup, behind the maintenance page, then restored from the archive.
+
+  Its display name, owner email and Idejo version default to the source forum's. Idejo
+  encrypts its secret settings with `SECRET_KEY_BASE`: when the source forum is deleted, its
+  key moves with its data (no forum shares it); when it is still alive, the new forum gets
+  its own key (SC-04) and new push keys, and an SMTP password set in the forum's own
+  Admin → Email must be entered again.
+  """
+  @spec restore_to_new(Export.t(), map(), String.t()) ::
+          {:ok, Forum.t()} | {:error, Ecto.Changeset.t() | :invalid}
+  def restore_to_new(%Export{} = export, attrs, actor) do
+    source = get_forum!(export.forum_id)
+
+    attrs =
+      Map.merge(
+        %{
+          "display_name" => source.display_name,
+          "owner_email" => source.owner_email,
+          "idejo_version" => source.idejo_version,
+          "memory_mb" => source.memory_mb,
+          "cpus" => source.cpus
+        },
+        attrs
+      )
+
+    move_key? = source.status == "deleted"
+
+    with {:ok, key} <-
+           if(move_key?,
+             do: secret(source, :secret_key_base),
+             else: {:ok, Secrets.new_secret_key_base()}
+           ) do
+      create_forum(attrs, actor,
+        secret_key_base: key,
+        job_args: %{"restore" => %{"export_id" => export.id, "rotate_push_keys" => not move_key?}}
+      )
+    end
+  end
 
   @doc "A forum's exports, newest first."
   @spec list_exports(Forum.t()) :: [Export.t()]

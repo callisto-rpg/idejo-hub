@@ -27,20 +27,24 @@ defmodule IdejoHub.Forums.CreateWorker do
 
   require Logger
 
-  alias IdejoHub.{Audit, Forums}
-  alias IdejoHub.Forums.{Errors, Forum}
-  alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Postgres}
+  alias IdejoHub.{Audit, Forums, Repo}
+  alias IdejoHub.Forums.{Errors, Export, Forum}
+  alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Maintenance, Postgres}
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"forum_id" => id, "actor" => actor}}) do
+  def perform(%Oban.Job{args: %{"forum_id" => id, "actor" => actor} = args}) do
     case Forums.get_forum!(id) do
-      %Forum{status: "creating"} = forum -> create(forum, actor)
+      %Forum{status: "creating"} = forum -> create(forum, actor, args["restore"])
       # Already handled (a duplicate job): nothing to do.
       _other -> :ok
     end
   end
 
-  defp create(forum, actor) do
+  # OP-03, restore to a new subdomain: the forum stays behind the maintenance page, skips
+  # headless setup (the archive brings its own owner and settings), then is restored.
+  defp create(forum, actor, restore) do
+    if restore, do: Maintenance.mark(Forums.host(forum))
+
     steps = [
       {"database", &database/1},
       {"container", &container/1},
@@ -49,6 +53,8 @@ defmodule IdejoHub.Forums.CreateWorker do
       {"setup", &setup/1}
     ]
 
+    steps = if restore, do: List.keydelete(steps, "setup", 0), else: steps
+
     case run(steps, forum) do
       {:ok, forum} ->
         {:ok, forum} = Forums.update_state(forum, %{status: "running", step: nil, error: nil})
@@ -56,10 +62,11 @@ defmodule IdejoHub.Forums.CreateWorker do
         {:ok, _} =
           Audit.record(actor, "forum.create", "ok", forum, %{"owner_invite" => forum.owner_invite})
 
-        :ok
+        then_restore(forum, actor, restore)
 
       {:error, step, reason, forum} ->
         clean_up(forum, step)
+        if restore, do: Maintenance.unmark(Forums.host(forum))
         error = Errors.describe(reason)
 
         {:ok, forum} =
@@ -71,6 +78,18 @@ defmodule IdejoHub.Forums.CreateWorker do
         Logger.warning("FL-01: creating forum #{forum.subdomain} failed at #{step}: #{error}")
         {:error, "#{step}: #{error}"}
     end
+  end
+
+  defp then_restore(_forum, _actor, nil), do: :ok
+
+  defp then_restore(forum, actor, %{"export_id" => export_id} = restore) do
+    {:ok, _} =
+      Forums.restore_forum(forum, Repo.get!(Export, export_id), actor,
+        new_forum: true,
+        rotate_push_keys: restore["rotate_push_keys"] == true
+      )
+
+    :ok
   end
 
   defp run([], forum), do: {:ok, forum}

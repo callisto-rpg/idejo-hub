@@ -34,6 +34,8 @@ defmodule IdejoHub.Hosting.Docker do
   @callback logs(id()) :: {:ok, binary()} | {:error, error()}
   @callback copy_from(id(), path :: String.t(), dest_dir :: String.t()) ::
               {:ok, String.t()} | {:error, error() | {:archive, term()}}
+  @callback copy_to(id(), file :: String.t(), dest_dir :: String.t()) ::
+              :ok | {:error, error() | {:archive, term()}}
 
   def ping, do: adapter().ping()
   def pull_image(image), do: adapter().pull_image(image)
@@ -51,6 +53,9 @@ defmodule IdejoHub.Hosting.Docker do
 
   @doc "Copies one file out of a container (running or not) into `dest_dir`; returns its path."
   def copy_from(id, path, dest_dir), do: adapter().copy_from(id, path, dest_dir)
+
+  @doc "Puts one local file into a container's `dest_dir` (running or not), under its own name."
+  def copy_to(id, file, dest_dir), do: adapter().copy_to(id, file, dest_dir)
 
   @doc false
   def config(key), do: Application.fetch_env!(:idejo_hub, IdejoHub.Hosting)[key]

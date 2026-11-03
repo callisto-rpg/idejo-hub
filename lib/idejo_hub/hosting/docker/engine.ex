@@ -147,6 +147,34 @@ defmodule IdejoHub.Hosting.Docker.Engine do
     end
   end
 
+  # A one-file tar of `file` is streamed to the archive endpoint (backups can be large).
+  # `file` comes from the Hub's own store (Archives / Export.path/1).
+  # sobelow_skip ["Traversal.FileModule"]
+  @impl true
+  def copy_to(id, file, dest_dir) do
+    tar = Path.join(System.tmp_dir!(), "copy-to-#{System.unique_integer([:positive])}.tar")
+
+    try do
+      with :ok <-
+             :erl_tar.create(String.to_charlist(tar), [
+               {String.to_charlist(Path.basename(file)), String.to_charlist(file)}
+             ]),
+           {:ok, _body} <-
+             request(:put, "/containers/#{segment(id)}/archive",
+               params: [path: dest_dir],
+               headers: [{"content-type", "application/x-tar"}],
+               body: File.stream!(tar, 65_536),
+               receive_timeout: :timer.hours(1)
+             ) do
+        :ok
+      else
+        {:error, reason} when is_atom(reason) or is_tuple(reason) -> {:error, reason}
+      end
+    after
+      File.rm(tar)
+    end
+  end
+
   defp extract(tar, name, dest_dir) do
     tar = String.to_charlist(tar)
     name = String.to_charlist(name)
