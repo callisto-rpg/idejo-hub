@@ -262,6 +262,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   are `setup`, `backup`, `restore`, `rotate-push-keys` (a new one updates that test, after
   review), SC-09 every operator route needs sign-in and forums get no Hub secret and no way
   to docker-guard (read from `deploy/docker-compose.yml`).
+- **Identity provider** (ID-01; steward decision 2026-11-03): Zitadel v4 (pinned by digest)
+  and its separate login screen (`zitadel-login`) in the bundle, at `IDEJO_ID_DOMAIN`
+  (`id.<hub domain>`): Caddy sends `/ui/v2/login*` to the login screen and the rest to
+  Zitadel over h2c; the `ask` endpoint allows that host. Its own role and database on the
+  shared PostgreSQL (`postgres-init/04-zitadel.sh`; the installer adds them to an existing
+  volume), `start-from-init` with its own role as "admin" (never the superuser; its first
+  connection to its own database, as `sameuser` allows). The first start makes org "Idejo",
+  an `admin` (password `ZITADEL_ADMIN_PASSWORD`), a machine user `idejo-hub` (org owner)
+  and the login client, and writes their tokens to the `zitadel-tokens` volume (all three
+  containers run as nobody; `zitadel-tokens-init` hands the volume over). The Hub reads its
+  token from `ZITADEL_TOKEN_FILE` (`IdejoHub.Identity` config).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

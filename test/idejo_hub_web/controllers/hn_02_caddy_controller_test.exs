@@ -46,6 +46,11 @@ defmodule IdejoHubWeb.HN02CaddyControllerTest do
       assert ask(conn, host).status == 200
     end
 
+    @tag req: "ID-01"
+    test "ID-01 yes for the identity provider's host", %{conn: conn} do
+      assert ask(conn, "id.idejo.test").status == 200
+    end
+
     test "no for anything else", %{conn: conn} do
       forum("hn02-run", "running")
 

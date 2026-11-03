@@ -119,6 +119,12 @@ env_fill SECRET_KEY_BASE "$(openssl rand -base64 48 | tr -d '\n')"
 env_fill HUB_SECRETS_KEY "$(openssl rand -base64 32 | tr -d '\n')"
 env_fill POSTGRES_PASSWORD "$(openssl rand -hex 24)"
 env_fill HUB_DB_PASSWORD "$(openssl rand -hex 24)"
+# ID-01: Zitadel, at id.<hub domain>. The master key is exactly 32 characters and never
+# changes; the admin password meets Zitadel's policy (upper, lower, digit, symbol).
+env_fill IDEJO_ID_DOMAIN "id.$hub_domain"
+env_fill ZITADEL_MASTERKEY "$(openssl rand -hex 16)"
+env_fill ZITADEL_DB_PASSWORD "$(openssl rand -hex 24)"
+env_fill ZITADEL_ADMIN_PASSWORD "Id-$(openssl rand -hex 12)-Z9"
 env_fill DOCKER_GID "$(stat -c %g /var/run/docker.sock)"
 chmod 600 "$ENV_FILE"
 echo "Settings are in $ENV_FILE (readable by root only)."
@@ -126,17 +132,29 @@ echo "Settings are in $ENV_FILE (readable by root only)."
 # HN-01: one wildcard record for the forums, one for the Hub; never a change per forum.
 say "Checking DNS"
 probe="dns-check-$RANDOM"
+id_domain=$(env_get IDEJO_ID_DOMAIN)
 hub_ip=$(getent ahostsv4 "$hub_domain" | awk 'NR==1 {print $1}' || true)
+id_ip=$(getent ahostsv4 "$id_domain" | awk 'NR==1 {print $1}' || true)
 wild_ip=$(getent ahostsv4 "$probe.$forum_domain" | awk 'NR==1 {print $1}' || true)
 echo "$hub_domain -> ${hub_ip:-nothing}"
+echo "$id_domain -> ${id_ip:-nothing}"
 echo "*.$forum_domain (tried $probe.$forum_domain) -> ${wild_ip:-nothing}"
-if [ -z "$hub_ip" ] || [ -z "$wild_ip" ]; then
+if [ -z "$hub_ip" ] || [ -z "$id_ip" ] || [ -z "$wild_ip" ]; then
   echo "Warning: add these DNS records, pointing to this server, before forums can get certificates:"
   echo "    $hub_domain        A (and AAAA)"
+  echo "    $id_domain         A (and AAAA)"
   echo "    *.$forum_domain    A (and AAAA)"
 fi
 
 say "Starting Idejo Hub"
+# ID-01: an install from before Zitadel has a database without its role: add it (new volumes
+# get it from postgres-init/04-zitadel.sh).
+"${COMPOSE[@]}" up -d --wait db
+if [ -z "$("${COMPOSE[@]}" exec -T db psql -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'zitadel'")" ]; then
+  echo "Adding Zitadel's database role."
+  "${COMPOSE[@]}" exec -T -e ZITADEL_DB_PASSWORD="$(env_get ZITADEL_DB_PASSWORD)" db \
+    sh /docker-entrypoint-initdb.d/04-zitadel.sh
+fi
 "${COMPOSE[@]}" up -d --build --wait
 
 if [ -z "$operator" ] && ! $yes; then
@@ -156,4 +174,7 @@ Idejo Hub is running at https://$hub_domain
   - Keep a copy of $ENV_FILE somewhere safe, away from this server. HUB_SECRETS_KEY above all:
     without it the Hub cannot read the forums' secrets.
   - More operators: ${COMPOSE[*]} exec hub bin/hub-admin create-operator EMAIL
+  - Members sign in at https://$id_domain (Zitadel). Its console, for identity
+    administration: https://$id_domain/ui/console, user "admin", password ZITADEL_ADMIN_PASSWORD
+    in $ENV_FILE.
 DONE

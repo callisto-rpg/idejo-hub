@@ -166,6 +166,11 @@ if config_env() == :prod do
 
   config :idejo_hub, IdejoHub.Forums.Mail, shared_smtp: shared_smtp
 
+  # ID-01: the identity provider (Zitadel) and the Hub's token for its API.
+  config :idejo_hub, IdejoHub.Identity,
+    domain: env_or.("IDEJO_ID_DOMAIN", "id." <> host),
+    token_file: env_or.("ZITADEL_TOKEN_FILE", "/zitadel-tokens/hub.pat")
+
   # HN-04: docker-guard's address, and the image and network every forum uses.
   config :idejo_hub, IdejoHub.Hosting,
     docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),

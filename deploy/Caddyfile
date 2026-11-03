@@ -51,6 +51,28 @@
 	}
 }
 
+# ID-01: the identity provider, Zitadel. Its sign-in pages are their own container (v4).
+# The Hub's ask endpoint allows this host like its own.
+{$IDEJO_ID_DOMAIN} {
+	encode zstd gzip
+
+	tls {
+		on_demand
+		protocols tls1.2 tls1.3
+	}
+
+	import security_headers
+
+	handle /ui/v2/login* {
+		reverse_proxy zitadel-login:3000
+	}
+
+	handle {
+		# Zitadel's API speaks gRPC too: HTTP/2 to it, without TLS on the inside.
+		reverse_proxy h2c://zitadel:8080
+	}
+}
+
 *.{$IDEJO_FORUM_DOMAIN} {
 	encode zstd gzip
 
