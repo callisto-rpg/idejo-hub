@@ -14,11 +14,9 @@ defmodule IdejoHub.Forums.ExportWorker do
   """
   use Oban.Worker, queue: :operations, max_attempts: 1
 
-  alias IdejoHub.{Forums, Repo}
-  alias IdejoHub.Forums.Export
-  alias IdejoHub.Hosting.{Docker, ForumContainer}
-
-  @backup ~r"Backup written to (/data/backups/idejo-\d{8}-\d{6}\.tar)"
+  alias IdejoHub.Forums
+  alias IdejoHub.Forums.Archives
+  alias IdejoHub.Hosting.ForumContainer
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"forum_id" => id, "actor" => actor} = args}) do
@@ -42,51 +40,14 @@ defmodule IdejoHub.Forums.ExportWorker do
   @doc false
   # Also used by FL-05's deletion, inside its own job.
   def export(forum, kind) do
-    dest = Path.join(Export.dir(), forum.subdomain)
-
     with {:ok, params} <- Forums.container_params(forum),
          {:ok, run} <-
            ForumContainer.run_one_off(params, "export", ["/app/bin/idejo-admin", "backup"]) do
       try do
-        with :ok <- succeeded(run),
-             {:ok, path} <- backup_path(run.output),
-             {:ok, file} <- Docker.copy_from(run.id, path, dest) do
-          record(forum, kind, file)
-        end
+        Archives.collect(forum, run.id, run, kind)
       after
         ForumContainer.remove_one_off(forum.subdomain, "export")
       end
     end
-  end
-
-  defp succeeded(%{exit_code: 0}), do: :ok
-  defp succeeded(%{exit_code: code}), do: {:error, {:backup_exit, code}}
-
-  defp backup_path(output) do
-    case Regex.run(@backup, output) do
-      [_, path] -> {:ok, path}
-      nil -> {:error, :backup_file_not_named}
-    end
-  end
-
-  # `file` is copy_from/3's result: the exports directory, a validated subdomain, and a name
-  # matched by @backup.
-  # sobelow_skip ["Traversal.FileModule"]
-  defp record(forum, kind, file) do
-    %{
-      forum_id: forum.id,
-      subdomain: forum.subdomain,
-      kind: kind,
-      file_name: Path.basename(file),
-      size: File.stat!(file).size,
-      sha256:
-        file
-        |> File.stream!(65_536)
-        |> Enum.reduce(:crypto.hash_init(:sha256), &:crypto.hash_update(&2, &1))
-        |> :crypto.hash_final()
-        |> Base.encode16(case: :lower)
-    }
-    |> Export.changeset()
-    |> Repo.insert()
   end
 end

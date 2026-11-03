@@ -14,6 +14,7 @@ defmodule IdejoHub.Forums do
 
   alias IdejoHub.{Audit, Repo, Secrets}
   alias IdejoHub.Hosting.Postgres
+  alias IdejoHub.Operations.BackupWorker
 
   alias IdejoHub.Forums.{
     CreateWorker,
@@ -146,6 +147,14 @@ defmodule IdejoHub.Forums do
         "forum.export",
         ExportWorker
       )
+
+  @doc """
+  OP-01: queues a backup of a running forum (`Operations.BackupWorker`), taking its action
+  slot (`step: "backing_up"`). The schedule calls it daily for every running forum.
+  """
+  @spec backup_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def backup_forum(%Forum{} = forum, actor),
+    do: start_action(forum, actor, "running", "backing_up", "forum.backup", BackupWorker)
 
   @doc "A forum's exports, newest first."
   @spec list_exports(Forum.t()) :: [Export.t()]

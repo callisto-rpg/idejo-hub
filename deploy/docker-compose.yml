@@ -44,6 +44,9 @@ services:
       IDEJO_FORUM_NETWORK: idejo-forums
       IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
       IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
+      # OP-01: forum backups (cron, UTC) and how many are kept per forum.
+      IDEJO_HUB_BACKUP_CRON: ${IDEJO_HUB_BACKUP_CRON:-0 2 * * *}
+      IDEJO_HUB_BACKUPS_KEPT: ${IDEJO_HUB_BACKUPS_KEPT:-14}
       # HN-07: optional SMTP shared by every forum.
       HUB_SMTP_HOST: ${HUB_SMTP_HOST:-}
       HUB_SMTP_PORT: ${HUB_SMTP_PORT:-}
