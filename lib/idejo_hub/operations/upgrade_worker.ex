@@ -25,11 +25,21 @@ defmodule IdejoHub.Operations.UpgradeWorker do
   alias IdejoHub.Forums
   alias IdejoHub.Forums.{Archives, Errors}
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Maintenance}
+  alias IdejoHub.Operations.BulkUpgradeWorker
 
   @admin "/app/bin/idejo-admin"
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"forum_id" => id, "version" => to, "actor" => actor}}) do
+  def perform(%Oban.Job{args: %{"forum_id" => id, "version" => to, "actor" => actor} = args}) do
+    result = upgrade(id, to, actor)
+
+    # OP-05: part of an upgrade of all forums; the next one starts only after this success.
+    if bulk = args["bulk"], do: BulkUpgradeWorker.continue(bulk, Forums.get_forum!(id), result)
+
+    result
+  end
+
+  defp upgrade(id, to, actor) do
     forum = Forums.get_forum!(id)
     from = forum.idejo_version
     host = Forums.host(forum)
