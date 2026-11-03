@@ -87,6 +87,10 @@ defmodule IdejoHub.MixProject do
       {:bandit, "~> 1.14 and >= 1.14.1"},
       # Lifecycle and scheduled jobs (FL, OP). Apache-2.0 (LI-06).
       {:oban, "~> 2.24"},
+      # HN-04: HTTP to docker-guard. Apache-2.0 (LI-06). The guard itself is a dependency only in tests, which
+      # check that what the Hub sends is what the guard allows.
+      {:req, "~> 0.5"},
+      {:docker_guard, path: "guard", only: :test, runtime: false},
       # Checks, dev and test only. MIT (credo, sobelow), Apache-2.0 (dialyxir),
       # BSD-3-Clause (mix_audit) (LI-06).
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

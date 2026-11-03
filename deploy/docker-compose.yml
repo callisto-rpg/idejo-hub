@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# Production bundle for the Hub itself (HN-08): Hub app + PostgreSQL + Caddy.
+# Production bundle for the Hub itself (HN-08): Hub app + PostgreSQL + Caddy, plus the Docker
+# access chain (HN-04): Hub → docker-guard → socket-proxy → Docker socket.
 #
 #   cp deploy/.env.example deploy/.env    # then fill it in
 #   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
@@ -10,9 +11,15 @@
 # HN-05). The Hub connects as `idejo_hub`, a role with CREATEDB and CREATEROLE and never
 # superuser (postgres-init/01-hub-role.sh).
 #
-# Not here yet, by design: the Docker socket (milestone 2 first proposes how to limit it,
-# for example a socket proxy) and on-demand TLS for forum subdomains (HN-02). The install
-# script (HN-08) comes with milestone 2.
+# Docker access (HN-04, steward decision 2026-11-03, docs/proposals/hn-04-docker-access.md):
+# only socket-proxy mounts the Docker socket. It has no network at all and answers on a Unix
+# socket that only docker-guard mounts. docker-guard checks every request body and is reachable
+# only from the Hub, on the internal `docker` network. The Hub never sees the socket.
+# Forum containers join the `idejo-forums` network with PostgreSQL, Caddy and the Hub.
+#
+# Caddy (HN-02): the Hub's host, and every forum subdomain with on-demand TLS (deploy/Caddyfile).
+#
+# Not here yet: the install script (HN-08).
 
 name: idejo-hub
 
@@ -29,11 +36,20 @@ services:
       PHX_HOST: ${IDEJO_HUB_DOMAIN}
       PORT: "4000"
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      HUB_SECRETS_KEY: ${HUB_SECRETS_KEY}
       DATABASE_URL: ecto://idejo_hub:${HUB_DB_PASSWORD}@db/idejo_hub
       POOL_SIZE: ${POOL_SIZE:-}
+      DOCKER_GUARD_URL: http://docker-guard:2375
+      IDEJO_FORUM_IMAGE: ${IDEJO_FORUM_IMAGE:-ghcr.io/callisto-rpg/idejo}
+      IDEJO_FORUM_NETWORK: idejo-forums
+      IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
+      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
     depends_on:
       db:
         condition: service_healthy
+      docker-guard:
+        condition: service_started
+    networks: [default, docker, forums]
     expose:
       - "4000"
     # Healthy once the server accepts connections. The image has no curl or wget, so bash's
@@ -58,6 +74,7 @@ services:
       - pgdata:/var/lib/postgresql
       # Runs once, on an empty data directory.
       - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    networks: [default, forums]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d idejo_hub"]
       interval: 5s
@@ -69,6 +86,7 @@ services:
     restart: unless-stopped
     environment:
       IDEJO_HUB_DOMAIN: ${IDEJO_HUB_DOMAIN}
+      IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
     ports:
       - "80:80"
@@ -81,8 +99,82 @@ services:
     depends_on:
       hub:
         condition: service_healthy
+    networks: [default, forums]
+
+  # HN-04: the only container with the Docker socket. MIT, pinned by digest. It allows only the
+  # method/path pairs the Hub needs and refuses any bind mount; docker-guard (below) checks the
+  # request bodies. No network: it answers on a Unix socket in a small tmpfs volume.
+  socket-proxy:
+    image: docker.io/wollomatic/socket-proxy:1.13.2@sha256:ff95d6ff6c27853005ef85eb8f4ab5923dc3d2f1e055f98fb6aeeaceec3fe848
+    restart: unless-stopped
+    # nobody, in the group that owns the Docker socket on this host.
+    user: "65534:${DOCKER_GID}"
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 64m
+    command:
+      - -proxysocketendpoint=/run/socket-proxy/proxy.sock
+      - -proxysocketendpointfilemode=0600
+      - -loglevel=info
+      - -watchdoginterval=3600
+      - -stoponwatchdog
+      # No host directory may be bind-mounted (forums use named volumes only).
+      - -allowbindmountfrom=/nonexistent/idejo-hub
+      - -allowGET=/v1\.[0-9]+/(_ping|version|containers/json|containers/[a-zA-Z0-9_.-]+/(json|logs|archive)|exec/[a-f0-9]+/json|volumes/[a-zA-Z0-9_.-]+|images/.+/json)
+      - -allowHEAD=/v1\.[0-9]+/(_ping|containers/[a-zA-Z0-9_.-]+/archive)
+      - -allowPOST=/v1\.[0-9]+/(containers/create|containers/[a-zA-Z0-9_.-]+/(start|stop|restart|wait|exec)|exec/[a-f0-9]+/start|volumes/create|images/create)
+      - -allowPUT=/v1\.[0-9]+/containers/[a-zA-Z0-9_.-]+/archive
+      - -allowDELETE=/v1\.[0-9]+/(containers|volumes)/[a-zA-Z0-9_.-]+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - docker-proxy-socket:/run/socket-proxy
+
+  # HN-04: checks every request body (no privileged container, no host namespace, only the
+  # Idejo image, only forum containers and volumes) before it reaches socket-proxy. Built
+  # from guard/ in this repository; runs as nobody, like the proxy's socket.
+  docker-guard:
+    build:
+      context: ..
+      dockerfile: guard/Dockerfile
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    environment:
+      RELEASE_TMP: /tmp
+      DOCKER_GUARD_UPSTREAM_SOCKET: /run/socket-proxy/proxy.sock
+      DOCKER_GUARD_IMAGE: ${IDEJO_FORUM_IMAGE:-ghcr.io/callisto-rpg/idejo}
+      DOCKER_GUARD_NETWORK: idejo-forums
+    volumes:
+      - docker-proxy-socket:/run/socket-proxy
+    depends_on:
+      socket-proxy:
+        condition: service_started
+    expose:
+      - "2375"
+    networks: [docker]
+
+networks:
+  default:
+  # The Hub and docker-guard only; no way out.
+  docker:
+    internal: true
+  # Forum containers, created by the Hub, join this network by name (HN-04).
+  forums:
+    name: idejo-forums
 
 volumes:
   pgdata:
   caddy_data:
   caddy_config:
+  # The socket between socket-proxy and docker-guard, in memory, owned by nobody.
+  docker-proxy-socket:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=64k,uid=65534,gid=65534,mode=0700

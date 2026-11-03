@@ -65,6 +65,8 @@ As built by Foundations:
 
 - Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
   Node), no mailer yet (alerts, OP, add Swoosh when needed).
+- Req (Apache-2.0) for HTTP to docker-guard. `docker_guard` is a path dependency in tests
+  only, so the Hub's tests check that what the Hub sends is what the guard allows.
 - Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a
   test runs them (`testing: :manual`). Migration `priv/repo/migrations/*_add_oban_jobs.exs`.
 - `IdejoHubWeb.Plugs.ContentSecurityPolicy`: strict CSP with per-request script and style
@@ -85,8 +87,13 @@ As built by Foundations:
 lib/idejo_hub/        business logic (contexts) — no web code
 lib/idejo_hub_web/    web layer — operator interface (LiveView), Caddy "ask" endpoint, identity pages
   plugs/              ContentSecurityPolicy
+  hosting/            Docker adapter (Docker.Engine, Docker.Fake), ForumContainer (HN-04),
+                      Postgres: one database and role per forum (HN-05)
+guard/                docker-guard (HN-04): separate mix project and release; Policy decides,
+                      Router forwards to socket-proxy's Unix socket; guard/Dockerfile
 deploy/               production bundle (HN-08): docker-compose.yml, Caddyfile, .env.example,
-                      postgres-init/ (creates the Hub's CREATEDB/CREATEROLE role, never superuser)
+                      postgres-init/ (creates the Hub's CREATEDB/CREATEROLE role, never superuser),
+                      socket-proxy and docker-guard (HN-04)
 docker-compose.yml    development PostgreSQL only (port 5433)
 ```
 
@@ -94,25 +101,55 @@ The context folders below are created by the first PR that needs them.
 
 | Prefix | Context folder | Notes |
 | --- | --- | --- |
-| FL | `lib/idejo_hub/forums/` | Forum records and lifecycle; each action an Oban job with clear states |
+| FL | `lib/idejo_hub/forums/` | Forum records and lifecycle; each action an Oban job with clear states. `Forums.Subdomain` (FL-03): the subdomain is also the slug every name derives from |
 | HN | `lib/idejo_hub/hosting/` | Docker adapter (with a fake for tests), PostgreSQL provisioning, Caddy routes, `ask` endpoint |
 | OP | `lib/idejo_hub/operations/` | Backups, restore, upgrades and rollback, health polling, alerts |
 | ID | `lib/idejo_hub/identity/` | OpenID Connect provider (milestone 3; provider choice still open) |
-| SC | `lib/idejo_hub/audit/`, `lib/idejo_hub/secrets/` | Audit log, encrypted per-forum secrets |
+| SC | `lib/idejo_hub/audit/`, `lib/idejo_hub/secrets.ex` | Audit log, encrypted per-forum secrets |
 | HA | `lib/idejo_hub_web/` | Operator screens; Hub CLI later (HA-08) |
 | LB | — | Source link per forum (`IDEJO_SOURCE_URL`), branding rules |
 
 Design points (Implementation Prompt, Part B, milestone 2):
 
 - **Docker** behind one adapter module, through `docker-guard` and the socket proxy (steward
-  decision 2026-11-03, below). The Hub never mounts the Docker socket.
+  decision 2026-11-03, below). The Hub never mounts the Docker socket. Forum names are fixed
+  so the guard can check them: container `idejo-forum-<slug>`, volumes
+  `idejo-forum-<slug>-{uploads,backups}`, label `org.idejo.hub.forum=<slug>`, network
+  `idejo-forums`, image `ghcr.io/callisto-rpg/idejo:X.Y.Z`. A new Docker call or create field
+  needs a rule in `DockerGuard.Policy` (with a refused example in its test) and, for a new
+  path, the socket-proxy allowlist in `deploy/docker-compose.yml`; both are DV-06 reviews.
 - **PostgreSQL**: the Hub's role has `CREATEDB` and `CREATEROLE`, never superuser. One
-  database and one login role per forum, that role able to reach only its own database
-  (HN-05). Generated passwords and `SECRET_KEY_BASE` are stored encrypted (SC-04).
-- **Caddy**: the `ask` endpoint says yes only for existing, non-deleted forums and the Hub's
-  own hosts (HN-02). Routes are re-applied on boot.
+  database and one login role per forum, both named `forum_<slug>` (hyphens → underscores),
+  that role able to reach only its own database (HN-05): `CONNECT` revoked from `PUBLIC`
+  everywhere, and `pg_hba.conf` `sameuser` for network connections
+  (`deploy/postgres-init/02-forum-isolation.sh`), so a role opens only the database of its
+  own name. That includes the Hub, which cannot open a forum's database at all. DDL runs on a
+  short Postgrex connection of its own (not the Repo pool); a new database or service needs
+  a role of the same name.
+- **Secrets** (SC-04): `IdejoHub.Secrets` generates each forum's `SECRET_KEY_BASE` and DB
+  password and encrypts them (AES-256-GCM, `:crypto`, key `HUB_SECRETS_KEY`) before they reach
+  the Hub database. Every value is bound to a context, `"forum:<slug>:<field>"`, so it cannot
+  be moved to another forum or field. Store only `encrypt/2` output, never plain secrets; the
+  Hub refuses to boot without a valid key. Dev and test have fixed keys in their config.
+- **Caddy** (HN-02, `deploy/Caddyfile`): on-demand TLS for every host; `ask`
+  (`GET /internal/caddy/ask`, `CaddyController`, `Forums.certificate_allowed?/1`) says yes
+  only for existing, non-deleted forums and the Hub's own host. No per-forum routes: the
+  wildcard site sends `<subdomain>.IDEJO_FORUM_DOMAIN` to `idejo-forum-<subdomain>:4000`
+  (so nothing to re-apply on boot), with `strict_sni_host` so the Host must match the
+  certificate. 502/503/504 go to `GET /internal/forum-unavailable` (being set up, paused,
+  unavailable, or 404). `/internal/*` is refused from outside by Caddy and excluded from the
+  Hub's `force_ssl` (Caddy calls it over plain http).
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
-  from the start (SC-07 shows them in milestone 4).
+  from the start (SC-07 shows them in milestone 4): `IdejoHub.Audit.record/5` (actor, action
+  such as `forum.create`, outcome `requested`/`ok`/`failed`, forum, details without secrets
+  or command output); `audit_entries` is append-only (trigger).
+- **Forums** (FL-01): `Forums.create_forum/2` stores the forum as `creating` with its
+  encrypted `SECRET_KEY_BASE` and queues `Forums.CreateWorker` (queue `lifecycle`, one
+  attempt), whose steps (`database`, `container`, `starting`, `health`, `setup`) show in
+  `forums.step`; it ends `running`, or `failed` with a short `error` after removing only what
+  it made. `Hosting.Health` polls `http://idejo-forum-<slug>:4000/health` on the forum
+  network. The output of `idejo-admin setup` (it may hold the owner's link) is never logged
+  or stored. Settings: `IDEJO_FORUM_DOMAIN` (required in production), `IDEJO_DEFAULT_VERSION`.
 - Per-forum memory and CPU limits on every container (SC-05).
 
 ## Conventions
@@ -139,7 +176,8 @@ Design points (Implementation Prompt, Part B, milestone 2):
   steward); signatures go to the `cla-signatures` branch.
 - CI (`.github/workflows/ci.yml`): REUSE lint; format, compile warnings, credo `--strict`,
   sobelow, `deps.audit`, `hex.audit`, unused deps; Dialyzer (dev env); tests against
-  PostgreSQL 18; the Compose bundle is validated and the image built.
+  PostgreSQL 18; the same checks for `guard/`; the Compose bundle is validated, the image
+  built, and `guard/test/hn_04_chain.sh` run against the runner's Docker.
 - A person reviews every PR. Identity, secrets, Docker access and anything touching sign-in
   get an extra careful human review (DV-06) — flag them in the PR description. Every OIDC
   change is in that group.
@@ -156,6 +194,8 @@ mix test                     # all tests
 mix test --only req:FL-01    # one requirement's tests
 mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
 reuse lint                   # SPDX headers (LI-01)
+(cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
+guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 ```
 
 Production bundle (HN-08; the install script comes with milestone 2):

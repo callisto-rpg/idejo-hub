@@ -88,6 +88,32 @@ if config_env() == :prod do
       Set it to the Hub's own host name, for example: hub.example.org
       """
 
+  # SC-04: encrypts forum secrets stored in the Hub database. Losing it means the Hub can no
+  # longer recreate forum containers; keep a copy with the Hub's backups.
+  config :idejo_hub, IdejoHub.Secrets,
+    key:
+      System.get_env("HUB_SECRETS_KEY") ||
+        raise("""
+        environment variable HUB_SECRETS_KEY is missing.
+        Generate one with: openssl rand -base64 32
+        """)
+
+  # FL: forums are `<subdomain>.IDEJO_FORUM_DOMAIN` (never hard-coded, LB-05).
+  config :idejo_hub, IdejoHub.Forums,
+    domain:
+      System.get_env("IDEJO_FORUM_DOMAIN") ||
+        raise("""
+        environment variable IDEJO_FORUM_DOMAIN is missing.
+        Set it to the domain forums are subdomains of, for example forums.example.org
+        """),
+    default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.1.0")
+
+  # HN-04: docker-guard's address, and the image and network every forum uses.
+  config :idejo_hub, IdejoHub.Hosting,
+    docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),
+    forum_image: System.get_env("IDEJO_FORUM_IMAGE", "ghcr.io/callisto-rpg/idejo"),
+    forum_network: System.get_env("IDEJO_FORUM_NETWORK", "idejo-forums")
+
   config :idejo_hub, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :idejo_hub, IdejoHubWeb.Endpoint,

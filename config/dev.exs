@@ -77,3 +77,7 @@ config :phoenix_live_view,
   debug_attributes: true,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
+
+# SC-04: the key that encrypts forum secrets in the Hub database. Dev only, never in
+# production (there it comes from HUB_SECRETS_KEY, config/runtime.exs).
+config :idejo_hub, IdejoHub.Secrets, key: "w1aEeU56Wwszoj+WbusseAsO6doTRnpT2YRdiB/YkTg="

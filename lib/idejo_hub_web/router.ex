@@ -27,6 +27,13 @@ defmodule IdejoHubWeb.Router do
     get "/", PageController, :home
   end
 
+  # HN-02: called by Caddy on the internal network only (the Caddyfile refuses /internal/*
+  # from outside). No session, no CSRF.
+  scope "/internal", IdejoHubWeb do
+    get "/caddy/ask", CaddyController, :ask
+    get "/forum-unavailable", CaddyController, :forum_unavailable
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", IdejoHubWeb do
   #   pipe_through :api

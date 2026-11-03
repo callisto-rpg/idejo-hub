@@ -26,6 +26,16 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
   secret_key_base: "YUhyYoEuogyBLtiBRPWbWbwQZu4lYoeLH3waQ4w7Kq40sIZc6Ebl8Av2I2JSiGOd",
   server: false
 
+# Tests never reach Docker: an in-memory fake stands in for the engine (HN-04).
+config :idejo_hub, IdejoHub.Hosting, docker_adapter: IdejoHub.Hosting.Docker.Fake
+
+# The engine adapter's own tests stub docker-guard with Req.Test.
+config :idejo_hub, :docker_req_options, plug: {Req.Test, IdejoHub.Hosting.Docker.Engine}
+
+# Forum health checks go to a Req.Test stub, and the wait does not sleep long.
+config :idejo_hub, :health_req_options, plug: {Req.Test, IdejoHub.Hosting.Health}
+config :idejo_hub, :health_wait, timeout: 200, interval: 10
+
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual
 
@@ -42,3 +52,7 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# SC-04: the key that encrypts forum secrets in the Hub database. Test only, never in
+# production (there it comes from HUB_SECRETS_KEY, config/runtime.exs).
+config :idejo_hub, IdejoHub.Secrets, key: "fcjlnmVauctvHV2aRFqBHgQaZIAaJpWxxfs8xi4Eu5c="
