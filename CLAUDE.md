@@ -250,6 +250,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   its container is made), alert email (for OP-08), extra reserved subdomains (refused by
   `Forum.create_changeset/2`). Forum domain and backup storage are shown, not edited.
   Audited `settings.update` (keys only).
+  The forum list also starts OP-05 (`#upgrade-all`, `Operations.upgrade_all/2`).
+- **Isolation checks** (`test/idejo_hub/sc_isolation_test.exs`): SC-01 host-only cookies,
+  SC-05 limits on every container spec, SC-06 the only `idejo-admin` commands the Hub runs
+  are `setup`, `backup`, `restore`, `rotate-push-keys` (a new one updates that test, after
+  review), SC-09 every operator route needs sign-in and forums get no Hub secret and no way
+  to docker-guard (read from `deploy/docker-compose.yml`).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

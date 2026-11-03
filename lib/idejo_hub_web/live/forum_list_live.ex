@@ -34,6 +34,37 @@ defmodule IdejoHubWeb.ForumListLive do
   @impl true
   def handle_info({:forum_changed, _forum}, socket), do: {:noreply, load(socket)}
 
+  # OP-05: upgrade every running forum on an older version, one after another, stopping at
+  # the first failure (Operations.upgrade_all/2).
+  @impl true
+  def handle_event("upgrade_all", %{"version" => version}, socket) do
+    case IdejoHub.Operations.upgrade_all(
+           String.trim(version),
+           socket.assigns.current_operator.email
+         ) do
+      {:ok, %{forums: forums, skipped: skipped}} ->
+        skipped =
+          if skipped == [], do: "", else: " Skipped (not running): #{Enum.join(skipped, ", ")}."
+
+        {:noreply,
+         put_flash(
+           socket,
+           :info,
+           "Upgrading #{Enum.join(forums, ", ")} to #{version}, one after another.#{skipped}"
+         )}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, upgrade_all_message(reason))}
+    end
+  end
+
+  defp upgrade_all_message(:invalid_version), do: "Give an exact version, for example 0.2.0."
+
+  defp upgrade_all_message(:nothing_to_upgrade),
+    do: "Every running forum is already on that version or newer."
+
+  defp upgrade_all_message(:already_running), do: "An upgrade of all forums is already under way."
+
   defp load(socket) do
     rows =
       Forums.list_overview()
@@ -105,6 +136,19 @@ defmodule IdejoHubWeb.ForumListLive do
           {status} ({Map.get(@counts, status, 0)})
         </.link>
       </nav>
+
+      <form id="upgrade-all" phx-submit="upgrade_all" class="flex gap-2 items-end">
+        <label>
+          Upgrade all running forums to
+          <input name="version" class="input input-sm" placeholder="0.2.0" required />
+        </label>
+        <button
+          class="btn btn-sm"
+          data-confirm="Upgrade every running forum, one after another? The run stops at the first failure, which is rolled back."
+        >
+          Upgrade all
+        </button>
+      </form>
 
       <p :if={@rows == []} id="no-forums">No forums here.</p>
 
