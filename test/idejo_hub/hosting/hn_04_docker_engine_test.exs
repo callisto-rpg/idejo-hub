@@ -77,4 +77,51 @@ defmodule IdejoHub.Hosting.HN04DockerEngineTest do
     assert Engine.pull_image("ghcr.io/callisto-rpg/idejo:9.9.9") ==
              {:error, {:status, 500, "manifest unknown"}}
   end
+
+  describe "copy_from/3 (FL-06)" do
+    setup do
+      dir = Path.join(System.tmp_dir!(), "copy-from-#{System.unique_integer([:positive])}")
+      on_exit(fn -> File.rm_rf!(dir) end)
+      %{dir: dir}
+    end
+
+    defp tar_of(entries) do
+      tmp = Path.join(System.tmp_dir!(), "t-#{System.unique_integer([:positive])}.tar")
+      :ok = :erl_tar.create(String.to_charlist(tmp), entries)
+      bytes = File.read!(tmp)
+      File.rm!(tmp)
+      bytes
+    end
+
+    defp serve(bytes) do
+      stub(fn conn ->
+        conn |> put_resp_content_type("application/x-tar") |> send_resp(200, bytes)
+      end)
+    end
+
+    test "extracts the one file asked for", %{dir: dir} do
+      serve(tar_of([{~c"idejo-1.tar", "backup bytes"}]))
+
+      assert {:ok, path} =
+               Engine.copy_from("idejo-forum-x-export", "/data/backups/idejo-1.tar", dir)
+
+      assert path == Path.join(dir, "idejo-1.tar")
+      assert File.read!(path) == "backup bytes"
+    end
+
+    test "refuses other names, extra entries and paths", %{dir: dir} do
+      for entries <- [
+            [{~c"other.tar", "x"}],
+            [{~c"idejo-1.tar", "x"}, {~c"extra", "y"}],
+            [{~c"../idejo-1.tar", "x"}]
+          ] do
+        serve(tar_of(entries))
+
+        assert {:error, {:archive, _}} =
+                 Engine.copy_from("idejo-forum-x-export", "/data/backups/idejo-1.tar", dir)
+      end
+
+      refute File.exists?(Path.join(Path.dirname(dir), "idejo-1.tar"))
+    end
+  end
 end

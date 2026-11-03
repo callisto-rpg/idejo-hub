@@ -15,6 +15,9 @@ defmodule IdejoHub.Forums.Errors do
   def describe({:status, status, message}), do: "Docker answered #{status} (#{message})"
   def describe({:unreachable, _detail}), do: "Docker is unreachable"
   def describe({:postgres, message}), do: "PostgreSQL: #{message}"
+  def describe({:backup_exit, code}), do: "idejo-admin backup exited with #{code}"
+  def describe(:backup_file_not_named), do: "idejo-admin backup did not name its file"
+  def describe({:archive, _reason}), do: "the backup could not be copied out"
   def describe({:error, reason}), do: describe(reason)
   def describe({:posix, reason}), do: "file: #{reason}"
   def describe(reason) when is_atom(reason), do: Atom.to_string(reason)

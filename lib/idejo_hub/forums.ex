@@ -13,10 +13,13 @@ defmodule IdejoHub.Forums do
   import Ecto.Query
 
   alias IdejoHub.{Audit, Repo, Secrets}
+  alias IdejoHub.Hosting.Postgres
 
   alias IdejoHub.Forums.{
     CreateWorker,
     Errors,
+    Export,
+    ExportWorker,
     Forum,
     Mail,
     ResumeWorker,
@@ -127,6 +130,30 @@ defmodule IdejoHub.Forums do
   def suspend_forum(%Forum{} = forum, actor),
     do: start_action(forum, actor, "running", "suspending", "forum.suspend", SuspendWorker)
 
+  @doc """
+  FL-06: exports a running or suspended forum as a standard Idejo backup, kept by the Hub.
+  Queues `ExportWorker` (queue `operations`).
+  """
+  @spec export_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def export_forum(%Forum{} = forum, actor),
+    do:
+      start_action(
+        forum,
+        actor,
+        ["running", "suspended"],
+        "exporting",
+        "forum.export",
+        ExportWorker
+      )
+
+  @doc "A forum's exports, newest first."
+  @spec list_exports(Forum.t()) :: [Export.t()]
+  def list_exports(%Forum{id: id}) do
+    Repo.all(
+      from e in Export, where: e.forum_id == ^id, order_by: [desc: e.inserted_at, desc: e.id]
+    )
+  end
+
   @doc "FL-04: resumes a suspended forum. Queues `ResumeWorker`."
   @spec resume_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
   def resume_forum(%Forum{} = forum, actor),
@@ -138,7 +165,8 @@ defmodule IdejoHub.Forums do
     Repo.transaction(fn ->
       locked = Repo.one!(from f in Forum, where: f.id == ^forum.id, lock: "FOR UPDATE")
 
-      if locked.status != from_status or locked.step != nil, do: Repo.rollback(:invalid_state)
+      if locked.status not in List.wrap(from_status) or locked.step != nil,
+        do: Repo.rollback(:invalid_state)
 
       {:ok, forum} = update_state(locked, %{step: step, error: nil})
       {:ok, _} = Audit.record(actor, action, "requested", forum)
@@ -149,9 +177,9 @@ defmodule IdejoHub.Forums do
 
   @doc false
   # Ends a lifecycle job that worked: the new state, step cleared, an `ok` audit entry.
-  def finish_action(forum, actor, action, attrs) do
+  def finish_action(forum, actor, action, attrs, details \\ %{}) do
     {:ok, forum} = update_state(forum, Map.merge(%{step: nil, error: nil}, attrs))
-    {:ok, _} = Audit.record(actor, action, "ok", forum)
+    {:ok, _} = Audit.record(actor, action, "ok", forum, details)
     :ok
   end
 
@@ -199,6 +227,37 @@ defmodule IdejoHub.Forums do
 
   defp decrypt(stored, forum, field),
     do: Secrets.decrypt(stored, context(forum.subdomain, field))
+
+  @doc """
+  What the forum's container is made from (HN-04): its image version, limits and Idejo
+  environment (AD-13), secrets decrypted (SC-04), email (HN-07). Used for the forum's own
+  container and for one-off containers on its volumes (exports, FL-06).
+  """
+  @spec container_params(Forum.t()) :: {:ok, map()} | {:error, :invalid}
+  def container_params(%Forum{} = forum) do
+    with {:ok, secret_key_base} <- secret(forum, :secret_key_base),
+         {:ok, db_password} <- secret(forum, :db_password) do
+      name = Postgres.name(forum.subdomain)
+      creds = %{database: name, username: name, password: db_password}
+      db_host = Application.fetch_env!(:idejo_hub, __MODULE__)[:db_host]
+
+      {:ok,
+       %{
+         slug: forum.subdomain,
+         version: forum.idejo_version,
+         memory_mb: forum.memory_mb,
+         cpus: forum.cpus,
+         env:
+           %{
+             "PHX_HOST" => host(forum),
+             "DATABASE_URL" => Postgres.database_url(creds, db_host),
+             "SECRET_KEY_BASE" => secret_key_base,
+             "IDEJO_SOURCE_URL" => source_url(forum)
+           }
+           |> Map.merge(Mail.env(forum.mail_from))
+       }}
+    end
+  end
 
   @doc "The forum's public host: `<subdomain>.<forum domain>`."
   @spec host(Forum.t()) :: String.t()

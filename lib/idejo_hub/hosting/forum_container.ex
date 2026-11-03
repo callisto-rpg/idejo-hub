@@ -79,6 +79,55 @@ defmodule IdejoHub.Hosting.ForumContainer do
   end
 
   @doc """
+  A one-off container on the forum's volumes, with its environment and limits, running one
+  `idejo-admin` command (FL-06 export; later restore): `idejo-forum-<slug>-<suffix>`, never
+  restarted, no network alias.
+  """
+  @spec one_off_spec(params(), [String.t()]) :: map()
+  def one_off_spec(params, ["/app/bin/idejo-admin" | _] = cmd) do
+    params
+    |> spec()
+    |> Map.put("Cmd", cmd)
+    |> put_in(["HostConfig", "RestartPolicy"], %{"Name" => "no"})
+    |> Map.put("NetworkingConfig", %{
+      "EndpointsConfig" => %{Docker.config(:forum_network) => %{}}
+    })
+  end
+
+  @doc """
+  Runs a one-off container to its end: creates it (removing a leftover of the same name),
+  starts it and waits. Returns its exit code and output; the caller copies what it needs and
+  then calls `remove_one_off/2`.
+  """
+  @spec run_one_off(params(), String.t(), [String.t()]) ::
+          {:ok, %{id: Docker.id(), exit_code: integer(), output: binary()}} | {:error, term()}
+  def run_one_off(%{slug: slug} = params, suffix, cmd) do
+    name = name(slug) <> "-" <> suffix
+    remove_one_off(slug, suffix)
+
+    with {:ok, id} <- Docker.create_container(name, one_off_spec(params, cmd)),
+         :ok <- Docker.start_container(id),
+         {:ok, exit_code} <- Docker.wait_container(id),
+         {:ok, output} <- Docker.logs(id) do
+      {:ok, %{id: id, exit_code: exit_code, output: output}}
+    else
+      error ->
+        remove_one_off(slug, suffix)
+        error
+    end
+  end
+
+  @doc "Removes a one-off container (already gone is fine)."
+  @spec remove_one_off(String.t(), String.t()) :: :ok | {:error, term()}
+  def remove_one_off(slug, suffix) do
+    case Docker.remove_container(name(slug) <> "-" <> suffix) do
+      :ok -> :ok
+      {:error, :not_found} -> :ok
+      error -> error
+    end
+  end
+
+  @doc """
   Pulls the image, creates the forum's volumes and its container (not started). On failure,
   removes what this call created and returns the first error.
   """

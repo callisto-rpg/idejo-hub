@@ -28,7 +28,7 @@ defmodule IdejoHub.Forums.CreateWorker do
   require Logger
 
   alias IdejoHub.{Audit, Forums}
-  alias IdejoHub.Forums.{Errors, Forum, Mail}
+  alias IdejoHub.Forums.{Errors, Forum}
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Postgres}
 
   @impl Oban.Worker
@@ -96,29 +96,7 @@ defmodule IdejoHub.Forums.CreateWorker do
   end
 
   defp container(forum) do
-    with {:ok, secret_key_base} <- Forums.secret(forum, :secret_key_base),
-         {:ok, db_password} <- Forums.secret(forum, :db_password) do
-      creds = %{
-        database: Postgres.name(forum.subdomain),
-        username: Postgres.name(forum.subdomain),
-        password: db_password
-      }
-
-      ForumContainer.provision(%{
-        slug: forum.subdomain,
-        version: forum.idejo_version,
-        memory_mb: forum.memory_mb,
-        cpus: forum.cpus,
-        env:
-          %{
-            "PHX_HOST" => Forums.host(forum),
-            "DATABASE_URL" => Postgres.database_url(creds, db_host()),
-            "SECRET_KEY_BASE" => secret_key_base,
-            "IDEJO_SOURCE_URL" => Forums.source_url(forum)
-          }
-          |> Map.merge(Mail.env(forum.mail_from))
-      })
-    end
+    with {:ok, params} <- Forums.container_params(forum), do: ForumContainer.provision(params)
   end
 
   # The output may hold the owner's set-password link: never logged or stored.
@@ -178,6 +156,5 @@ defmodule IdejoHub.Forums.CreateWorker do
     end
   end
 
-  defp db_host, do: Application.fetch_env!(:idejo_hub, Forums)[:db_host]
   defp health_options, do: Application.get_env(:idejo_hub, :health_wait, [])
 end

@@ -26,6 +26,8 @@ defmodule IdejoHub.Hosting.Docker.Fake do
           failures: %{},
           exec: [],
           execs: [],
+          runs: [],
+          files: %{},
           calls: []
         }
       end)
@@ -37,6 +39,16 @@ defmodule IdejoHub.Hosting.Docker.Fake do
   @doc "The next call to `fun` returns `{:error, error}`."
   def fail(fun, error \\ {:status, 500, "fake failure"}),
     do: update(&put_in(&1, [:failures, fun], error))
+
+  @doc """
+  A container whose command starts with `prefix` exits with `code` and logs `output` when
+  started (one-off containers, FL-06).
+  """
+  def run_result(prefix, code, output),
+    do: update(&Map.update!(&1, :runs, fn rules -> [{prefix, {code, output}} | rules] end))
+
+  @doc "`copy_from/3` of `path` gives a file with `content`."
+  def put_file(path, content), do: update(&put_in(&1, [:files, path], content))
 
   @doc "An exec whose command starts with `prefix` returns `result`."
   def exec_result(prefix, result),
@@ -142,6 +154,55 @@ defmodule IdejoHub.Hosting.Docker.Fake do
 
   defp exec_rule(rules, cmd) do
     Enum.find_value(rules, {:ok, %{exit_code: 0, output: ""}}, fn {prefix, result} ->
+      if List.starts_with?(cmd, prefix), do: result
+    end)
+  end
+
+  @impl true
+  def wait_container(id) do
+    call(:wait_container, fn s ->
+      case s.containers[id] do
+        nil -> {{:error, :not_found}, s}
+        c -> {{:ok, elem(run_rule(s.runs, c), 0)}, put_in(s, [:containers, id, "Running"], false)}
+      end
+    end)
+  end
+
+  @impl true
+  def logs(id) do
+    call(:logs, fn s ->
+      case s.containers[id] do
+        nil -> {{:error, :not_found}, s}
+        c -> {{:ok, elem(run_rule(s.runs, c), 1)}, s}
+      end
+    end)
+  end
+
+  # Test only; dest_dir comes from the test's configuration.
+  # sobelow_skip ["Traversal.FileModule"]
+  @impl true
+  def copy_from(id, path, dest_dir) do
+    result =
+      call(:copy_from, fn s ->
+        cond do
+          not Map.has_key?(s.containers, id) -> {{:error, :not_found}, s}
+          not Map.has_key?(s.files, path) -> {{:error, :not_found}, s}
+          true -> {{:ok, s.files[path]}, s}
+        end
+      end)
+
+    with {:ok, content} <- result do
+      File.mkdir_p!(dest_dir)
+      dest = Path.join(dest_dir, Path.basename(path))
+      File.write!(dest, content)
+      {:ok, dest}
+    end
+  end
+
+  defp run_rule(rules, container) do
+    cmd = container["Spec"]["Cmd"] || []
+
+    Enum.find_value(rules, {0, ""}, fn {prefix, result} ->
       if List.starts_with?(cmd, prefix), do: result
     end)
   end

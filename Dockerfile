@@ -97,9 +97,9 @@ ENV LC_ALL=en_US.UTF-8
 WORKDIR "/app"
 RUN chown nobody /app
 
-# FL-04: where the Hub marks suspended forums for Caddy (a volume in deploy/; it takes this
-# directory's owner when first created).
-RUN mkdir -p /data/forum-state/suspended && chown -R nobody /data
+# FL-04: where the Hub marks suspended forums for Caddy; FL-06: forum exports. Volumes in
+# deploy/, which take these directories' owner when first created.
+RUN mkdir -p /data/forum-state/suspended /data/exports && chown -R nobody /data
 
 # set runner ENV
 ENV MIX_ENV="prod"

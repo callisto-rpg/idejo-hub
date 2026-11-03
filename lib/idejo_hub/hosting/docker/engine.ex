@@ -105,6 +105,62 @@ defmodule IdejoHub.Hosting.Docker.Engine do
     end
   end
 
+  @impl true
+  def wait_container(id) do
+    with {:ok, %{"StatusCode" => code}} <-
+           request(:post, "/containers/#{segment(id)}/wait", receive_timeout: :timer.hours(2)),
+         do: {:ok, code}
+  end
+
+  @impl true
+  def logs(id) do
+    with {:ok, body} <-
+           request(:get, "/containers/#{segment(id)}/logs",
+             params: [stdout: true, stderr: true],
+             decode_body: false
+           ),
+         do: {:ok, demultiplex(to_string(body))}
+  end
+
+  # The archive endpoint answers a tar holding the file; it is streamed to disk (backups can
+  # be large), then the one file is extracted. The tar comes from a forum's container, so it
+  # must hold exactly one regular file named like the one asked for: no link, no directory,
+  # no other path. dest_dir comes from the caller (the Hub's own configuration).
+  # sobelow_skip ["Traversal.FileModule"]
+  @impl true
+  def copy_from(id, path, dest_dir) do
+    File.mkdir_p!(dest_dir)
+    tar = Path.join(dest_dir, ".copy-#{System.unique_integer([:positive])}.tar")
+
+    try do
+      with {:ok, _body} <-
+             request(:get, "/containers/#{segment(id)}/archive",
+               params: [path: path],
+               into: File.stream!(tar),
+               receive_timeout: :timer.hours(1)
+             ),
+           :ok <- extract(tar, Path.basename(path), dest_dir) do
+        {:ok, Path.join(dest_dir, Path.basename(path))}
+      end
+    after
+      File.rm(tar)
+    end
+  end
+
+  defp extract(tar, name, dest_dir) do
+    tar = String.to_charlist(tar)
+    name = String.to_charlist(name)
+
+    with {:ok, [{^name, :regular, _size, _mtime, _mode, _uid, _gid}]} <-
+           :erl_tar.table(tar, [:verbose]),
+         :ok <- :erl_tar.extract(tar, [{:cwd, String.to_charlist(dest_dir)}, {:files, [name]}]) do
+      :ok
+    else
+      {:ok, _other_entries} -> {:error, {:archive, :unexpected_entries}}
+      {:error, reason} -> {:error, {:archive, reason}}
+    end
+  end
+
   # Without a TTY, Docker frames stdout and stderr: 1 byte stream, 3 zero bytes, 4 bytes
   # length (big-endian), then the payload. Both streams are kept, in order.
   @doc false
