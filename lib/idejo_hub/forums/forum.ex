@@ -32,6 +32,12 @@ defmodule IdejoHub.Forums.Forum do
     field :owner_invite, :string
     field :owner_link_enc, :binary, redact: true
     field :purge_at, :utc_datetime
+    field :members, :integer
+    field :topics, :integer
+    field :messages, :integer
+    field :database_bytes, :integer
+    field :uploads_bytes, :integer
+    field :stats_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -98,7 +104,13 @@ defmodule IdejoHub.Forums.Forum do
       :owner_invite,
       :owner_link_enc,
       :purge_at,
-      :idejo_version
+      :idejo_version,
+      :members,
+      :topics,
+      :messages,
+      :database_bytes,
+      :uploads_bytes,
+      :stats_at
     ])
     |> validate_inclusion(:status, @statuses)
   end
