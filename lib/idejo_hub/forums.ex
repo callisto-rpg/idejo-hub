@@ -13,7 +13,7 @@ defmodule IdejoHub.Forums do
   import Ecto.Query
 
   alias IdejoHub.{Audit, Repo, Secrets}
-  alias IdejoHub.Forums.{CreateWorker, Forum}
+  alias IdejoHub.Forums.{CreateWorker, Forum, Subdomain}
 
   @doc "Defaults for a new forum's form: the configured Idejo version and limits."
   @spec defaults() :: map()
@@ -118,6 +118,44 @@ defmodule IdejoHub.Forums do
   @spec host(Forum.t()) :: String.t()
   def host(%Forum{subdomain: subdomain}) do
     subdomain <> "." <> Application.fetch_env!(:idejo_hub, __MODULE__)[:domain]
+  end
+
+  @doc """
+  The forum a public host belongs to (`<subdomain>.<forum domain>`, one label), deleted ones
+  included, or nil.
+  """
+  @spec for_host(String.t()) :: Forum.t() | nil
+  def for_host(host) when is_binary(host) do
+    suffix = "." <> Application.fetch_env!(:idejo_hub, __MODULE__)[:domain]
+    host = String.downcase(host)
+
+    with true <- String.ends_with?(host, suffix),
+         subdomain = String.replace_suffix(host, suffix, ""),
+         :ok <- Subdomain.validate(subdomain) do
+      get_by_subdomain(subdomain)
+    else
+      _not_a_forum_host -> nil
+    end
+  end
+
+  @doc """
+  HN-02: whether Caddy may get a certificate for `host`: the Hub's own host, or the host of
+  an existing forum that is not deleted.
+  """
+  @spec certificate_allowed?(String.t()) :: boolean()
+  def certificate_allowed?(host) when is_binary(host) do
+    host = String.downcase(host)
+
+    cond do
+      host in hub_hosts() -> true
+      forum = for_host(host) -> forum.status != "deleted"
+      true -> false
+    end
+  end
+
+  defp hub_hosts do
+    # The host the Hub serves itself on (PHX_HOST), read from config, not the web layer.
+    [Application.fetch_env!(:idejo_hub, IdejoHubWeb.Endpoint)[:url][:host]]
   end
 
   @doc "LB-03: the source of the exact Idejo release a forum runs (`IDEJO_SOURCE_URL`)."
