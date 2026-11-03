@@ -19,6 +19,7 @@ defmodule IdejoHub.Forums.Errors do
   def describe(:backup_file_not_named), do: "idejo-admin backup did not name its file"
   def describe({:archive, _reason}), do: "the backup could not be copied out"
   def describe({:error, reason}), do: describe(reason)
+  def describe({:file, reason}), do: "file: #{reason}"
   def describe({:posix, reason}), do: "file: #{reason}"
   def describe(reason) when is_atom(reason), do: Atom.to_string(reason)
   def describe(other), do: inspect(other)

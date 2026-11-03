@@ -31,6 +31,7 @@ defmodule IdejoHub.Forums.Forum do
     field :mail_from, :string
     field :owner_invite, :string
     field :owner_link_enc, :binary, redact: true
+    field :purge_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -77,13 +78,24 @@ defmodule IdejoHub.Forums.Forum do
     )
     |> validate_number(:memory_mb, greater_than_or_equal_to: 256, less_than_or_equal_to: 8192)
     |> validate_number(:cpus, greater_than: 0, less_than_or_equal_to: 8)
-    |> unique_constraint(:subdomain, message: "is already used by another forum")
+    |> unique_constraint(:subdomain,
+      name: :forums_subdomain_index,
+      message: "is already used by another forum"
+    )
   end
 
   @doc "Lifecycle changes, made by the Hub itself."
   def state_changeset(forum, attrs) do
     forum
-    |> cast(attrs, [:status, :step, :error, :db_password_enc, :owner_invite, :owner_link_enc])
+    |> cast(attrs, [
+      :status,
+      :step,
+      :error,
+      :db_password_enc,
+      :owner_invite,
+      :owner_link_enc,
+      :purge_at
+    ])
     |> validate_inclusion(:status, @statuses)
   end
 end
