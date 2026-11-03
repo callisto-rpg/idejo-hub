@@ -111,4 +111,30 @@ defmodule DockerGuard.HN04RouterTest do
 
     assert conn.status == 403
   end
+
+  test "an archive upload keeps its length on the way to the proxy" do
+    Req.Test.stub(DockerGuard.Upstream, fn conn ->
+      case {conn.method, conn.path_info} do
+        {"GET", [_v, "containers", "idejo-forum-tennis", "json"]} ->
+          Req.Test.json(conn, %{"Config" => %{"Labels" => %{"org.idejo.hub.forum" => "tennis"}}})
+
+        {"PUT", _} ->
+          {:ok, body, conn} = read_body(conn)
+          send(self(), {:put, get_req_header(conn, "content-length"), byte_size(body)})
+          send_resp(conn, 200, "")
+      end
+    end)
+
+    body = String.duplicate("t", 5000)
+
+    conn =
+      :put
+      |> conn("/v1.44/containers/idejo-forum-tennis/archive?path=/data/backups", body)
+      |> put_req_header("content-type", "application/x-tar")
+      |> put_req_header("content-length", "5000")
+      |> Router.call([])
+
+    assert conn.status == 200
+    assert_received {:put, ["5000"], 5000}
+  end
 end

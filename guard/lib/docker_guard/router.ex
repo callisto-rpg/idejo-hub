@@ -102,13 +102,14 @@ defmodule DockerGuard.Router do
     target =
       if query_string == "", do: conn.request_path, else: conn.request_path <> "?" <> query_string
 
-    content_type =
-      case get_req_header(conn, "content-type") do
-        [type | _] -> [{"content-type", type}]
-        [] -> []
-      end
+    # A streamed upload keeps its length, so it goes on as a plain body, not chunked.
+    headers =
+      for name <- ["content-type", "content-length"],
+          [value | _] <- [get_req_header(conn, name)],
+          name == "content-type" or match?({:stream, _}, body),
+          do: {name, value}
 
-    case Upstream.stream(conn.method, target, content_type, body, conn) do
+    case Upstream.stream(conn.method, target, headers, body, conn) do
       {:ok, conn} ->
         conn
 

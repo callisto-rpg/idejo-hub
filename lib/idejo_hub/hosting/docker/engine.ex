@@ -147,7 +147,9 @@ defmodule IdejoHub.Hosting.Docker.Engine do
     end
   end
 
-  # A one-file tar of `file` is streamed to the archive endpoint (backups can be large).
+  # A one-file tar of `file` is streamed to the archive endpoint (backups can be large), with
+  # its length: a chunked upload broke in docker-guard (Bandit could not parse a chunk size,
+  # then the connection closed under the Hub's next call; M2 exit check, 2026-11-03).
   # `file` comes from the Hub's own store (Archives / Export.path/1).
   # sobelow_skip ["Traversal.FileModule"]
   @impl true
@@ -162,7 +164,10 @@ defmodule IdejoHub.Hosting.Docker.Engine do
            {:ok, _body} <-
              request(:put, "/containers/#{segment(id)}/archive",
                params: [path: dest_dir],
-               headers: [{"content-type", "application/x-tar"}],
+               headers: [
+                 {"content-type", "application/x-tar"},
+                 {"content-length", Integer.to_string(File.stat!(tar).size)}
+               ],
                body: File.stream!(tar, 65_536),
                receive_timeout: :timer.hours(1)
              ) do
