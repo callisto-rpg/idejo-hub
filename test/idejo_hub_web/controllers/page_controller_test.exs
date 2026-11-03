@@ -4,7 +4,10 @@
 defmodule IdejoHubWeb.PageControllerTest do
   use IdejoHubWeb.ConnCase
 
-  test "GET / shows the Hub's placeholder page", %{conn: conn} do
+  import IdejoHub.OperatorFixtures
+
+  test "GET / shows the Hub's page to a signed-in operator", %{conn: conn} do
+    {conn, _operator, _password} = sign_in(conn)
     conn = get(conn, ~p"/")
     assert html_response(conn, 200) =~ "Idejo Hub"
   end

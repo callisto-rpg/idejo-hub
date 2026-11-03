@@ -6,7 +6,7 @@ defmodule IdejoHubWeb.Plugs.ContentSecurityPolicyTest do
 
   test "browser pages carry a strict policy whose nonce matches the inline script",
        %{conn: conn} do
-    conn = get(conn, ~p"/")
+    conn = get(conn, ~p"/sign-in")
     [policy] = get_resp_header(conn, "content-security-policy")
 
     assert policy =~ "default-src 'self'"
@@ -19,7 +19,7 @@ defmodule IdejoHubWeb.Plugs.ContentSecurityPolicyTest do
   end
 
   test "each request gets a new nonce", %{conn: conn} do
-    first = get(conn, ~p"/").assigns.script_csp_nonce
+    first = get(conn, ~p"/sign-in").assigns.script_csp_nonce
     second = get(build_conn(), ~p"/").assigns.script_csp_nonce
     refute first == second
   end

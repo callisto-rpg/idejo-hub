@@ -34,6 +34,10 @@ defmodule IdejoHubWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  attr :current_operator, :map,
+    default: nil,
+    doc: "the signed-in operator (SC-08): shows their email and Sign out"
+
   slot :inner_block, required: true
 
   def app(assigns) do
@@ -42,7 +46,19 @@ defmodule IdejoHubWeb.Layouts do
       <div class="flex-1">
         <a href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
       </div>
-      <div class="flex-none">
+      <div class="flex-none flex items-center gap-3">
+        <span :if={@current_operator} id="current-operator" class="text-sm">
+          {@current_operator.email}
+        </span>
+        <.form
+          :if={@current_operator}
+          for={%{}}
+          id="sign-out"
+          action={~p"/sign-out"}
+          method="delete"
+        >
+          <button class="btn btn-ghost btn-sm">Sign out</button>
+        </.form>
         <.theme_toggle />
       </div>
     </header>

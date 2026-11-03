@@ -211,6 +211,21 @@ Design points (Implementation Prompt, Part B, milestone 2):
   queues the next step, failure (rolled back or not) stops the run. Audited
   `forums.upgrade_all` (no forum): `requested` with the list, then `ok` with `done`, or
   `failed` with `done`, `failed`, `not_attempted`. A busy forum is waited for (snooze).
+- **Operator sign-in** (SC-08, `IdejoHub.Operators`, `IdejoHubWeb.OperatorAuth`,
+  `SessionController`; extra review: DV-06): operators are made only by `bin/hub-admin
+  create-operator EMAIL` (`IdejoHub.Release`; random password shown once; no sign-up page) and
+  sign in with the password (Argon2id at Idejo's cost), then a TOTP code (`nimble_totp`;
+  secret encrypted, context `operator:<id>:totp`; set up at the first sign-in and confirmed
+  by a code; a code's 30 s step is kept so it works once; the previous step is accepted).
+  Between the two, the session holds only `pending_operator_id` for five minutes. Five
+  failures in a row lock the account for 15 minutes. Sessions: a random token in the
+  session cookie (encrypted, HttpOnly, SameSite=Strict, host-only, Secure outside dev and
+  tests), its SHA-256 in `operator_tokens`, 12 hours; sign-in renews the session.
+  `bin/hub-admin reset-two-factor EMAIL` clears the setup and ends the sessions. Every
+  operator page goes through the router's `:operator` pipeline; pass
+  `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
+  `operator.create`, `operator.sign_in` (ok/failed with the factor, never a password or
+  code), `operator.two_factor_reset`.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
@@ -263,6 +278,7 @@ mix test                     # all tests
 mix test --only req:FL-01    # one requirement's tests
 mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
 reuse lint                   # SPDX headers (LI-01)
+# in the Hub's container: bin/hub-admin create-operator EMAIL | reset-two-factor EMAIL (SC-08)
 (cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 ```
