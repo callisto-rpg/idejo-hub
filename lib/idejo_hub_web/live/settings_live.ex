@@ -1,0 +1,162 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+defmodule IdejoHubWeb.SettingsLive do
+  @moduledoc """
+  HA-05: settings. Forum domain and backup storage are shown (environment, exports volume);
+  SMTP shared by forums, alert email and extra reserved subdomains are changed here
+  (`IdejoHub.Settings`). The SMTP password is never sent back to the page: left empty it
+  stays, "Remove the password" clears it.
+  """
+  use IdejoHubWeb, :live_view
+
+  alias IdejoHub.Settings
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok, socket |> assign(page_title: "Settings", errors: %{}) |> load()}
+  end
+
+  @impl true
+  def handle_event("save", %{"settings" => params}, socket) do
+    case Settings.update(params, socket.assigns.current_operator.email) do
+      {:ok, _} ->
+        {:noreply, socket |> put_flash(:info, "Settings saved.") |> assign(errors: %{}) |> load()}
+
+      {:error, errors} ->
+        {:noreply, socket |> put_flash(:error, "Not saved: see below.") |> assign(errors: errors)}
+    end
+  end
+
+  defp load(socket) do
+    values = Settings.all()
+
+    assign(socket,
+      values: values,
+      password_set?: values["smtp_password"] != nil,
+      env_smtp: Application.get_env(:idejo_hub, IdejoHub.Forums.Mail, [])[:shared_smtp],
+      domain: Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain],
+      exports: Application.fetch_env!(:idejo_hub, IdejoHub.Forums.Export)[:dir]
+    )
+  end
+
+  defp field(assigns) do
+    ~H"""
+    <label class="block">
+      <span class="block text-sm font-medium">{@label}</span>
+      <input
+        type={@type}
+        name={"settings[#{@key}]"}
+        id={"setting-#{@key}"}
+        value={@value}
+        class="input input-sm w-full"
+        autocomplete="off"
+      />
+      <span :if={@errors[@key]} class="text-sm text-error">{@errors[@key]}</span>
+    </label>
+    """
+  end
+
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <Layouts.app flash={@flash} current_operator={@current_operator}>
+      <h1 class="text-2xl font-semibold">Settings</h1>
+
+      <section id="fixed">
+        <h2 class="text-xl font-semibold">Set at install</h2>
+        <p>
+          Forum domain: <strong id="forum-domain">{@domain}</strong>
+          (forums are <em>name</em>.{@domain}).
+          It is set by <code>IDEJO_FORUM_DOMAIN</code>: every forum's address depends on it.
+        </p>
+        <p>Backup storage: <strong id="backup-storage">this server, {@exports}</strong>.
+          Off-server copies come with a later version.</p>
+      </section>
+
+      <form id="settings" phx-submit="save" class="space-y-4">
+        <section id="smtp" class="space-y-2">
+          <h2 class="text-xl font-semibold">Email for forums</h2>
+          <p class="text-sm">
+            A server here replaces <code>HUB_SMTP_*</code>
+            (now: {if @env_smtp, do: @env_smtp[:host], else: "none"}).
+            It reaches a forum when its container is made: created, upgraded or restored.
+            Each forum's owner can still set its own in the forum's Admin → Email.
+          </p>
+          <.field
+            key="smtp_host"
+            label="SMTP host"
+            type="text"
+            value={@values["smtp_host"]}
+            errors={@errors}
+          />
+          <.field
+            key="smtp_port"
+            label="Port"
+            type="text"
+            value={@values["smtp_port"]}
+            errors={@errors}
+          />
+          <.field
+            key="smtp_security"
+            label="Security (starttls, tls or none)"
+            type="text"
+            value={@values["smtp_security"]}
+            errors={@errors}
+          />
+          <.field
+            key="smtp_username"
+            label="Username"
+            type="text"
+            value={@values["smtp_username"]}
+            errors={@errors}
+          />
+          <.field
+            key="smtp_password"
+            label={if @password_set?, do: "Password (set; leave empty to keep)", else: "Password"}
+            type="password"
+            value=""
+            errors={@errors}
+          />
+          <label :if={@password_set?} class="text-sm">
+            <input type="checkbox" name="settings[clear_smtp_password]" value="true" />
+            Remove the password
+          </label>
+        </section>
+
+        <section id="alerts" class="space-y-2">
+          <h2 class="text-xl font-semibold">Alerts</h2>
+          <.field
+            key="alert_email"
+            label="Alert email (forum down, failed backup, disk full)"
+            type="email"
+            value={@values["alert_email"]}
+            errors={@errors}
+          />
+        </section>
+
+        <section id="reserved" class="space-y-2">
+          <h2 class="text-xl font-semibold">Reserved subdomains</h2>
+          <p class="text-sm">
+            Refused for new forums, on top of the built-in list (hub, www, admin, mail, api, status…).
+          </p>
+          <label class="block">
+            <span class="block text-sm font-medium">One per line or separated by commas</span>
+            <textarea
+              name="settings[reserved_subdomains]"
+              id="setting-reserved_subdomains"
+              class="textarea w-full"
+              rows="4"
+            >{Enum.join(@values["reserved_subdomains"] || [], "\n")}</textarea>
+            <span :if={@errors["reserved_subdomains"]} class="text-sm text-error">{@errors[
+              "reserved_subdomains"
+            ]}</span>
+          </label>
+        </section>
+
+        <button class="btn btn-primary">Save</button>
+      </form>
+    </Layouts.app>
+    """
+  end
+end

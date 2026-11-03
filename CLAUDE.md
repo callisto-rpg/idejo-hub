@@ -244,6 +244,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `hub_database_sizes()` (`deploy/postgres-init/03-database-sizes.sh`: superuser-owned,
   names and sizes only) or the databases the role may connect to, forum containers through
   docker-guard. A reading that fails shows as unavailable.
+  HA-05 settings at `/settings` (`SettingsLive`, `IdejoHub.Settings`, table `settings`, JSON
+  values, secrets encrypted with context `setting:<key>`): SMTP shared by forums
+  (`Settings.shared_smtp/0`: set here, it replaces `HUB_SMTP_*` whole; reaches a forum when
+  its container is made), alert email (for OP-08), extra reserved subdomains (refused by
+  `Forum.create_changeset/2`). Forum domain and backup storage are shown, not edited.
+  Audited `settings.update` (keys only).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

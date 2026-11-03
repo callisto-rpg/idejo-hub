@@ -63,6 +63,9 @@ defmodule IdejoHub.Forums.Forum do
       :cpus
     ])
     |> Subdomain.validate_subdomain(:subdomain)
+    |> validate_exclusion(:subdomain, IdejoHub.Settings.reserved_subdomains(),
+      message: "is reserved"
+    )
     |> validate_length(:display_name, max: 100)
     |> validate_format(:owner_email, ~r/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/,
       message: "must be an email address"
