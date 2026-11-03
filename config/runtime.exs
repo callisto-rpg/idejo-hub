@@ -108,6 +108,34 @@ if config_env() == :prod do
         """),
     default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.1.0")
 
+  # HN-07: optional SMTP server shared by every forum (passed to them as IDEJO_SMTP_*).
+  # A forum's own SMTP is set in its Admin → Email and wins over this.
+  shared_smtp =
+    case System.get_env("HUB_SMTP_HOST", "") |> String.trim() do
+      "" ->
+        nil
+
+      host ->
+        port = System.get_env("HUB_SMTP_PORT", "") |> String.trim()
+        security = System.get_env("HUB_SMTP_SECURITY", "") |> String.trim()
+
+        port in ["" | Enum.map(1..65_535, &Integer.to_string/1)] ||
+          raise "environment variable HUB_SMTP_PORT must be a port number (1 to 65535)."
+
+        security in ["", "starttls", "tls", "none"] ||
+          raise "environment variable HUB_SMTP_SECURITY must be starttls, tls or none."
+
+        [
+          host: host,
+          port: port,
+          security: security,
+          username: System.get_env("HUB_SMTP_USERNAME", ""),
+          password: System.get_env("HUB_SMTP_PASSWORD", "")
+        ]
+    end
+
+  config :idejo_hub, IdejoHub.Forums.Mail, shared_smtp: shared_smtp
+
   # HN-04: docker-guard's address, and the image and network every forum uses.
   config :idejo_hub, IdejoHub.Hosting,
     docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),

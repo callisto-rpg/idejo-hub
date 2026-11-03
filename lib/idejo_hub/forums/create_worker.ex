@@ -11,8 +11,9 @@ defmodule IdejoHub.Forums.CreateWorker do
   3. `starting`: starts it; the image's command runs Idejo's migrations, then the server.
   4. `health`: waits for `GET /health` to answer 200 (Idejo AD-15).
   5. `setup`: `bin/idejo-admin setup --name … --owner-email …` (Idejo AD-14). The owner gets
-     an email with a link to choose a password, or, when the forum cannot send email yet,
-     the link is printed to the job; it is never stored or logged (FL-02 delivers it).
+     an email with a link to choose a password (FL-02, `owner_invite: "emailed"`), or, when
+     the forum cannot send email, the job keeps that link encrypted for the operator
+     (`owner_invite: "operator"`, `Forums.take_owner_link/2`). The output is never logged.
 
   Then the forum is `running`. If any step fails, everything this job made is removed
   (container, volumes, database, role; never something that was there before), the forum becomes `failed` with a short error, and
@@ -27,7 +28,7 @@ defmodule IdejoHub.Forums.CreateWorker do
   require Logger
 
   alias IdejoHub.{Audit, Forums}
-  alias IdejoHub.Forums.Forum
+  alias IdejoHub.Forums.{Forum, Mail}
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Postgres}
 
   @impl Oban.Worker
@@ -51,7 +52,10 @@ defmodule IdejoHub.Forums.CreateWorker do
     case run(steps, forum) do
       {:ok, forum} ->
         {:ok, forum} = Forums.update_state(forum, %{status: "running", step: nil, error: nil})
-        {:ok, _} = Audit.record(actor, "forum.create", "ok", forum)
+
+        {:ok, _} =
+          Audit.record(actor, "forum.create", "ok", forum, %{"owner_invite" => forum.owner_invite})
+
         :ok
 
       {:error, step, reason, forum} ->
@@ -105,12 +109,14 @@ defmodule IdejoHub.Forums.CreateWorker do
         version: forum.idejo_version,
         memory_mb: forum.memory_mb,
         cpus: forum.cpus,
-        env: %{
-          "PHX_HOST" => Forums.host(forum),
-          "DATABASE_URL" => Postgres.database_url(creds, db_host()),
-          "SECRET_KEY_BASE" => secret_key_base,
-          "IDEJO_SOURCE_URL" => Forums.source_url(forum)
-        }
+        env:
+          %{
+            "PHX_HOST" => Forums.host(forum),
+            "DATABASE_URL" => Postgres.database_url(creds, db_host()),
+            "SECRET_KEY_BASE" => secret_key_base,
+            "IDEJO_SOURCE_URL" => Forums.source_url(forum)
+          }
+          |> Map.merge(Mail.env(forum.mail_from))
       })
     end
   end
@@ -127,9 +133,28 @@ defmodule IdejoHub.Forums.CreateWorker do
     ]
 
     case Docker.exec(ForumContainer.name(forum.subdomain), cmd) do
-      {:ok, %{exit_code: 0}} -> :ok
+      {:ok, %{exit_code: 0, output: output}} -> owner_invite(forum, output)
       {:ok, %{exit_code: code}} -> {:error, {:exit, code}}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # FL-02. Setup prints the owner's link only when the forum could not email it; then the
+  # Hub keeps it, encrypted, for the operator (Forums.take_owner_link/2). The link is matched
+  # on the forum's own address only, and nothing else of the output is kept.
+  defp owner_invite(forum, output) do
+    link = ~r{https://#{Regex.escape(Forums.host(forum))}/users/reset-password/[A-Za-z0-9_\-]+}
+
+    case Regex.run(link, output) do
+      [url] ->
+        Forums.update_state(forum, %{
+          owner_invite: "operator",
+          owner_link_enc:
+            IdejoHub.Secrets.encrypt(url, Forums.context(forum.subdomain, :owner_link))
+        })
+
+      nil ->
+        Forums.update_state(forum, %{owner_invite: "emailed"})
     end
   end
 

@@ -44,6 +44,12 @@ services:
       IDEJO_FORUM_NETWORK: idejo-forums
       IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
       IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
+      # HN-07: optional SMTP shared by every forum.
+      HUB_SMTP_HOST: ${HUB_SMTP_HOST:-}
+      HUB_SMTP_PORT: ${HUB_SMTP_PORT:-}
+      HUB_SMTP_SECURITY: ${HUB_SMTP_SECURITY:-}
+      HUB_SMTP_USERNAME: ${HUB_SMTP_USERNAME:-}
+      HUB_SMTP_PASSWORD: ${HUB_SMTP_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

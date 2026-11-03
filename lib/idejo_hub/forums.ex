@@ -13,7 +13,7 @@ defmodule IdejoHub.Forums do
   import Ecto.Query
 
   alias IdejoHub.{Audit, Repo, Secrets}
-  alias IdejoHub.Forums.{CreateWorker, Forum, Subdomain}
+  alias IdejoHub.Forums.{CreateWorker, Forum, Mail, Subdomain}
 
   @doc "Defaults for a new forum's form: the configured Idejo version and limits."
   @spec defaults() :: map()
@@ -44,11 +44,12 @@ defmodule IdejoHub.Forums do
     changeset =
       case Ecto.Changeset.fetch_field(changeset, :subdomain) do
         {_source, subdomain} when is_binary(subdomain) ->
-          Ecto.Changeset.put_change(
-            changeset,
+          changeset
+          |> Ecto.Changeset.put_change(
             :secret_key_base_enc,
             Secrets.encrypt(Secrets.new_secret_key_base(), context(subdomain, :secret_key_base))
           )
+          |> put_default_mail_from(subdomain)
 
         _missing ->
           changeset
@@ -70,12 +71,43 @@ defmodule IdejoHub.Forums do
     end)
   end
 
+  # HN-07: the forum's own sender address, unless the operator gave one.
+  defp put_default_mail_from(changeset, subdomain) do
+    if Ecto.Changeset.get_field(changeset, :mail_from),
+      do: changeset,
+      else:
+        Ecto.Changeset.put_change(
+          changeset,
+          :mail_from,
+          Mail.default_from(host(%Forum{subdomain: subdomain}))
+        )
+  end
+
   defp audit_request(forum, actor) do
     Audit.changeset(actor, "forum.create", "requested", forum, %{
       "display_name" => forum.display_name,
       "owner_email" => forum.owner_email,
       "idejo_version" => forum.idejo_version
     })
+  end
+
+  @doc """
+  FL-02: when the forum could not email its owner the link to choose a password, the Hub
+  keeps it (encrypted) for the operator to pass on. This hands it over once: it is removed
+  from the Hub, and the audit log records who took it.
+  """
+  @spec take_owner_link(Forum.t(), String.t()) :: {:ok, String.t()} | {:error, :none}
+  def take_owner_link(%Forum{owner_link_enc: nil}, _actor), do: {:error, :none}
+
+  def take_owner_link(%Forum{} = forum, actor) do
+    with {:ok, link} <-
+           Secrets.decrypt(forum.owner_link_enc, context(forum.subdomain, :owner_link)),
+         {:ok, forum} <- update_state(forum, %{owner_link_enc: nil}),
+         {:ok, _entry} <- Audit.record(actor, "forum.owner_link.take", "ok", forum) do
+      {:ok, link}
+    else
+      _error -> {:error, :none}
+    end
   end
 
   @doc "A forum by id."
