@@ -10,6 +10,9 @@ defmodule IdejoHub.Application do
 
   @impl true
   def start(_type, _args) do
+    # SC-04: refuse to start without a usable key for forum secrets.
+    IdejoHub.Secrets.validate_key!()
+
     children = [
       IdejoHubWeb.Telemetry,
       IdejoHub.Repo,

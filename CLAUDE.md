@@ -105,7 +105,7 @@ The context folders below are created by the first PR that needs them.
 | HN | `lib/idejo_hub/hosting/` | Docker adapter (with a fake for tests), PostgreSQL provisioning, Caddy routes, `ask` endpoint |
 | OP | `lib/idejo_hub/operations/` | Backups, restore, upgrades and rollback, health polling, alerts |
 | ID | `lib/idejo_hub/identity/` | OpenID Connect provider (milestone 3; provider choice still open) |
-| SC | `lib/idejo_hub/audit/`, `lib/idejo_hub/secrets/` | Audit log, encrypted per-forum secrets |
+| SC | `lib/idejo_hub/audit/`, `lib/idejo_hub/secrets.ex` | Audit log, encrypted per-forum secrets |
 | HA | `lib/idejo_hub_web/` | Operator screens; Hub CLI later (HA-08) |
 | LB | — | Source link per forum (`IDEJO_SOURCE_URL`), branding rules |
 
@@ -125,8 +125,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   (`deploy/postgres-init/02-forum-isolation.sh`), so a role opens only the database of its
   own name. That includes the Hub, which cannot open a forum's database at all. DDL runs on a
   short Postgrex connection of its own (not the Repo pool); a new database or service needs
-  a role of the same name. Generated passwords and `SECRET_KEY_BASE` are stored encrypted
-  (SC-04).
+  a role of the same name.
+- **Secrets** (SC-04): `IdejoHub.Secrets` generates each forum's `SECRET_KEY_BASE` and DB
+  password and encrypts them (AES-256-GCM, `:crypto`, key `HUB_SECRETS_KEY`) before they reach
+  the Hub database. Every value is bound to a context, `"forum:<slug>:<field>"`, so it cannot
+  be moved to another forum or field. Store only `encrypt/2` output, never plain secrets; the
+  Hub refuses to boot without a valid key. Dev and test have fixed keys in their config.
 - **Caddy**: the `ask` endpoint says yes only for existing, non-deleted forums and the Hub's
   own hosts (HN-02). Routes are re-applied on boot.
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
