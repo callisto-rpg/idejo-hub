@@ -67,6 +67,14 @@ defmodule IdejoHub.SCIsolationTest do
       "/internal/forum-unavailable"
     ]
 
+    # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's
+    # own host they do not exist.
+    for path <- ["/account/sign-up"] do
+      assert get(recycle(conn), path).status == 404, "#{path} answers on the Hub's host"
+    end
+
+    open = open ++ ["/account/sign-up"]
+
     for %{verb: :get, path: path} <- IdejoHubWeb.Router.__routes__(),
         path not in open,
         not String.starts_with?(path, "/dev"),

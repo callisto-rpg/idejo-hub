@@ -285,6 +285,18 @@ Design points (Implementation Prompt, Part B, milestone 2):
   encrypted, `forum:<slug>:oidc_client_secret`), `_LABEL` ("Idejo ID") and
   `IDEJO_LOCAL_ACCOUNTS` (`forums.local_accounts`, ID-07; always on without a client). On the
   forum network Caddy answers to `IDEJO_ID_DOMAIN`, so forums reach the provider inside.
+- **Sign-up** (ID-02, ID-08; steward decision 2026-11-04): members' pages are under
+  `/account` on `IDEJO_ID_DOMAIN` only (`Plugs.IdentityHost`, 404 elsewhere; Caddy sends
+  `/account*` there to the Hub). `/account/sign-up` (`SignupController`, plain HTML, no
+  JavaScript) asks email and display name; a CSS-only checkbox reveals optional first and
+  last name, else "Sennoma" and "Ulo" (`Identity.placeholder_names/0`). It makes the person
+  (`Identity.create_person/1`, username = email; `:exists` for a used email) and Zitadel
+  emails the invite (`send_invite/1`: verify, then password or passkey on its login pages);
+  the Hub never sees a password. Five per address an hour (`IdejoHub.RateLimit`, ETS);
+  closed while the Hub has no SMTP. `Identity.SetupWorker` (at boot and after an SMTP
+  setting changes, retried) applies `Identity.configure/2`: Zitadel's own registration off,
+  passkeys allowed, one-time codes and security keys as second factors, and the Hub's SMTP
+  as its config "Idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
@@ -361,6 +373,10 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   `id.<hub domain>` (`docs/proposals/id-01-oidc-provider.md`). Leaving a forum (ID-05): the
   person chooses to delete their account there or just leave (account and messages kept for
   a return with the same identity); Idejo gets commands for both.
+- 2026-11-04 — Consent on first join (ID-09): shown by Idejo at a person's first sign-in with
+  the provider (Zitadel has none). Sign-up (ID-02): the Hub runs its own page (email and display
+  name required; a checkbox reveals optional first and last name, otherwise Zitadel gets
+  "Sennoma" and "Ulo", which it requires); Zitadel's own sign-up form is off.
 - 2026-11-03 — Docker access (HN-04): option B of `docs/proposals/hn-04-docker-access.md`.
   Only wollomatic/socket-proxy (MIT, pinned by digest) mounts the socket, read-only, and it
   allows only the listed method/path pairs. `docker-guard` (a second release from this
@@ -386,7 +402,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-07 to FL-10, HN-03.
 
-Current milestone: **3 — Shared identity**, waiting for the steward: first a one-page proposal
-for the OIDC provider (built in, or an existing open-source one beside it), then the steward's
-answer, before any milestone-3 code. Exit checks for each milestone are
+Current milestone: **3 — Shared identity** (provider decided: Zitadel). Done so far: ID-01
+(bundle, forum clients), ID-07, ID-02 sign-up, ID-08 settings. Next: ID-09 consent in Idejo,
+ID-05/ID-06 members' forums page with leave or delete, then the exit check. Exit checks for each milestone are
 in the Implementation Prompt, Part B.

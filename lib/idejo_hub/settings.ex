@@ -21,6 +21,7 @@ defmodule IdejoHub.Settings do
   import Ecto.Query
 
   alias IdejoHub.{Audit, Repo, Secrets}
+  alias IdejoHub.Identity.SetupWorker
   alias IdejoHub.Settings.Setting
 
   @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains)
@@ -56,6 +57,10 @@ defmodule IdejoHub.Settings do
 
   defp save(changes, actor) do
     for {key, value} <- changes, do: put(key, value)
+    # ID-02: the identity provider sends its invites through the same SMTP.
+    if Enum.any?(Map.keys(changes), &String.starts_with?(&1, "smtp_")),
+      do: SetupWorker.queue()
+
     keys = changes |> Map.keys() |> Enum.sort()
     {:ok, _} = Audit.record(actor, "settings.update", "ok", nil, %{"keys" => keys})
   end

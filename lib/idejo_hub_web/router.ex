@@ -27,6 +27,18 @@ defmodule IdejoHubWeb.Router do
     plug IdejoHubWeb.OperatorAuth, :require_operator
   end
 
+  # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).
+  pipeline :identity_host do
+    plug IdejoHubWeb.Plugs.IdentityHost
+  end
+
+  scope "/account", IdejoHubWeb do
+    pipe_through [:identity_host, :browser]
+
+    get "/sign-up", SignupController, :new
+    post "/sign-up", SignupController, :create
+  end
+
   # SC-08: sign-in, two-factor setup and code, sign-out.
   scope "/", IdejoHubWeb do
     pipe_through :browser

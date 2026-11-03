@@ -9,6 +9,7 @@ defmodule IdejoHub.Application do
   use Application
 
   alias IdejoHub.Hosting.Maintenance
+  alias IdejoHub.Identity.SetupWorker
 
   @impl true
   def start(_type, _args) do
@@ -20,10 +21,13 @@ defmodule IdejoHub.Application do
       IdejoHub.Repo,
       {DNSCluster, query: Application.get_env(:idejo_hub, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: IdejoHub.PubSub},
+      IdejoHub.RateLimit,
       # FL-04: make Caddy's maintenance marks match the suspended forums.
       maintenance_sync(),
       # Lifecycle (FL) and operations (OP) jobs, stored in PostgreSQL.
       {Oban, Application.fetch_env!(:idejo_hub, Oban)},
+      # ID-02, ID-08: the identity provider's settings, once Oban runs.
+      Supervisor.child_spec({Task, &SetupWorker.queue/0}, id: :identity_setup),
       # Start to serve requests, typically the last entry
       IdejoHubWeb.Endpoint
     ]
