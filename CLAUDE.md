@@ -204,6 +204,13 @@ Design points (Implementation Prompt, Part B, milestone 2):
   within `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` (300). Failure: recreate on the old version,
   restore the pre-upgrade backup in a one-off, start, health → `running` on the old version,
   audited `rolled_back: true`; if that fails too, stopped and marked as `suspended`.
+- **Upgrade all** (OP-05, `Operations.upgrade_all/2`, `Operations.BulkUpgradeWorker`): the
+  running forums on an older version, by subdomain (others listed as skipped), one run at a
+  time. Each step starts the next forum's OP-04 upgrade with `bulk:` (the run) in its
+  arguments; `UpgradeWorker` calls `BulkUpgradeWorker.continue/3` when it ends: success
+  queues the next step, failure (rolled back or not) stops the run. Audited
+  `forums.upgrade_all` (no forum): `requested` with the list, then `ok` with `done`, or
+  `failed` with `done`, `failed`, `not_attempted`. A busy forum is waited for (snooze).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

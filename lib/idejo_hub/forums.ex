@@ -233,14 +233,14 @@ defmodule IdejoHub.Forums do
   current version and a pre-upgrade backup if the new one is not healthy in time. Queues
   `Operations.UpgradeWorker`.
   """
-  @spec upgrade_forum(Forum.t(), String.t(), String.t()) ::
+  @spec upgrade_forum(Forum.t(), String.t(), String.t(), keyword()) ::
           {:ok, Forum.t()} | {:error, :invalid_state | :invalid_version | :not_newer}
-  def upgrade_forum(%Forum{} = forum, version, actor) do
+  def upgrade_forum(%Forum{} = forum, version, actor, opts \\ []) do
     with {:ok, to} <- Version.parse(version),
          :gt <- Version.compare(to, Version.parse!(forum.idejo_version)) do
-      start_action(forum, actor, "running", "upgrading", "forum.upgrade", UpgradeWorker, %{
-        "version" => version
-      })
+      args = %{"version" => version}
+      args = if bulk = opts[:bulk], do: Map.put(args, "bulk", bulk), else: args
+      start_action(forum, actor, "running", "upgrading", "forum.upgrade", UpgradeWorker, args)
     else
       :error -> {:error, :invalid_version}
       _not_greater -> {:error, :not_newer}
