@@ -311,6 +311,7 @@ mix precommit                # compile warnings, format, credo, sobelow, audits,
 reuse lint                   # SPDX headers (LI-01)
 # in the Hub's container: bin/hub-admin create-operator EMAIL | reset-two-factor EMAIL (SC-08)
 (cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
+deploy/test/m2/run.sh        # milestone 2 exit check from the web interface (Docker; ~15 min)
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 ```
 
@@ -347,12 +348,15 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).
-- [ ] **2 — Hub alpha** — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
-  SC-01, SC-04 to SC-06, SC-08, SC-09; separate accounts per forum.
+- [x] **2 — Hub alpha** — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
+  SC-01, SC-04 to SC-06, SC-08, SC-09; separate accounts per forum. Exit check
+  `deploy/test/m2/run.sh` passed 2026-11-03 (peak 1325 MiB of the 4 GiB budget).
 - [ ] 3 — Shared identity — ID-01 to ID-09, forums switched to Idejo's OIDC client.
 - [ ] 4 — Hub 1.0 — OP-02, OP-06 to OP-10, SC-02, SC-03, SC-07, SC-10, HA-06 to HA-09, HN-06,
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-07 to FL-10, HN-03.
 
-Current milestone: **2 — Hub alpha**. Exit checks for each milestone are
+Current milestone: **3 — Shared identity**, waiting for the steward: first a one-page proposal
+for the OIDC provider (built in, or an existing open-source one beside it), then the steward's
+answer, before any milestone-3 code. Exit checks for each milestone are
 in the Implementation Prompt, Part B.

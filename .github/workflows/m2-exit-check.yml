@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Hub milestone 2 exit check (deploy/test/m2/README.md): nightly and on demand.
+
+name: M2 exit check
+
+on:
+  schedule:
+    - cron: "37 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exit-check:
+    name: Milestone 2 exit check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: deploy/test/m2/run.sh
