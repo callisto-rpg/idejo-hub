@@ -136,7 +136,7 @@ defmodule IdejoHubWeb.ForumListLive do
         </thead>
         <tbody>
           <tr :for={%{forum: f, last_backup: b} <- @rows} id={"forum-#{f.subdomain}"}>
-            <td>{f.subdomain}</td>
+            <td><.link navigate={~p"/forums/#{f}"}>{f.subdomain}</.link></td>
             <td>{f.display_name}</td>
             <td>{f.owner_email}</td>
             <td>

@@ -234,6 +234,11 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `?sort=`; members are not shown (no contract for it; never the forum's database), size is
   the latest backup's. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
   checked while typing (FL-03 rules and free), created as the signed-in operator's email.
+  HA-03 forum page at `/forums/:id` (`ForumShowLive`): health (`start_async`), actions
+  through `Forums` as the operator (suspend, resume, back up, export, upgrade, restore here
+  or to new, delete with grace or now with the subdomain typed, cancel, owner's link once),
+  archives, audit log. Downloads: `GET /forums/:forum_id/archives/:id` (`ArchiveController`,
+  audited `forum.archive.download`, only that forum's archives).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
