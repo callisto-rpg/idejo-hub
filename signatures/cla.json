@@ -1,3 +1,12 @@
 {
-   "signedContributors": []
+  "signedContributors": [
+    {
+      "name": "callisto-rpg",
+      "id": 340209915,
+      "comment_id": 6604880928,
+      "created_at": "2026-11-03T13:18:40Z",
+      "repoId": 1443026022,
+      "pullRequestNo": 15
+    }
+  ]
 }
