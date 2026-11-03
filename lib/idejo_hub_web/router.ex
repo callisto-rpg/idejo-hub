@@ -46,7 +46,12 @@ defmodule IdejoHubWeb.Router do
       live "/", ForumListLive, :index
       # HA-02
       live "/forums/new", ForumNewLive, :new
+      # HA-03
+      live "/forums/:id", ForumShowLive, :show
     end
+
+    # HA-03: archive download (audited).
+    get "/forums/:forum_id/archives/:id", ArchiveController, :show
   end
 
   # HN-02: called by Caddy on the internal network only (the Caddyfile refuses /internal/*
