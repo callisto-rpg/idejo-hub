@@ -17,6 +17,7 @@ ACME_EMAIL=ops@idejo.test
 SECRET_KEY_BASE=test
 POSTGRES_PASSWORD=test
 HUB_DB_PASSWORD=test
+ZITADEL_DB_PASSWORD=test
 DOCKER_GID=$(stat -c %g /var/run/docker.sock)
 ENV
 

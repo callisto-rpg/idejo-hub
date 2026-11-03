@@ -73,6 +73,10 @@ DOCKER_GID=$(stat -c %g /var/run/docker.sock)
 IDEJO_FORUM_IMAGE=localhost:5000/idejo
 IDEJO_DEFAULT_VERSION=0.1.0
 IDEJO_HUB_UPGRADE_HEALTH_SECONDS=90
+IDEJO_ID_DOMAIN=id.idejo.test
+ZITADEL_MASTERKEY=$(openssl rand -hex 16)
+ZITADEL_DB_PASSWORD=$(openssl rand -hex 24)
+ZITADEL_ADMIN_PASSWORD=Id-$(openssl rand -hex 12)-Z9
 ENV
 # shellcheck disable=SC2016 # Caddy placeholders, not shell variables.
 sed 's/^\temail {\$ACME_EMAIL}$/\temail {$ACME_EMAIL}\n\tlocal_certs/' "$root/deploy/Caddyfile" >"$work/Caddyfile"
@@ -93,7 +97,7 @@ echo "  running: $(compose ps --format '{{.Service}}' | tr '\n' ' ')"
   peak=0
   while true; do
     total=$(docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' |
-      awk -v p="$project" '$1 ~ "^"p"-(hub|db|caddy|docker-guard|socket-proxy)" || $1 ~ /^idejo-forum-/ {
+      awk -v p="$project" '$1 ~ "^"p"-(hub|db|caddy|docker-guard|socket-proxy|zitadel)" || $1 ~ /^idejo-forum-/ {
         split($2, a, /[A-Za-z]+/); v = a[1]; u = $2; gsub(/[0-9.]/, "", u)
         if (u == "GiB") v *= 1073741824; else if (u == "MiB") v *= 1048576; else if (u == "KiB") v *= 1024
         s += v } END { printf "%d", s }')

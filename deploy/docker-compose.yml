@@ -43,6 +43,9 @@ services:
       IDEJO_FORUM_IMAGE: ${IDEJO_FORUM_IMAGE:-ghcr.io/callisto-rpg/idejo}
       IDEJO_FORUM_NETWORK: idejo-forums
       IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
+      # ID-01: the identity provider's address, and the Hub's token for its API.
+      IDEJO_ID_DOMAIN: ${IDEJO_ID_DOMAIN}
+      ZITADEL_TOKEN_FILE: /zitadel-tokens/hub.pat
       IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
       # OP-01: forum backups (cron, UTC) and how many are kept per forum.
       IDEJO_HUB_BACKUP_CRON: ${IDEJO_HUB_BACKUP_CRON:-0 2 * * *}
@@ -65,6 +68,8 @@ services:
       - forum-state:/data/forum-state
       # FL-06: forum exports (standard Idejo backups). Back this volume up off the server.
       - exports:/data/exports
+      # ID-01: the Hub's token for Zitadel's API (written by Zitadel's first start).
+      - zitadel-tokens:/zitadel-tokens:ro
     networks: [default, docker, forums]
     expose:
       - "4000"
@@ -86,6 +91,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       HUB_DB_PASSWORD: ${HUB_DB_PASSWORD}
+      ZITADEL_DB_PASSWORD: ${ZITADEL_DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql
       # Runs once, on an empty data directory.
@@ -102,6 +108,7 @@ services:
     restart: unless-stopped
     environment:
       IDEJO_HUB_DOMAIN: ${IDEJO_HUB_DOMAIN}
+      IDEJO_ID_DOMAIN: ${IDEJO_ID_DOMAIN}
       IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
     ports:
@@ -119,6 +126,88 @@ services:
       hub:
         condition: service_healthy
     networks: [default, forums]
+
+  # ID-01: the identity provider (Zitadel, AGPL-3.0; steward decision 2026-11-03), at
+  # IDEJO_ID_DOMAIN behind Caddy. Its own role and database on the shared PostgreSQL
+  # (postgres-init/04-zitadel.sh). Its first start makes the instance (org "Idejo", an admin
+  # whose password is in deploy/.env, a machine user for the Hub and one for the login
+  # screen) and writes those two tokens into the zitadel-tokens volume. Everything runs as
+  # nobody, so the login screen and the Hub can read them.
+  # A new volume belongs to root: hand zitadel-tokens to nobody before Zitadel writes there.
+  zitadel-tokens-init:
+    image: alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+    command: ["chown", "65534:65534", "/tokens"]
+    volumes:
+      - zitadel-tokens:/tokens
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:v4.20.1@sha256:4817dbd8896306867f28bba63e7dc3526b2d2646ac7111db9524eb3ab6e82301
+    restart: unless-stopped
+    user: "65534:65534"
+    # start-from-init: its schemas on first start (its role and database exist already, made by
+    # postgres-init/04-zitadel.sh, so its own role is enough as "admin": never the superuser).
+    command: start-from-init --masterkeyFromEnv --tlsMode external
+    environment:
+      ZITADEL_MASTERKEY: ${ZITADEL_MASTERKEY}
+      ZITADEL_EXTERNALDOMAIN: ${IDEJO_ID_DOMAIN}
+      ZITADEL_EXTERNALSECURE: "true"
+      ZITADEL_EXTERNALPORT: "443"
+      # Caddy ends TLS; inside, plain HTTP/2 (also what `zitadel ready`, the health check, uses).
+      ZITADEL_TLS_ENABLED: "false"
+      ZITADEL_DATABASE_POSTGRES_HOST: db
+      ZITADEL_DATABASE_POSTGRES_PORT: "5432"
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      # Its first connection goes to its own database: pg_hba lets a role open only its own.
+      ZITADEL_DATABASE_POSTGRES_ADMIN_EXISTINGDATABASE: zitadel
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: Idejo
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ACME_EMAIL}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_VERIFIED: "true"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: idejo-hub
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Idejo Hub
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: "2099-01-01T00:00:00Z"
+      ZITADEL_FIRSTINSTANCE_PATPATH: /tokens/hub.pat
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Login client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: "2099-01-01T00:00:00Z"
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /tokens/login-client.pat
+    volumes:
+      - zitadel-tokens:/tokens
+    depends_on:
+      db:
+        condition: service_healthy
+      zitadel-tokens-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # ID-01: Zitadel's sign-in pages (v4 runs them apart), under /ui/v2/login on IDEJO_ID_DOMAIN.
+  zitadel-login:
+    image: ghcr.io/zitadel/zitadel-login:v4.20.1@sha256:1508e83275f1471b20ed42b159174e6b3e10e6c2481e64c0aee7ed5bfeeec18b
+    restart: unless-stopped
+    user: "65534:65534"
+    environment:
+      ZITADEL_API_URL: http://zitadel:8080
+      CUSTOM_REQUEST_HEADERS: Host:${IDEJO_ID_DOMAIN}
+      ZITADEL_SERVICE_USER_TOKEN_FILE: /tokens/login-client.pat
+      NEXT_PUBLIC_BASE_PATH: /ui/v2/login
+    volumes:
+      - zitadel-tokens:/tokens:ro
+    depends_on:
+      zitadel:
+        condition: service_healthy
 
   # HN-04: the only container with the Docker socket. MIT, pinned by digest. It allows only the
   # method/path pairs the Hub needs and refuses any bind mount; docker-guard (below) checks the
@@ -194,6 +283,8 @@ volumes:
   forum-state:
   # FL-06: exports the Hub keeps, final ones (FL-05) included.
   exports:
+  # ID-01: the tokens Zitadel's first start writes for the Hub and its login screen.
+  zitadel-tokens:
   # The socket between socket-proxy and docker-guard, in memory, owned by nobody.
   docker-proxy-socket:
     driver: local

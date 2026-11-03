@@ -543,7 +543,11 @@ defmodule IdejoHub.Forums do
 
   defp hub_hosts do
     # The host the Hub serves itself on (PHX_HOST), read from config, not the web layer.
-    [Application.fetch_env!(:idejo_hub, IdejoHubWeb.Endpoint)[:url][:host]]
+    [
+      Application.fetch_env!(:idejo_hub, IdejoHubWeb.Endpoint)[:url][:host],
+      # ID-01: the identity provider's host is served by the same Caddy.
+      Application.fetch_env!(:idejo_hub, IdejoHub.Identity)[:domain]
+    ]
   end
 
   @doc "LB-03: the source of the exact Idejo release a forum runs (`IDEJO_SOURCE_URL`)."

@@ -56,6 +56,9 @@ config :idejo_hub, IdejoHub.Forums,
 # OP-04: how long an upgraded forum has to answer /health (its migrations run first).
 config :idejo_hub, IdejoHub.Operations, backups_kept: 14, upgrade_health_timeout: 300_000
 
+# ID-01: the identity provider (Zitadel) at its own host; the Hub's API token file.
+config :idejo_hub, IdejoHub.Identity, domain: "id.idejo.test", token_file: nil
+
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)
 
