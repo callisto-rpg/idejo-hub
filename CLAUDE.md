@@ -158,6 +158,16 @@ Design points (Implementation Prompt, Part B, milestone 2):
   starts it, waits for `/health`, then unmarks. Database, volumes and container are kept.
   The marks are rebuilt from the database at boot (`Maintenance.sync/0`). Jobs end through
   `Forums.finish_action/4` / `fail_action/4`; errors read from `Forums.Errors.describe/1`.
+- **Export** (FL-06): `Forums.export_forum/2` (running or suspended) queues `ExportWorker`
+  (queue `operations`): a one-off container `idejo-forum-<slug>-export`
+  (`ForumContainer.run_one_off/3`: the forum's spec, `idejo-admin` command, restart `no`, no
+  alias; `Forums.container_params/1` gives the environment) runs `idejo-admin backup`; the
+  file named in its output (only `/data/backups/idejo-YYYYMMDD-HHMMSS.tar`) is copied out
+  (`Docker.copy_from/3`: the archive must hold exactly that one regular file) into
+  `<exports dir>/<subdomain>/` (`/data/exports`, the `exports` volume), with a
+  `forum_exports` row (kind `export` or `final`, size, SHA-256; no foreign key, kept after
+  deletion). Restores on a standalone install with `idejo-admin restore FILE --yes` (on a
+  migrated database).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

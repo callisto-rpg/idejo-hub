@@ -22,7 +22,9 @@ defmodule IdejoHub.Hosting.Maintenance do
   @doc "Marks a host as suspended."
   # sobelow_skip ["Traversal.FileModule"]
   @spec mark(String.t()) :: :ok | {:error, File.posix()}
-  def mark(host), do: File.write(path(host), "")
+  def mark(host) do
+    with :ok <- File.mkdir_p(dir()), do: File.write(path(host), "")
+  end
 
   @doc "Removes a host's mark (nothing to do when there is none)."
   # sobelow_skip ["Traversal.FileModule"]

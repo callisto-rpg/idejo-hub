@@ -58,6 +58,8 @@ services:
     volumes:
       # FL-04: markers of suspended forums, read by Caddy.
       - forum-state:/data/forum-state
+      # FL-06: forum exports (standard Idejo backups). Back this volume up off the server.
+      - exports:/data/exports
     networks: [default, docker, forums]
     expose:
       - "4000"
@@ -185,6 +187,8 @@ volumes:
   caddy_config:
   # FL-04: one empty file per suspended forum's host, written by the Hub, read by Caddy.
   forum-state:
+  # FL-06: exports the Hub keeps, final ones (FL-05) included.
+  exports:
   # The socket between socket-proxy and docker-guard, in memory, owned by nobody.
   docker-proxy-socket:
     driver: local

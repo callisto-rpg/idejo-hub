@@ -30,6 +30,10 @@ defmodule IdejoHub.Hosting.Docker do
   @callback list_forum_containers() :: {:ok, [map()]} | {:error, error()}
   @callback exec(id(), cmd :: [String.t()]) ::
               {:ok, %{exit_code: integer(), output: binary()}} | {:error, error()}
+  @callback wait_container(id()) :: {:ok, exit_code :: integer()} | {:error, error()}
+  @callback logs(id()) :: {:ok, binary()} | {:error, error()}
+  @callback copy_from(id(), path :: String.t(), dest_dir :: String.t()) ::
+              {:ok, String.t()} | {:error, error() | {:archive, term()}}
 
   def ping, do: adapter().ping()
   def pull_image(image), do: adapter().pull_image(image)
@@ -42,6 +46,11 @@ defmodule IdejoHub.Hosting.Docker do
   def inspect_container(id), do: adapter().inspect_container(id)
   def list_forum_containers, do: adapter().list_forum_containers()
   def exec(id, cmd), do: adapter().exec(id, cmd)
+  def wait_container(id), do: adapter().wait_container(id)
+  def logs(id), do: adapter().logs(id)
+
+  @doc "Copies one file out of a container (running or not) into `dest_dir`; returns its path."
+  def copy_from(id, path, dest_dir), do: adapter().copy_from(id, path, dest_dir)
 
   @doc false
   def config(key), do: Application.fetch_env!(:idejo_hub, IdejoHub.Hosting)[key]
