@@ -88,6 +88,10 @@ defmodule IdejoHub.Forums do
         {:error, other} -> raise "FL-01: could not record the request: #{inspect(other)}"
       end
     end)
+    |> tap(fn
+      {:ok, forum} -> broadcast(forum)
+      _error -> :ok
+    end)
   end
 
   # HN-07: the forum's own sender address, unless the operator gave one.
@@ -366,7 +370,37 @@ defmodule IdejoHub.Forums do
 
   @doc "Moves a forum's lifecycle state (the Hub's own changes, from jobs)."
   @spec update_state(Forum.t(), map()) :: {:ok, Forum.t()} | {:error, Ecto.Changeset.t()}
-  def update_state(forum, attrs), do: forum |> Forum.state_changeset(attrs) |> Repo.update()
+  def update_state(forum, attrs) do
+    with {:ok, forum} <- forum |> Forum.state_changeset(attrs) |> Repo.update() do
+      broadcast(forum)
+      {:ok, forum}
+    end
+  end
+
+  @topic "forums"
+
+  @doc "HA-01: operator screens follow forum changes (`{:forum_changed, forum}`)."
+  @spec subscribe() :: :ok | {:error, term()}
+  def subscribe, do: Phoenix.PubSub.subscribe(IdejoHub.PubSub, @topic)
+
+  defp broadcast(forum),
+    do: Phoenix.PubSub.broadcast(IdejoHub.PubSub, @topic, {:forum_changed, forum})
+
+  @doc """
+  HA-01: every forum not deleted, with its latest scheduled backup (when, and its size: the
+  forum's data and uploads, as far as the Hub may know without reading its database).
+  """
+  @spec list_overview() :: [%{forum: Forum.t(), last_backup: Export.t() | nil}]
+  def list_overview do
+    latest =
+      from e in Export,
+        where: e.kind in ["backup", "upgrade", "export", "final"],
+        distinct: e.forum_id,
+        order_by: [asc: e.forum_id, desc: e.inserted_at, desc: e.id]
+
+    backups = latest |> Repo.all() |> Map.new(&{&1.forum_id, &1})
+    for forum <- list_forums(), do: %{forum: forum, last_backup: backups[forum.id]}
+  end
 
   @doc "The encryption context of one of a forum's secrets (SC-04)."
   @spec context(String.t(), atom()) :: String.t()

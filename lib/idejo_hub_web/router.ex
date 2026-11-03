@@ -41,7 +41,10 @@ defmodule IdejoHubWeb.Router do
   scope "/", IdejoHubWeb do
     pipe_through [:browser, :operator]
 
-    get "/", PageController, :home
+    live_session :operator, on_mount: {IdejoHubWeb.OperatorAuth, :require_operator} do
+      # HA-01
+      live "/", ForumListLive, :index
+    end
   end
 
   # HN-02: called by Caddy on the internal network only (the Caddyfile refuses /internal/*

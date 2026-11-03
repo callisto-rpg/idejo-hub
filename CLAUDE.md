@@ -226,6 +226,13 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
   `operator.create`, `operator.sign_in` (ok/failed with the factor, never a password or
   code), `operator.two_factor_reset`.
+- **Operator screens** (HA): LiveViews in `lib/idejo_hub_web/live/`, in the router's
+  `live_session :operator` (`on_mount: {OperatorAuth, :require_operator}`), rendered in
+  `<Layouts.app current_operator={@current_operator}>` (`wide` for tables). They follow
+  `Forums.subscribe/0` (`{:forum_changed, forum}`, broadcast by `update_state/2` and
+  `create_forum/3`). HA-01 forum list at `/` (`ForumListLive`): filter `?status=`, sort
+  `?sort=`; members are not shown (no contract for it; never the forum's database), size is
+  the latest backup's.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
