@@ -26,6 +26,12 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
   secret_key_base: "YUhyYoEuogyBLtiBRPWbWbwQZu4lYoeLH3waQ4w7Kq40sIZc6Ebl8Av2I2JSiGOd",
   server: false
 
+# Tests never reach Docker: an in-memory fake stands in for the engine (HN-04).
+config :idejo_hub, IdejoHub.Hosting, docker_adapter: IdejoHub.Hosting.Docker.Fake
+
+# The engine adapter's own tests stub docker-guard with Req.Test.
+config :idejo_hub, :docker_req_options, plug: {Req.Test, IdejoHub.Hosting.Docker.Engine}
+
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual
 

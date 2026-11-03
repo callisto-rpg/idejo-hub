@@ -65,6 +65,8 @@ As built by Foundations:
 
 - Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
   Node), no mailer yet (alerts, OP, add Swoosh when needed).
+- Req (Apache-2.0) for HTTP to docker-guard. `docker_guard` is a path dependency in tests
+  only, so the Hub's tests check that what the Hub sends is what the guard allows.
 - Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a
   test runs them (`testing: :manual`). Migration `priv/repo/migrations/*_add_oban_jobs.exs`.
 - `IdejoHubWeb.Plugs.ContentSecurityPolicy`: strict CSP with per-request script and style
@@ -85,8 +87,12 @@ As built by Foundations:
 lib/idejo_hub/        business logic (contexts) — no web code
 lib/idejo_hub_web/    web layer — operator interface (LiveView), Caddy "ask" endpoint, identity pages
   plugs/              ContentSecurityPolicy
+  hosting/            Docker adapter (Docker.Engine, Docker.Fake), ForumContainer (HN-04)
+guard/                docker-guard (HN-04): separate mix project and release; Policy decides,
+                      Router forwards to socket-proxy's Unix socket; guard/Dockerfile
 deploy/               production bundle (HN-08): docker-compose.yml, Caddyfile, .env.example,
-                      postgres-init/ (creates the Hub's CREATEDB/CREATEROLE role, never superuser)
+                      postgres-init/ (creates the Hub's CREATEDB/CREATEROLE role, never superuser),
+                      socket-proxy and docker-guard (HN-04)
 docker-compose.yml    development PostgreSQL only (port 5433)
 ```
 
@@ -105,7 +111,12 @@ The context folders below are created by the first PR that needs them.
 Design points (Implementation Prompt, Part B, milestone 2):
 
 - **Docker** behind one adapter module, through `docker-guard` and the socket proxy (steward
-  decision 2026-11-03, below). The Hub never mounts the Docker socket.
+  decision 2026-11-03, below). The Hub never mounts the Docker socket. Forum names are fixed
+  so the guard can check them: container `idejo-forum-<slug>`, volumes
+  `idejo-forum-<slug>-{uploads,backups}`, label `org.idejo.hub.forum=<slug>`, network
+  `idejo-forums`, image `ghcr.io/callisto-rpg/idejo:X.Y.Z`. A new Docker call or create field
+  needs a rule in `DockerGuard.Policy` (with a refused example in its test) and, for a new
+  path, the socket-proxy allowlist in `deploy/docker-compose.yml`; both are DV-06 reviews.
 - **PostgreSQL**: the Hub's role has `CREATEDB` and `CREATEROLE`, never superuser. One
   database and one login role per forum, that role able to reach only its own database
   (HN-05). Generated passwords and `SECRET_KEY_BASE` are stored encrypted (SC-04).
@@ -139,7 +150,8 @@ Design points (Implementation Prompt, Part B, milestone 2):
   steward); signatures go to the `cla-signatures` branch.
 - CI (`.github/workflows/ci.yml`): REUSE lint; format, compile warnings, credo `--strict`,
   sobelow, `deps.audit`, `hex.audit`, unused deps; Dialyzer (dev env); tests against
-  PostgreSQL 18; the Compose bundle is validated and the image built.
+  PostgreSQL 18; the same checks for `guard/`; the Compose bundle is validated, the image
+  built, and `guard/test/hn_04_chain.sh` run against the runner's Docker.
 - A person reviews every PR. Identity, secrets, Docker access and anything touching sign-in
   get an extra careful human review (DV-06) — flag them in the PR description. Every OIDC
   change is in that group.
@@ -156,6 +168,8 @@ mix test                     # all tests
 mix test --only req:FL-01    # one requirement's tests
 mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
 reuse lint                   # SPDX headers (LI-01)
+(cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
+guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 ```
 
 Production bundle (HN-08; the install script comes with milestone 2):

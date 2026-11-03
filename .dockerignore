@@ -50,3 +50,8 @@ erl_crash.dump
 
 # Production secrets
 /deploy/.env
+
+# docker-guard's own build artifacts (guard/Dockerfile builds them inside the image)
+/guard/_build/
+/guard/deps/
+/guard/priv/plts/

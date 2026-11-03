@@ -100,6 +100,35 @@ jobs:
       - run: mix deps.get
       - run: mix test --warnings-as-errors
 
+  guard:
+    name: docker-guard (HN-04)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: guard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+      - uses: actions/cache@v4
+        with:
+          path: |
+            guard/deps
+            guard/_build
+            guard/priv/plts
+          key: mix-guard-${{ runner.os }}-${{ hashFiles('.tool-versions', 'guard/mix.lock') }}
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix compile --warnings-as-errors
+      - run: mix credo --strict
+      - run: mix deps.audit
+      - run: mix hex.audit
+      - run: mix deps.unlock --check-unused
+      - run: mix test --warnings-as-errors
+      - run: MIX_ENV=dev mix dialyzer --format github
+
   compose:
     name: Compose bundle (HN-08)
     runs-on: ubuntu-24.04
@@ -109,3 +138,5 @@ jobs:
         run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config --quiet
       - name: Build the Hub image
         run: docker build -t idejo-hub:ci .
+      - name: Docker access chain refuses what it must (HN-04)
+        run: guard/test/hn_04_chain.sh

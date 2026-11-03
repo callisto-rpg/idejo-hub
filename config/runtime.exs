@@ -88,6 +88,12 @@ if config_env() == :prod do
       Set it to the Hub's own host name, for example: hub.example.org
       """
 
+  # HN-04: docker-guard's address, and the image and network every forum uses.
+  config :idejo_hub, IdejoHub.Hosting,
+    docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),
+    forum_image: System.get_env("IDEJO_FORUM_IMAGE", "ghcr.io/callisto-rpg/idejo"),
+    forum_network: System.get_env("IDEJO_FORUM_NETWORK", "idejo-forums")
+
   config :idejo_hub, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :idejo_hub, IdejoHubWeb.Endpoint,
