@@ -50,6 +50,7 @@ defmodule IdejoHubWeb.Layouts do
         <nav :if={@current_operator} aria-label="Hub" class="flex gap-3 text-sm">
           <.link navigate={~p"/"}>Forums</.link>
           <.link navigate={~p"/server"}>Server</.link>
+          <.link navigate={~p"/settings"}>Settings</.link>
         </nav>
       </div>
       <div class="flex-none flex items-center gap-3">
