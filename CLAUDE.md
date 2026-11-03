@@ -104,7 +104,7 @@ The context folders below are created by the first PR that needs them.
 | FL | `lib/idejo_hub/forums/` | Forum records and lifecycle; each action an Oban job with clear states. `Forums.Subdomain` (FL-03): the subdomain is also the slug every name derives from |
 | HN | `lib/idejo_hub/hosting/` | Docker adapter (with a fake for tests), PostgreSQL provisioning, Caddy routes, `ask` endpoint |
 | OP | `lib/idejo_hub/operations/` | Backups, restore, upgrades and rollback, health polling, alerts |
-| ID | `lib/idejo_hub/identity/` | OpenID Connect provider (milestone 3; provider choice still open) |
+| ID | `lib/idejo_hub/identity/` | Zitadel beside the Hub (milestone 3): forum clients, member pages, deletion |
 | SC | `lib/idejo_hub/audit/`, `lib/idejo_hub/secrets.ex` | Audit log, encrypted per-forum secrets |
 | HA | `lib/idejo_hub_web/` | Operator screens; Hub CLI later (HA-08) |
 | LB | — | Source link per forum (`IDEJO_SOURCE_URL`), branding rules |
@@ -335,8 +335,10 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - 2026-11-02 — Account model: shared Idejo identity (spec §5); the Hub is the OpenID Connect
   provider, each forum a client.
 - 2026-11-02 — Licence: AGPL-3.0-only headers for now, same steward and CLA as Idejo.
-- 2026-11-02 — OIDC provider (built in or existing open-source beside it): **open.** Before
-  milestone 3, write a one-page proposal (licence, memory, maintenance, passkeys) and wait.
+- 2026-11-03 — OIDC provider (ID-01): **Zitadel** (AGPL-3.0) beside the Hub, at
+  `id.<hub domain>` (`docs/proposals/id-01-oidc-provider.md`). Leaving a forum (ID-05): the
+  person chooses to delete their account there or just leave (account and messages kept for
+  a return with the same identity); Idejo gets commands for both.
 - 2026-11-03 — Docker access (HN-04): option B of `docs/proposals/hn-04-docker-access.md`.
   Only wollomatic/socket-proxy (MIT, pinned by digest) mounts the socket, read-only, and it
   allows only the listed method/path pairs. `docker-guard` (a second release from this
