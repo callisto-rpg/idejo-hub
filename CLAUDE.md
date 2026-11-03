@@ -186,6 +186,16 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `backup` keeps 7 in the forum volume, so the 14 live in the Hub's `exports` volume.
   Audited `forum.backup` (actor `schedule`). Exports, final exports and backups all share
   `forum_exports` and `Archives`.
+- **Restore** (OP-03, `Operations.RestoreWorker`): `Forums.restore_forum/4` (running or
+  suspended, from the forum's own archives of any kind) marks the host, stops the
+  container, puts the file in its backups volume (`Docker.copy_to/3`), runs `idejo-admin
+  restore FILE --yes` in a one-off `-restore` container, starts it, waits for `/health`,
+  unmarks. A failure before the restore puts the forum back; after it, the forum stays
+  stopped and marked as `suspended`. `Forums.restore_to_new/3` creates a forum (FL-01 via
+  `create_forum/3`'s `job_args`, no headless setup, behind the page) and restores into it.
+  Idejo's secret settings are encrypted with `SECRET_KEY_BASE`: a deleted source's key moves
+  with its data; a live source's is never shared (SC-04), so the new forum gets its own and
+  a one-off `rotate-push-keys --yes`, and a panel SMTP password must be entered again.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
