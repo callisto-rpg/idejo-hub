@@ -124,4 +124,31 @@ defmodule IdejoHub.Hosting.HN04DockerEngineTest do
       refute File.exists?(Path.join(Path.dirname(dir), "idejo-1.tar"))
     end
   end
+
+  describe "copy_to/3 (OP-03)" do
+    test "uploads a one-file tar with its length, not chunked" do
+      file = Path.join(System.tmp_dir!(), "idejo-#{System.unique_integer([:positive])}.tar")
+      File.write!(file, String.duplicate("b", 200_000))
+      on_exit(fn -> File.rm(file) end)
+
+      stub(fn conn ->
+        assert conn.method == "PUT"
+        assert conn.query_string == "path=%2Fdata%2Fbackups"
+        [length] = get_req_header(conn, "content-length")
+        assert get_req_header(conn, "transfer-encoding") == []
+        {:ok, body, conn} = read_body(conn, length: 1_000_000)
+        assert byte_size(body) == String.to_integer(length)
+        send(self(), {:uploaded, body})
+        send_resp(conn, 200, "")
+      end)
+
+      assert Engine.copy_to("idejo-forum-x", file, "/data/backups") == :ok
+      assert_received {:uploaded, tar}
+      tmp = Path.join(System.tmp_dir!(), "check-#{System.unique_integer([:positive])}.tar")
+      File.write!(tmp, tar)
+      assert {:ok, [name]} = :erl_tar.table(String.to_charlist(tmp))
+      assert to_string(name) == Path.basename(file)
+      File.rm(tmp)
+    end
+  end
 end

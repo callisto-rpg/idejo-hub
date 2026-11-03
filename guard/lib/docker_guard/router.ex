@@ -28,13 +28,18 @@ defmodule DockerGuard.Router do
   def init(opts), do: opts
 
   @impl true
-  def call(%{path_info: [version | path]} = conn, _opts) do
+  def call(conn, opts) do
+    Upstream.clear_body_conn()
+    route(conn, opts)
+  end
+
+  defp route(%{path_info: [version | path]} = conn, _opts) do
     if Regex.match?(@api_version, version),
       do: decide(fetch_query_params(conn), version, path),
       else: deny(conn, :api_version)
   end
 
-  def call(conn, _opts), do: deny(conn, :api_version)
+  defp route(conn, _opts), do: deny(conn, :api_version)
 
   defp decide(conn, version, path) do
     case read_json(conn, path) do
@@ -84,6 +89,10 @@ defmodule DockerGuard.Router do
     end
   end
 
+  # Read while the request goes upstream (in this process). Each read returns a new conn
+  # that knows how much of the body is read; the answer must go out on the last one
+  # (`Upstream.body_conn/1`), or the server thinks the body is unread, waits for it to keep
+  # the connection, times out and closes it under the Hub's next call (M2 exit check).
   defp body_stream(conn) do
     Stream.unfold(conn, fn
       :done ->
@@ -91,9 +100,16 @@ defmodule DockerGuard.Router do
 
       conn ->
         case read_body(conn, length: 1_000_000, read_length: 1_000_000) do
-          {:ok, data, _conn} -> {data, :done}
-          {:more, data, conn} -> {data, conn}
-          {:error, _reason} -> nil
+          {:ok, data, conn} ->
+            Upstream.put_body_conn(conn)
+            {data, :done}
+
+          {:more, data, conn} ->
+            Upstream.put_body_conn(conn)
+            {data, conn}
+
+          {:error, _reason} ->
+            nil
         end
     end)
   end
@@ -102,13 +118,14 @@ defmodule DockerGuard.Router do
     target =
       if query_string == "", do: conn.request_path, else: conn.request_path <> "?" <> query_string
 
-    content_type =
-      case get_req_header(conn, "content-type") do
-        [type | _] -> [{"content-type", type}]
-        [] -> []
-      end
+    # A streamed upload keeps its length, so it goes on as a plain body, not chunked.
+    headers =
+      for name <- ["content-type", "content-length"],
+          [value | _] <- [get_req_header(conn, name)],
+          name == "content-type" or match?({:stream, _}, body),
+          do: {name, value}
 
-    case Upstream.stream(conn.method, target, content_type, body, conn) do
+    case Upstream.stream(conn.method, target, headers, body, conn) do
       {:ok, conn} ->
         conn
 
