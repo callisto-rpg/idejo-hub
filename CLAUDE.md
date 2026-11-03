@@ -87,7 +87,8 @@ As built by Foundations:
 lib/idejo_hub/        business logic (contexts) — no web code
 lib/idejo_hub_web/    web layer — operator interface (LiveView), Caddy "ask" endpoint, identity pages
   plugs/              ContentSecurityPolicy
-  hosting/            Docker adapter (Docker.Engine, Docker.Fake), ForumContainer (HN-04)
+  hosting/            Docker adapter (Docker.Engine, Docker.Fake), ForumContainer (HN-04),
+                      Postgres: one database and role per forum (HN-05)
 guard/                docker-guard (HN-04): separate mix project and release; Policy decides,
                       Router forwards to socket-proxy's Unix socket; guard/Dockerfile
 deploy/               production bundle (HN-08): docker-compose.yml, Caddyfile, .env.example,
@@ -118,8 +119,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   needs a rule in `DockerGuard.Policy` (with a refused example in its test) and, for a new
   path, the socket-proxy allowlist in `deploy/docker-compose.yml`; both are DV-06 reviews.
 - **PostgreSQL**: the Hub's role has `CREATEDB` and `CREATEROLE`, never superuser. One
-  database and one login role per forum, that role able to reach only its own database
-  (HN-05). Generated passwords and `SECRET_KEY_BASE` are stored encrypted (SC-04).
+  database and one login role per forum, both named `forum_<slug>` (hyphens → underscores),
+  that role able to reach only its own database (HN-05): `CONNECT` revoked from `PUBLIC`
+  everywhere, and `pg_hba.conf` `sameuser` for network connections
+  (`deploy/postgres-init/02-forum-isolation.sh`), so a role opens only the database of its
+  own name. That includes the Hub, which cannot open a forum's database at all. DDL runs on a
+  short Postgrex connection of its own (not the Repo pool); a new database or service needs
+  a role of the same name. Generated passwords and `SECRET_KEY_BASE` are stored encrypted
+  (SC-04).
 - **Caddy**: the `ask` endpoint says yes only for existing, non-deleted forums and the Hub's
   own hosts (HN-02). Routes are re-applied on boot.
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
