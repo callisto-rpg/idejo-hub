@@ -96,6 +96,11 @@ defmodule IdejoHubWeb.ForumNewLive do
           type="email"
           label="Sender address (optional; default noreply@ its address)"
         />
+        <.input
+          field={@form[:local_accounts]}
+          type="checkbox"
+          label="Also allow local accounts (people without an Idejo ID)"
+        />
         <.button phx-disable-with="Creating…">Create forum</.button>
         <.link navigate={~p"/"} class="btn btn-ghost">Cancel</.link>
       </.form>

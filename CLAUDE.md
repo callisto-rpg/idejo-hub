@@ -274,6 +274,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   and the login client, and writes their tokens to the `zitadel-tokens` volume (all three
   containers run as nobody; `zitadel-tokens-init` hands the volume over). The Hub reads its
   token from `ZITADEL_TOKEN_FILE` (`IdejoHub.Identity` config).
+- **Forum clients** (ID-01, ID-07; `IdejoHub.Identity`, adapter `Identity.Zitadel` over its
+  management API v1 with the Hub's token, `Identity.Fake` in tests, off when unset): each
+  forum is an OIDC web app in project "Idejo forums" (code flow, client secret Basic,
+  `https://<host>/users/oidc/callback`, user info in the ID token), registered by the
+  `identity` step of `CreateWorker` (removed again if a later step fails, and at purge);
+  `Forums.ensure_identity_client/1` connects older forums on recreate,
+  `rotate_identity/2` rotates the secret and recreates. `container_params/1` gives
+  `IDEJO_OIDC_ISSUER` (`https://IDEJO_ID_DOMAIN`), `_CLIENT_ID`, `_CLIENT_SECRET` (stored
+  encrypted, `forum:<slug>:oidc_client_secret`), `_LABEL` ("Idejo ID") and
+  `IDEJO_LOCAL_ACCOUNTS` (`forums.local_accounts`, ID-07; always on without a client). On the
+  forum network Caddy answers to `IDEJO_ID_DOMAIN`, so forums reach the provider inside.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

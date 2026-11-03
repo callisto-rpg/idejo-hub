@@ -125,7 +125,12 @@ services:
     depends_on:
       hub:
         condition: service_healthy
-    networks: [default, forums]
+    networks:
+      default:
+      forums:
+        # ID-01: forums fetch the identity provider's settings and keys from its address;
+        # on the forum network that name is Caddy itself, never a trip out and back in.
+        aliases: ["${IDEJO_ID_DOMAIN}"]
 
   # ID-01: the identity provider (Zitadel, AGPL-3.0; steward decision 2026-11-03), at
   # IDEJO_ID_DOMAIN behind Caddy. Its own role and database on the shared PostgreSQL

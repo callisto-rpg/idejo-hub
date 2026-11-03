@@ -169,6 +169,7 @@ if config_env() == :prod do
 
   # ID-01: the identity provider (Zitadel) and the Hub's token for its API.
   config :idejo_hub, IdejoHub.Identity,
+    adapter: IdejoHub.Identity.Zitadel,
     domain: env_or.("IDEJO_ID_DOMAIN", "id." <> host),
     token_file: env_or.("ZITADEL_TOKEN_FILE", "/zitadel-tokens/hub.pat")
 

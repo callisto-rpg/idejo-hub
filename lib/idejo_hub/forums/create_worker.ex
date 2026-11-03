@@ -47,6 +47,8 @@ defmodule IdejoHub.Forums.CreateWorker do
 
     steps = [
       {"database", &database/1},
+      # ID-01: the forum's client at the identity provider, before its container (its env).
+      {"identity", &Forums.ensure_identity_client/1},
       {"container", &container/1},
       {"starting", fn f -> Docker.start_container(ForumContainer.name(f.subdomain)) end},
       {"health", fn f -> Health.wait(f.subdomain, health_options()) end},
@@ -160,6 +162,10 @@ defmodule IdejoHub.Forums.CreateWorker do
   defp clean_up(_forum, "database"), do: :ok
 
   defp clean_up(forum, step) do
+    # ID-01: a client made by this job goes too.
+    if step not in ["database", "identity"],
+      do: Forums.remove_identity_client(Forums.get_forum!(forum.id))
+
     if step != "container" do
       with {:error, reason} <- ForumContainer.remove(forum.subdomain, volumes: true) do
         Logger.error(

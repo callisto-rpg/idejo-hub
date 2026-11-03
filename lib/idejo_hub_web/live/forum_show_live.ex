@@ -118,6 +118,17 @@ defmodule IdejoHubWeb.ForumShowLive do
         "Deletion cancelled; the forum is suspended."
       )
 
+  defp run("rotate_identity", _p, forum, actor, socket),
+    do: done(socket, Forums.rotate_identity(forum, actor), "Rotating the sign-in secret.")
+
+  defp run("local_accounts", %{"allowed" => allowed}, forum, actor, socket),
+    do:
+      done(
+        socket,
+        Forums.set_local_accounts(forum, allowed == "true", actor),
+        if(allowed == "true", do: "Allowing local accounts.", else: "Idejo ID accounts only.")
+      )
+
   defp run("recreate", _p, forum, actor, socket),
     do: done(socket, Forums.recreate_forum(forum, actor), "Recreating with the current settings.")
 
@@ -297,6 +308,38 @@ defmodule IdejoHubWeb.ForumShowLive do
             <button class="btn btn-sm btn-error">Delete now</button>
           </form>
         </div>
+      </section>
+
+      <section id="identity" aria-labelledby="identity-title" class="space-y-2">
+        <h2 id="identity-title" class="text-xl font-semibold">Sign-in</h2>
+        <p :if={@forum.oidc_client_id} id="identity-client">
+          Members sign in with Idejo ID (client <code>{@forum.oidc_client_id}</code>).
+        </p>
+        <p :if={!@forum.oidc_client_id} id="identity-none">
+          Not connected to Idejo ID yet: "Recreate (apply settings)" connects it.
+        </p>
+        <p id="local-accounts">
+          Local accounts (without an Idejo ID):
+          <strong>{if @forum.local_accounts, do: "allowed", else: "not allowed"}</strong>
+          <button
+            :if={@forum.status in ["running", "suspended"]}
+            phx-click="local_accounts"
+            phx-value-allowed={to_string(!@forum.local_accounts)}
+            class="btn btn-ghost btn-xs"
+            data-confirm="Change this and make the forum's container again (briefly unavailable)?"
+          >
+            {if @forum.local_accounts, do: "Allow Idejo ID only", else: "Allow local accounts"}
+          </button>
+        </p>
+        <button
+          :if={@forum.oidc_client_id && @forum.status in ["running", "suspended"]}
+          id="rotate-identity"
+          phx-click="rotate_identity"
+          class="btn btn-sm"
+          data-confirm="Give the forum a new sign-in secret? The old one stops working at once; the forum is briefly unavailable."
+        >
+          Rotate the sign-in secret
+        </button>
       </section>
 
       <section id="archives" aria-labelledby="archives-title" class="space-y-2">

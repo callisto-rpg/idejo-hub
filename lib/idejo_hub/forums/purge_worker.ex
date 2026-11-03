@@ -34,13 +34,22 @@ defmodule IdejoHub.Forums.PurgeWorker do
 
   defp purge(forum, actor) do
     with :ok <- ForumContainer.remove(forum.subdomain, volumes: true),
+         :ok <- Forums.remove_identity_client(forum),
          :ok <- Postgres.drop(forum.subdomain),
          :ok <- Maintenance.unmark(Forums.host(forum)) do
       Forums.finish_action(
         forum,
         actor,
         "forum.purge",
-        %{status: "deleted", purge_at: nil, db_password_enc: nil, owner_link_enc: nil}
+        %{
+          status: "deleted",
+          purge_at: nil,
+          db_password_enc: nil,
+          owner_link_enc: nil,
+          oidc_app_id: nil,
+          oidc_client_id: nil,
+          oidc_client_secret_enc: nil
+        }
       )
     else
       error -> Forums.fail_action(forum, actor, "forum.purge", error)
