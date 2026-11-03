@@ -40,6 +40,8 @@ services:
       DOCKER_GUARD_URL: http://docker-guard:2375
       IDEJO_FORUM_IMAGE: ${IDEJO_FORUM_IMAGE:-ghcr.io/callisto-rpg/idejo}
       IDEJO_FORUM_NETWORK: idejo-forums
+      IDEJO_FORUM_DOMAIN: ${IDEJO_FORUM_DOMAIN}
+      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
     depends_on:
       db:
         condition: service_healthy

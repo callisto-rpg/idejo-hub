@@ -98,6 +98,16 @@ if config_env() == :prod do
         Generate one with: openssl rand -base64 32
         """)
 
+  # FL: forums are `<subdomain>.IDEJO_FORUM_DOMAIN` (never hard-coded, LB-05).
+  config :idejo_hub, IdejoHub.Forums,
+    domain:
+      System.get_env("IDEJO_FORUM_DOMAIN") ||
+        raise("""
+        environment variable IDEJO_FORUM_DOMAIN is missing.
+        Set it to the domain forums are subdomains of, for example forums.example.org
+        """),
+    default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.1.0")
+
   # HN-04: docker-guard's address, and the image and network every forum uses.
   config :idejo_hub, IdejoHub.Hosting,
     docker_url: System.get_env("DOCKER_GUARD_URL", "http://docker-guard:2375"),

@@ -134,7 +134,16 @@ Design points (Implementation Prompt, Part B, milestone 2):
 - **Caddy**: the `ask` endpoint says yes only for existing, non-deleted forums and the Hub's
   own hosts (HN-02). Routes are re-applied on boot.
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
-  from the start (SC-07 shows them in milestone 4).
+  from the start (SC-07 shows them in milestone 4): `IdejoHub.Audit.record/5` (actor, action
+  such as `forum.create`, outcome `requested`/`ok`/`failed`, forum, details without secrets
+  or command output); `audit_entries` is append-only (trigger).
+- **Forums** (FL-01): `Forums.create_forum/2` stores the forum as `creating` with its
+  encrypted `SECRET_KEY_BASE` and queues `Forums.CreateWorker` (queue `lifecycle`, one
+  attempt), whose steps (`database`, `container`, `starting`, `health`, `setup`) show in
+  `forums.step`; it ends `running`, or `failed` with a short `error` after removing only what
+  it made. `Hosting.Health` polls `http://idejo-forum-<slug>:4000/health` on the forum
+  network. The output of `idejo-admin setup` (it may hold the owner's link) is never logged
+  or stored. Settings: `IDEJO_FORUM_DOMAIN` (required in production), `IDEJO_DEFAULT_VERSION`.
 - Per-forum memory and CPU limits on every container (SC-05).
 
 ## Conventions

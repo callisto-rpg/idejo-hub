@@ -32,6 +32,10 @@ config :idejo_hub, IdejoHub.Hosting, docker_adapter: IdejoHub.Hosting.Docker.Fak
 # The engine adapter's own tests stub docker-guard with Req.Test.
 config :idejo_hub, :docker_req_options, plug: {Req.Test, IdejoHub.Hosting.Docker.Engine}
 
+# Forum health checks go to a Req.Test stub, and the wait does not sleep long.
+config :idejo_hub, :health_req_options, plug: {Req.Test, IdejoHub.Hosting.Health}
+config :idejo_hub, :health_wait, timeout: 200, interval: 10
+
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual
 
