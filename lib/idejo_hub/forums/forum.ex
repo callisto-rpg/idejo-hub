@@ -28,6 +28,9 @@ defmodule IdejoHub.Forums.Forum do
     field :error, :string
     field :secret_key_base_enc, :binary, redact: true
     field :db_password_enc, :binary, redact: true
+    field :mail_from, :string
+    field :owner_invite, :string
+    field :owner_link_enc, :binary, redact: true
 
     timestamps(type: :utc_datetime)
   end
@@ -38,7 +41,15 @@ defmodule IdejoHub.Forums.Forum do
   @doc "What the operator gives to create a forum (FL-01)."
   def create_changeset(forum, attrs) do
     forum
-    |> cast(attrs, [:subdomain, :display_name, :owner_email, :idejo_version, :memory_mb, :cpus])
+    |> cast(attrs, [
+      :subdomain,
+      :display_name,
+      :owner_email,
+      :idejo_version,
+      :memory_mb,
+      :cpus,
+      :mail_from
+    ])
     |> update_change(:subdomain, &(&1 |> String.trim() |> String.downcase()))
     |> update_change(:owner_email, &String.trim/1)
     |> update_change(:display_name, &String.trim/1)
@@ -56,6 +67,11 @@ defmodule IdejoHub.Forums.Forum do
       message: "must be an email address"
     )
     |> validate_length(:owner_email, max: 254)
+    |> update_change(:mail_from, &String.trim/1)
+    |> validate_format(:mail_from, ~r/\A[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+\z/,
+      message: "must be an email address"
+    )
+    |> validate_length(:mail_from, max: 160)
     |> validate_format(:idejo_version, ~r/\A\d+\.\d+\.\d+\z/,
       message: "must be an exact version, for example 0.1.0"
     )
@@ -67,7 +83,7 @@ defmodule IdejoHub.Forums.Forum do
   @doc "Lifecycle changes, made by the Hub itself."
   def state_changeset(forum, attrs) do
     forum
-    |> cast(attrs, [:status, :step, :error, :db_password_enc])
+    |> cast(attrs, [:status, :step, :error, :db_password_enc, :owner_invite, :owner_link_enc])
     |> validate_inclusion(:status, @statuses)
   end
 end

@@ -150,6 +150,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   it made. `Hosting.Health` polls `http://idejo-forum-<slug>:4000/health` on the forum
   network. The output of `idejo-admin setup` (it may hold the owner's link) is never logged
   or stored. Settings: `IDEJO_FORUM_DOMAIN` (required in production), `IDEJO_DEFAULT_VERSION`.
+- **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
+  `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
+  is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
+- **Owner invite** (FL-02): setup emails the owner their link; when it cannot, the link is
+  in setup's output, matched only as `https://<forum host>/users/reset-password/<token>`,
+  kept encrypted (`forum:<subdomain>:owner_link`) with `owner_invite: "operator"`, and
+  handed out once by `Forums.take_owner_link/2` (audited `forum.owner_link.take`). The Hub
+  operator is never made owner.
 - Per-forum memory and CPU limits on every container (SC-05).
 
 ## Conventions
@@ -217,6 +225,9 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
   allows only the listed method/path pairs. `docker-guard` (a second release from this
   repository) checks every create/exec body in front of it. The Hub reaches Docker only
   through `IdejoHub.Hosting.Docker` and never mounts the socket.
+- 2026-11-03 — Forum routing (HN-02): no per-forum routes. One wildcard site sends each
+  subdomain to `idejo-forum-<subdomain>:4000`; `ask` and `strict_sni_host` decide what is
+  reachable (approved over the prompt's "admin API or regenerated Caddyfile").
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)

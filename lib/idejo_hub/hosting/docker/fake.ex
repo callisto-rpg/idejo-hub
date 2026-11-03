@@ -19,7 +19,15 @@ defmodule IdejoHub.Hosting.Docker.Fake do
   def start do
     {:ok, pid} =
       Agent.start_link(fn ->
-        %{containers: %{}, volumes: %{}, images: MapSet.new(), failures: %{}, exec: [], calls: []}
+        %{
+          containers: %{},
+          volumes: %{},
+          images: MapSet.new(),
+          failures: %{},
+          exec: [],
+          execs: [],
+          calls: []
+        }
       end)
 
     Process.put(@key, pid)
@@ -34,7 +42,10 @@ defmodule IdejoHub.Hosting.Docker.Fake do
   def exec_result(prefix, result),
     do: update(&Map.update!(&1, :exec, fn rules -> [{prefix, result} | rules] end))
 
-  @doc "Containers, volumes and images as they are now, plus the calls made, oldest first."
+  @doc """
+  Containers, volumes and images as they are now, the calls made (names, oldest first) and
+  the exec commands run (`execs`, `{container, cmd}`, oldest first).
+  """
   def state,
     do: Agent.get(server(), &Map.update!(&1, :calls, fn calls -> Enum.reverse(calls) end))
 
@@ -124,7 +135,7 @@ defmodule IdejoHub.Hosting.Docker.Fake do
   def exec(id, cmd) do
     call(:exec, fn s ->
       if Map.has_key?(s.containers, id),
-        do: {exec_rule(s.exec, cmd), s},
+        do: {exec_rule(s.exec, cmd), Map.update!(s, :execs, &(&1 ++ [{id, cmd}]))},
         else: {{:error, :not_found}, s}
     end)
   end
