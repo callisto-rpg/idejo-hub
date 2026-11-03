@@ -3,6 +3,9 @@
 
 import Config
 
+# Plain http on localhost in development: the session cookie cannot be Secure (SC-08).
+config :idejo_hub, :secure_cookies, false
+
 # Configure your database
 config :idejo_hub, IdejoHub.Repo,
   username: "postgres",

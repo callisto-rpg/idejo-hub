@@ -11,6 +11,7 @@ defmodule IdejoHubWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
+    plug IdejoHubWeb.OperatorAuth, :fetch_operator
     plug :put_root_layout, html: {IdejoHubWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
@@ -21,8 +22,24 @@ defmodule IdejoHubWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # SC-08: every operator page needs a signed-in operator (password and two-factor code).
+  pipeline :operator do
+    plug IdejoHubWeb.OperatorAuth, :require_operator
+  end
+
+  # SC-08: sign-in, two-factor setup and code, sign-out.
   scope "/", IdejoHubWeb do
     pipe_through :browser
+
+    get "/sign-in", SessionController, :new
+    post "/sign-in", SessionController, :create
+    get "/sign-in/two-factor", SessionController, :two_factor
+    post "/sign-in/two-factor", SessionController, :verify
+    delete "/sign-out", SessionController, :delete
+  end
+
+  scope "/", IdejoHubWeb do
+    pipe_through [:browser, :operator]
 
     get "/", PageController, :home
   end

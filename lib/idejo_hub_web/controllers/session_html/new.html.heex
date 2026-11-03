@@ -1,0 +1,18 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Sign in to Idejo Hub</h1>
+  <.form for={@form} id="sign-in" action={~p"/sign-in"} method="post">
+    <.input field={@form[:email]} type="email" label="Email" autocomplete="username" required />
+    <.input
+      field={@form[:password]}
+      type="password"
+      label="Password"
+      autocomplete="current-password"
+      required
+    />
+    <.button>Continue</.button>
+  </.form>
+</Layouts.app>

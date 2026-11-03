@@ -58,6 +58,9 @@ config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __
 config :idejo_hub, IdejoHub.Hosting.Maintenance,
   dir: Path.expand("../tmp/forum-state/suspended", __DIR__)
 
+# SC-08: operator passwords, Argon2id at Idejo's pinned cost (3 passes, 64 MiB).
+config :argon2_elixir, argon2_type: 2, t_cost: 3, m_cost: 16, parallelism: 4
+
 # Configure the endpoint
 config :idejo_hub, IdejoHubWeb.Endpoint,
   url: [host: "localhost"],

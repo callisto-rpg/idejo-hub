@@ -90,6 +90,10 @@ defmodule IdejoHub.MixProject do
       # HN-04: HTTP to docker-guard. Apache-2.0 (LI-06). The guard itself is a dependency only in tests, which
       # check that what the Hub sends is what the guard allows.
       {:req, "~> 0.5"},
+      # SC-08: operator passwords (Argon2id, as Idejo) and two-factor codes (TOTP).
+      # Apache-2.0 both (LI-06).
+      {:argon2_elixir, "~> 4.1"},
+      {:nimble_totp, "~> 1.0"},
       {:docker_guard, path: "guard", only: :test, runtime: false},
       # Checks, dev and test only. MIT (credo, sobelow), Apache-2.0 (dialyxir),
       # BSD-3-Clause (mix_audit) (LI-06).

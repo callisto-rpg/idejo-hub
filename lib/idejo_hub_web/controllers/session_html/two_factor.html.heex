@@ -1,0 +1,29 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Two-factor code</h1>
+  <section :if={@setup} id="two-factor-setup">
+    <p>
+      Two-factor sign-in is required. Add this account to an authenticator app (for example
+      Aegis, 2FAS or a password manager), then enter the code it shows.
+    </p>
+    <p>Key: <code id="two-factor-secret">{@setup.secret}</code></p>
+    <p>
+      <a href={@setup.uri} id="two-factor-uri">Open in an authenticator app on this device</a>
+    </p>
+  </section>
+  <.form for={@form} id="two-factor" action={~p"/sign-in/two-factor"} method="post">
+    <.input
+      field={@form[:code]}
+      type="text"
+      label="Code"
+      inputmode="numeric"
+      autocomplete="one-time-code"
+      pattern="[0-9 ]*"
+      required
+    />
+    <.button>Sign in</.button>
+  </.form>
+</Layouts.app>

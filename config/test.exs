@@ -3,6 +3,8 @@
 
 import Config
 
+config :idejo_hub, :secure_cookies, false
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
@@ -41,6 +43,9 @@ config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/test-exports
 config :idejo_hub, IdejoHub.Hosting.Maintenance,
   dir: Path.expand("../tmp/test-forum-state/suspended", __DIR__),
   sync_on_boot: false
+
+# Only in tests, a low Argon2id cost so the suite stays fast.
+config :argon2_elixir, t_cost: 1, m_cost: 8
 
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual

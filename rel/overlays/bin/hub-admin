@@ -1,0 +1,30 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Idejo Hub's command line, inside the Hub's container:
+#   docker compose -f deploy/docker-compose.yml exec hub bin/hub-admin create-operator EMAIL
+set -eu
+cd -P -- "$(dirname -- "$0")"
+
+usage() {
+  cat <<USAGE
+Usage: bin/hub-admin COMMAND
+
+  create-operator EMAIL    make a Hub operator; prints their one-time password (SC-08)
+  reset-two-factor EMAIL   remove an operator's two-factor setup and end their sessions
+USAGE
+}
+
+case "${1:-}" in
+  create-operator | reset-two-factor)
+    if [ $# -ne 2 ]; then usage >&2; exit 64; fi
+    fun=$(printf '%s' "$1" | tr '-' '_')
+    # The email goes through an environment variable, never into the Elixir code.
+    HUB_ADMIN_EMAIL="$2" exec ./idejo_hub eval "IdejoHub.Release.$fun(System.fetch_env!(\"HUB_ADMIN_EMAIL\"))"
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac
