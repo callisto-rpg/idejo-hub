@@ -13,7 +13,16 @@ defmodule IdejoHub.Forums do
   import Ecto.Query
 
   alias IdejoHub.{Audit, Repo, Secrets}
-  alias IdejoHub.Forums.{CreateWorker, Forum, Mail, Subdomain}
+
+  alias IdejoHub.Forums.{
+    CreateWorker,
+    Errors,
+    Forum,
+    Mail,
+    ResumeWorker,
+    Subdomain,
+    SuspendWorker
+  }
 
   @doc "Defaults for a new forum's form: the configured Idejo version and limits."
   @spec defaults() :: map()
@@ -108,6 +117,51 @@ defmodule IdejoHub.Forums do
     else
       _error -> {:error, :none}
     end
+  end
+
+  @doc """
+  FL-04: suspends a running forum. Caddy shows a maintenance page while its container is
+  stopped; database, volumes and backups are kept. Queues `SuspendWorker`.
+  """
+  @spec suspend_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def suspend_forum(%Forum{} = forum, actor),
+    do: start_action(forum, actor, "running", "suspending", "forum.suspend", SuspendWorker)
+
+  @doc "FL-04: resumes a suspended forum. Queues `ResumeWorker`."
+  @spec resume_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
+  def resume_forum(%Forum{} = forum, actor),
+    do: start_action(forum, actor, "suspended", "resuming", "forum.resume", ResumeWorker)
+
+  # One action at a time per forum: the row is locked, and a forum whose `step` is set is
+  # already being worked on.
+  defp start_action(forum, actor, from_status, step, action, worker) do
+    Repo.transaction(fn ->
+      locked = Repo.one!(from f in Forum, where: f.id == ^forum.id, lock: "FOR UPDATE")
+
+      if locked.status != from_status or locked.step != nil, do: Repo.rollback(:invalid_state)
+
+      {:ok, forum} = update_state(locked, %{step: step, error: nil})
+      {:ok, _} = Audit.record(actor, action, "requested", forum)
+      {:ok, _} = Oban.insert(worker.new(%{"forum_id" => forum.id, "actor" => actor}))
+      forum
+    end)
+  end
+
+  @doc false
+  # Ends a lifecycle job that worked: the new state, step cleared, an `ok` audit entry.
+  def finish_action(forum, actor, action, attrs) do
+    {:ok, forum} = update_state(forum, Map.merge(%{step: nil, error: nil}, attrs))
+    {:ok, _} = Audit.record(actor, action, "ok", forum)
+    :ok
+  end
+
+  @doc false
+  # Ends a lifecycle job that failed: state unchanged, step cleared, the error kept.
+  def fail_action(forum, actor, action, error) do
+    message = Errors.describe(error)
+    {:ok, forum} = update_state(forum, %{step: nil, error: message})
+    {:ok, _} = Audit.record(actor, action, "failed", forum, %{"error" => message})
+    {:error, message}
   end
 
   @doc "A forum by id."

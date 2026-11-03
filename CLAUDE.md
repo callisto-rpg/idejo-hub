@@ -150,6 +150,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   it made. `Hosting.Health` polls `http://idejo-forum-<slug>:4000/health` on the forum
   network. The output of `idejo-admin setup` (it may hold the owner's link) is never logged
   or stored. Settings: `IDEJO_FORUM_DOMAIN` (required in production), `IDEJO_DEFAULT_VERSION`.
+- **Suspend and resume** (FL-04): `Forums.suspend_forum/2` / `resume_forum/2` (one action
+  at a time: row lock, `step` set) queue `SuspendWorker` / `ResumeWorker`. Suspend marks the
+  host (`Hosting.Maintenance`: an empty file per host in the `forum-state` volume, which
+  Caddy reads) then stops the container; Caddy serves the static
+  `deploy/maintenance/index.html` (503) for marked hosts, even with the Hub down. Resume
+  starts it, waits for `/health`, then unmarks. Database, volumes and container are kept.
+  The marks are rebuilt from the database at boot (`Maintenance.sync/0`). Jobs end through
+  `Forums.finish_action/4` / `fail_action/4`; errors read from `Forums.Errors.describe/1`.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).

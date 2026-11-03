@@ -8,6 +8,8 @@ defmodule IdejoHub.Application do
 
   use Application
 
+  alias IdejoHub.Hosting.Maintenance
+
   @impl true
   def start(_type, _args) do
     # SC-04: refuse to start without a usable key for forum secrets.
@@ -18,6 +20,8 @@ defmodule IdejoHub.Application do
       IdejoHub.Repo,
       {DNSCluster, query: Application.get_env(:idejo_hub, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: IdejoHub.PubSub},
+      # FL-04: make Caddy's maintenance marks match the suspended forums.
+      maintenance_sync(),
       # Lifecycle (FL) and operations (OP) jobs, stored in PostgreSQL.
       {Oban, Application.fetch_env!(:idejo_hub, Oban)},
       # Start to serve requests, typically the last entry
@@ -36,5 +40,11 @@ defmodule IdejoHub.Application do
   def config_change(changed, _new, removed) do
     IdejoHubWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp maintenance_sync do
+    if Application.get_env(:idejo_hub, Maintenance)[:sync_on_boot] == false,
+      do: {Task, fn -> :ok end},
+      else: {Task, &Maintenance.sync/0}
   end
 end

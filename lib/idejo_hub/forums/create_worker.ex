@@ -28,7 +28,7 @@ defmodule IdejoHub.Forums.CreateWorker do
   require Logger
 
   alias IdejoHub.{Audit, Forums}
-  alias IdejoHub.Forums.{Forum, Mail}
+  alias IdejoHub.Forums.{Errors, Forum, Mail}
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Postgres}
 
   @impl Oban.Worker
@@ -60,7 +60,7 @@ defmodule IdejoHub.Forums.CreateWorker do
 
       {:error, step, reason, forum} ->
         clean_up(forum, step)
-        error = describe(reason)
+        error = Errors.describe(reason)
 
         {:ok, forum} =
           Forums.update_state(forum, %{status: "failed", step: nil, error: "#{step}: #{error}"})
@@ -166,27 +166,17 @@ defmodule IdejoHub.Forums.CreateWorker do
     if step != "container" do
       with {:error, reason} <- ForumContainer.remove(forum.subdomain, volumes: true) do
         Logger.error(
-          "FL-01: could not remove #{forum.subdomain}'s container: #{describe(reason)}"
+          "FL-01: could not remove #{forum.subdomain}'s container: #{Errors.describe(reason)}"
         )
       end
     end
 
     with {:error, reason} <- Postgres.drop(forum.subdomain) do
-      Logger.error("FL-01: could not drop #{forum.subdomain}'s database: #{describe(reason)}")
+      Logger.error(
+        "FL-01: could not drop #{forum.subdomain}'s database: #{Errors.describe(reason)}"
+      )
     end
   end
-
-  # Short, secret-free descriptions for the forum row and the audit log.
-  defp describe(:timeout), do: "no healthy answer in time"
-  defp describe(:not_found), do: "not found"
-  defp describe({:image_unavailable, image}), do: "image #{image} could not be pulled"
-  defp describe(:invalid), do: "a stored secret could not be decrypted"
-  defp describe({:exit, code}), do: "idejo-admin setup exited with #{code}"
-  defp describe({:denied, message}), do: "refused by docker-guard (#{message})"
-  defp describe({:status, status, message}), do: "Docker answered #{status} (#{message})"
-  defp describe({:unreachable, _detail}), do: "Docker is unreachable"
-  defp describe({:postgres, message}), do: "PostgreSQL: #{message}"
-  defp describe(other), do: inspect(other)
 
   defp db_host, do: Application.fetch_env!(:idejo_hub, Forums)[:db_host]
   defp health_options, do: Application.get_env(:idejo_hub, :health_wait, [])

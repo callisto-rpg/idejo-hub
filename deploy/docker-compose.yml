@@ -55,6 +55,9 @@ services:
         condition: service_healthy
       docker-guard:
         condition: service_started
+    volumes:
+      # FL-04: markers of suspended forums, read by Caddy.
+      - forum-state:/data/forum-state
     networks: [default, docker, forums]
     expose:
       - "4000"
@@ -100,6 +103,9 @@ services:
       - "443:443/udp"   # HTTP/3
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # FL-04: suspended forums' markers (written by the Hub) and the static page.
+      - forum-state:/srv/forum-state:ro
+      - ./maintenance:/srv/maintenance:ro
       - caddy_data:/data       # certificates — keep this volume
       - caddy_config:/config
     depends_on:
@@ -177,6 +183,8 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+  # FL-04: one empty file per suspended forum's host, written by the Hub, read by Caddy.
+  forum-state:
   # The socket between socket-proxy and docker-guard, in memory, owned by nobody.
   docker-proxy-socket:
     driver: local

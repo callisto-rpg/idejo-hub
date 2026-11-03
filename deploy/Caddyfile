@@ -61,6 +61,23 @@
 
 	import security_headers
 
+	# FL-04: a suspended forum gets a static page from Caddy itself, so it shows even while the
+	# Hub is down. The Hub marks it with an empty file named after the host (strict_sni_host
+	# keeps {host} to names the ask endpoint approved).
+	@suspended file {
+		root /srv/forum-state/suspended
+		try_files /{host}
+	}
+	handle @suspended {
+		root * /srv/maintenance
+		rewrite * /index.html
+		header Cache-Control no-store
+		header Retry-After 3600
+		file_server {
+			status 503
+		}
+	}
+
 	# The subdomain names the container (one label: the site address matches one only).
 	@forum vars_regexp forum {host} ^([a-z0-9-]+)\.
 	handle @forum {

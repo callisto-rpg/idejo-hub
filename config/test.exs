@@ -36,6 +36,10 @@ config :idejo_hub, :docker_req_options, plug: {Req.Test, IdejoHub.Hosting.Docker
 config :idejo_hub, :health_req_options, plug: {Req.Test, IdejoHub.Hosting.Health}
 config :idejo_hub, :health_wait, timeout: 200, interval: 10
 
+config :idejo_hub, IdejoHub.Hosting.Maintenance,
+  dir: Path.expand("../tmp/test-forum-state/suspended", __DIR__),
+  sync_on_boot: false
+
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual
 
