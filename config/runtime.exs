@@ -145,6 +145,38 @@ if config_env() == :prod do
       password: System.get_env("ZITADEL_DB_PASSWORD")
     ]
 
+  # OP-02: off-server copies (steward decision 2026-11-04). With a bucket, every other value
+  # is required, and the age public key must look like one: a copy is never sent unencrypted.
+  s3_bucket = env_or.("IDEJO_HUB_S3_BUCKET", nil)
+
+  if s3_bucket do
+    required = fn name ->
+      env_or.(name, nil) ||
+        raise "IDEJO_HUB_S3_BUCKET is set, so #{name} is required (deploy/.env.example, OP-02)"
+    end
+
+    recipient = required.("IDEJO_HUB_BACKUP_AGE_RECIPIENT")
+
+    unless recipient =~ ~r/\Aage1[02-9ac-hj-np-z]{58}\z/ do
+      raise "IDEJO_HUB_BACKUP_AGE_RECIPIENT is not an age public key (age1..., from age-keygen)"
+    end
+
+    prefix =
+      case env_or.("IDEJO_HUB_S3_PREFIX", "") |> String.trim("/") do
+        "" -> ""
+        prefix -> prefix <> "/"
+      end
+
+    config :idejo_hub, IdejoHub.Operations.Offsite,
+      endpoint: required.("IDEJO_HUB_S3_ENDPOINT") |> String.trim_trailing("/"),
+      region: env_or.("IDEJO_HUB_S3_REGION", "us-east-1"),
+      bucket: s3_bucket,
+      prefix: prefix,
+      access_key_id: required.("IDEJO_HUB_S3_ACCESS_KEY_ID"),
+      secret_access_key: required.("IDEJO_HUB_S3_SECRET_ACCESS_KEY"),
+      recipient: recipient
+  end
+
   # FL-06: forum exports (the `exports` volume, deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Forums.Export, dir: "/data/exports"
 

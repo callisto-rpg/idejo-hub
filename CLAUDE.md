@@ -202,6 +202,21 @@ Design points (Implementation Prompt, Part B, milestone 2):
   Audited `hub.backup` (no forum; `failed` names the database and pg_dump's exit code,
   never its output). The image has `postgresql-client-18` from PGDG (Debian's is older than
   the server). Tests use `test/support/bin/pg_dump`.
+- **Off-server copies** (OP-02, `Operations.Offsite`, `OffsiteWorker`; extra review: DV-06;
+  steward decision 2026-11-04): on while `IDEJO_HUB_S3_BUCKET` is set (the Hub refuses to
+  boot with a bucket and no valid `IDEJO_HUB_BACKUP_AGE_RECIPIENT`). After each scheduled
+  forum backup (`BackupWorker`) and each Hub dump (`HubBackupWorker`), `OffsiteWorker.queue/1`
+  (queue `operations`, three attempts) runs `age --encrypt --recipient` into a `.age.part`
+  next to the file (always removed), uploads it with Req's `aws_sigv4` (path-style; one PUT
+  up to 16 MiB, else multipart, a part at a time; aborted on failure) as
+  `<prefix>forums/<subdomain>/<file>.age` or `<prefix>hub/<file>.age`, sets `offsite_key`
+  and `offsite_at` on the row, then keeps the newest `IDEJO_HUB_BACKUPS_KEPT` under that
+  forum's or that Hub database's key prefix (list v2, delete). Audited
+  `forum.backup.offsite` / `hub.backup.offsite` (`ok` with key, size, pruned; `failed`
+  after the last attempt). S3 settings are environment only (`deploy/.env`), shown on
+  Settings without the access keys. Exports, final exports and pre-upgrade backups are not
+  copied. The image has `age` (BSD-3-Clause, Debian). Tests: `test/support/bin/age`,
+  `IdejoHub.S3Fake` (`:offsite_req_options`).
 - **Restore** (OP-03, `Operations.RestoreWorker`): `Forums.restore_forum/4` (running or
   suspended, from the forum's own archives of any kind) marks the host, stops the
   container, puts the file in its backups volume (`Docker.copy_to/3`), runs `idejo-admin
