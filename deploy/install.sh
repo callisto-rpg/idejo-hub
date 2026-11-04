@@ -11,6 +11,8 @@
 #
 #   --hub-domain HOST       the Hub's own address, e.g. hub.example.org
 #   --forum-domain DOMAIN   forums are <name>.DOMAIN, e.g. forums.example.org
+#   --id-domain HOST        where members sign in (ID-01), default id.<hub domain>;
+#                           fixed after the first start (Zitadel keeps it)
 #   --acme-email EMAIL      for Let's Encrypt notices
 #   --operator EMAIL        the first operator's email
 #   --yes                   do not ask; install Docker when it is missing
@@ -24,7 +26,7 @@ cd "$(dirname "$0")/.."
 ENV_FILE=deploy/.env
 COMPOSE=(docker compose -f deploy/docker-compose.yml --env-file "$ENV_FILE")
 
-hub_domain="" forum_domain="" acme_email="" operator="" yes=false
+hub_domain="" forum_domain="" id_domain="" acme_email="" operator="" yes=false
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 say() { printf '\n== %s\n' "$*"; }
@@ -33,19 +35,29 @@ while [ $# -gt 0 ]; do
   case $1 in
     --hub-domain) hub_domain=${2:?}; shift 2 ;;
     --forum-domain) forum_domain=${2:?}; shift 2 ;;
+    --id-domain) id_domain=${2:?}; shift 2 ;;
     --acme-email) acme_email=${2:?}; shift 2 ;;
     --operator) operator=${2:?}; shift 2 ;;
     --yes) yes=true; shift ;;
-    -h | --help) sed -n '4,20p' "$0"; exit 0 ;;
+    -h | --help) sed -n '4,22p' "$0"; exit 0 ;;
     *) die "unknown option $1 (see --help)" ;;
   esac
 done
 
-ask() { # ask VAR "question"
-  local var=$1 question=$2 value
+ask() { # ask VAR "question" [DEFAULT]: Enter (or --yes) takes the default, when there is one
+  local var=$1 question=$2 default=${3:-} value
   [ -n "${!var}" ] && return
-  $yes && die "--${var//_/-} is required with --yes"
-  read -r -p "$question: " value
+  if $yes; then
+    [ -n "$default" ] || die "--${var//_/-} is required with --yes"
+    printf -v "$var" '%s' "$default"
+    return
+  fi
+  if [ -n "$default" ]; then
+    read -r -p "$question [$default]: " value
+    value=${value:-$default}
+  else
+    read -r -p "$question: " value
+  fi
   printf -v "$var" '%s' "$value"
 }
 
@@ -102,15 +114,35 @@ echo "Docker: $(docker --version)"
 say "Settings"
 [ -f "$ENV_FILE" ] || { cp deploy/.env.example "$ENV_FILE"; chmod 600 "$ENV_FILE"; echo "Created $ENV_FILE."; }
 
+# ID-01: Zitadel keeps its address from its first start, so once deploy/.env has one, a
+# different --id-domain is refused rather than silently ignored.
+saved_id_domain=$(env_get IDEJO_ID_DOMAIN)
+if [ -n "$id_domain" ] && [ -n "$saved_id_domain" ] && [ "$id_domain" != "$saved_id_domain" ]; then
+  die "--id-domain $id_domain: $ENV_FILE already has IDEJO_ID_DOMAIN=$saved_id_domain, and Zitadel keeps the address it first started with"
+fi
+
 hub_domain=${hub_domain:-$(env_get IDEJO_HUB_DOMAIN)}
 forum_domain=${forum_domain:-$(env_get IDEJO_FORUM_DOMAIN)}
+id_domain=${id_domain:-$saved_id_domain}
 acme_email=${acme_email:-$(env_get ACME_EMAIL)}
 ask hub_domain "The Hub's own address (e.g. hub.example.org)"
 ask forum_domain "The domain forums are subdomains of (e.g. forums.example.org)"
-ask acme_email "Email for Let's Encrypt notices"
 check_host "--hub-domain" "$hub_domain"
+ask id_domain "Where members sign in (cannot be changed later)" "id.$hub_domain"
+ask acme_email "Email for Let's Encrypt notices"
 check_host "--forum-domain" "$forum_domain"
+check_host "--id-domain" "$id_domain"
 check_email "--acme-email" "$acme_email"
+[ "$id_domain" != "$hub_domain" ] || die "--id-domain must differ from --hub-domain ($hub_domain)"
+
+# A host that is one label under the forum domain looks like a forum to the wildcard:
+# that label must never become a forum's name (FL-03).
+for host in "$hub_domain" "$id_domain"; do
+  label=${host%."$forum_domain"}
+  if [ "$label" != "$host" ] && [[ $label != *.* ]]; then
+    echo "$host is under the forum domain: no forum can be named \"$label\"."
+  fi
+done
 
 env_fill IDEJO_HUB_DOMAIN "$hub_domain"
 env_fill IDEJO_FORUM_DOMAIN "$forum_domain"
@@ -119,9 +151,9 @@ env_fill SECRET_KEY_BASE "$(openssl rand -base64 48 | tr -d '\n')"
 env_fill HUB_SECRETS_KEY "$(openssl rand -base64 32 | tr -d '\n')"
 env_fill POSTGRES_PASSWORD "$(openssl rand -hex 24)"
 env_fill HUB_DB_PASSWORD "$(openssl rand -hex 24)"
-# ID-01: Zitadel, at id.<hub domain>. The master key is exactly 32 characters and never
+# ID-01: Zitadel, at IDEJO_ID_DOMAIN. The master key is exactly 32 characters and never
 # changes; the admin password meets Zitadel's policy (upper, lower, digit, symbol).
-env_fill IDEJO_ID_DOMAIN "id.$hub_domain"
+env_fill IDEJO_ID_DOMAIN "$id_domain"
 env_fill ZITADEL_MASTERKEY "$(openssl rand -hex 16)"
 env_fill ZITADEL_DB_PASSWORD "$(openssl rand -hex 24)"
 env_fill ZITADEL_ADMIN_PASSWORD "Id-$(openssl rand -hex 12)-Z9"
@@ -132,7 +164,6 @@ echo "Settings are in $ENV_FILE (readable by root only)."
 # HN-01: one wildcard record for the forums, one for the Hub; never a change per forum.
 say "Checking DNS"
 probe="dns-check-$RANDOM"
-id_domain=$(env_get IDEJO_ID_DOMAIN)
 hub_ip=$(getent ahostsv4 "$hub_domain" | awk 'NR==1 {print $1}' || true)
 id_ip=$(getent ahostsv4 "$id_domain" | awk 'NR==1 {print $1}' || true)
 wild_ip=$(getent ahostsv4 "$probe.$forum_domain" | awk 'NR==1 {print $1}' || true)
@@ -141,9 +172,14 @@ echo "$id_domain -> ${id_ip:-nothing}"
 echo "*.$forum_domain (tried $probe.$forum_domain) -> ${wild_ip:-nothing}"
 if [ -z "$hub_ip" ] || [ -z "$id_ip" ] || [ -z "$wild_ip" ]; then
   echo "Warning: add these DNS records, pointing to this server, before forums can get certificates:"
-  echo "    $hub_domain        A (and AAAA)"
-  echo "    $id_domain         A (and AAAA)"
-  echo "    *.$forum_domain    A (and AAAA)"
+  # The wildcard already covers a host one label under the forum domain.
+  for host in "$hub_domain" "$id_domain"; do
+    label=${host%."$forum_domain"}
+    if [ "$label" = "$host" ] || [[ $label == *.* ]]; then
+      printf '    %-28s A (and AAAA)\n' "$host"
+    fi
+  done
+  printf '    %-28s A (and AAAA)\n' "*.$forum_domain"
 fi
 
 say "Starting Idejo Hub"
