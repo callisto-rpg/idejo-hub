@@ -90,6 +90,7 @@ $H logs -f hub                                     # the Hub's log
 | `IDEJO_DEFAULT_VERSION` | The Idejo version new forums get (default 0.2.0, the first with shared sign-in) |
 | `HUB_SMTP_*` | SMTP for forums; Settings in the Hub can set it instead |
 | `IDEJO_HUB_BACKUP_CRON`, `IDEJO_HUB_BACKUPS_KEPT` | Backups of forums, the Hub's database and Zitadel's: when (default daily 02:00 UTC) and how many of each (14) |
+| `IDEJO_HUB_S3_*`, `IDEJO_HUB_BACKUP_AGE_RECIPIENT` | Off-server copies of every backup (OP-02), below |
 | `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` | How long an upgraded forum has to become healthy before it is rolled back (300) |
 
 `deploy/.env.example` explains each one.
@@ -119,6 +120,41 @@ $H up -d
 ```
 
 Forums are not in these dumps: restore each from its own backup (OP-03).
+
+## Off-server copies (OP-02)
+
+Every scheduled forum backup and every Hub dump can also go to S3-compatible storage (AWS
+S3, Backblaze B2, Cloudflare R2, Scaleway, Infomaniak, a MinIO of your own…), encrypted
+with [age](https://age-encryption.org) **before** it leaves the server.
+
+1. **On your own computer**, not the server, make a key pair:
+   `age-keygen -o idejo-backups.key`. It prints `Public key: age1…`. Keep
+   `idejo-backups.key` safe and apart from the server, with your copy of `deploy/.env`.
+   Without it no copy can be read. The Hub only ever gets the public key, so even someone
+   who takes the server cannot read the off-site copies.
+2. Make a bucket and an access key that can list, put and delete objects in it. The Hub
+   deletes copies beyond the newest `IDEJO_HUB_BACKUPS_KEPT` (14) per forum and per Hub
+   database.
+3. In `deploy/.env`, set `IDEJO_HUB_S3_ENDPOINT` (for example
+   `https://s3.eu-central-1.amazonaws.com`), `IDEJO_HUB_S3_REGION`, `IDEJO_HUB_S3_BUCKET`,
+   optionally `IDEJO_HUB_S3_PREFIX`, `IDEJO_HUB_S3_ACCESS_KEY_ID`,
+   `IDEJO_HUB_S3_SECRET_ACCESS_KEY` and `IDEJO_HUB_BACKUP_AGE_RECIPIENT` (the `age1…` key),
+   then `$H up -d hub`. The Hub refuses to start if a bucket is set without a valid public
+   key. **Settings** shows where copies go.
+
+Copies are named `<prefix>forums/<subdomain>/idejo-…tar.age` and `<prefix>hub/hub-…dump.age`
+/ `zitadel-…dump.age`. Each upload is in the audit log (`forum.backup.offsite`,
+`hub.backup.offsite`); a failed one is tried three times, then recorded as failed.
+
+To read a copy, download it with any S3 tool and decrypt it on a computer that has the key:
+
+```sh
+age --decrypt -i idejo-backups.key -o idejo-20261104-020000.tar idejo-20261104-020000.tar.age
+```
+
+The result is the same file as the backup on the server: a standard Idejo backup (restore
+it as in "Moving a forum to a standalone Idejo" below, or put it back in the `exports`
+volume), or a Hub dump (restore it as above).
 
 ## Moving a forum to a standalone Idejo (FL-06)
 

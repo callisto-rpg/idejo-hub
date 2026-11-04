@@ -21,6 +21,11 @@ defmodule IdejoHub.Forums.Errors do
   def describe({:command_exit, command, code}), do: "idejo-admin #{command} exited with #{code}"
   def describe({:pg_dump_exit, code}), do: "pg_dump exited with #{code}"
   def describe({:pg_dump_missing, _}), do: "pg_dump is not installed"
+  def describe({:age_exit, code}), do: "age exited with #{code}"
+  def describe({:age_missing, _}), do: "age is not installed"
+  def describe({:s3_status, status}), do: "the storage answered #{status}"
+  def describe({:s3_unreachable, _detail}), do: "the storage is unreachable"
+  def describe({:s3_answer, _tag}), do: "the storage gave an unexpected answer"
   def describe({:error, reason}), do: describe(reason)
   def describe({:file, reason}), do: "file: #{reason}"
   def describe({:posix, reason}), do: "file: #{reason}"

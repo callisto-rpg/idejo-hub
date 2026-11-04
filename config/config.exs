@@ -58,6 +58,9 @@ config :idejo_hub, IdejoHub.Forums,
 # OP-04: how long an upgraded forum has to answer /health (its migrations run first).
 config :idejo_hub, IdejoHub.Operations, backups_kept: 14, upgrade_health_timeout: 300_000
 
+# OP-02: off-server copies (off without a bucket; IDEJO_HUB_S3_* in production).
+config :idejo_hub, IdejoHub.Operations.Offsite, age: "age", bucket: nil
+
 # OP-10: pg_dump for the Hub's database and the identity provider's (its role and password;
 # ZITADEL_DB_PASSWORD in production, none in development, so only the Hub's is dumped).
 config :idejo_hub, IdejoHub.Operations.HubBackup,

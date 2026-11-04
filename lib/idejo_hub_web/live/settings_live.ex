@@ -3,13 +3,15 @@
 
 defmodule IdejoHubWeb.SettingsLive do
   @moduledoc """
-  HA-05: settings. Forum domain and backup storage are shown (environment, exports volume);
+  HA-05: settings. Forum domain and backup storage are shown (environment, exports volume,
+  OP-02's off-server storage without its keys);
   SMTP shared by forums, alert email and extra reserved subdomains are changed here
   (`IdejoHub.Settings`). The SMTP password is never sent back to the page: left empty it
   stays, "Remove the password" clears it.
   """
   use IdejoHubWeb, :live_view
 
+  alias IdejoHub.Operations.Offsite
   alias IdejoHub.Settings
 
   @impl true
@@ -57,7 +59,8 @@ defmodule IdejoHubWeb.SettingsLive do
       password_set?: values["smtp_password"] != nil,
       env_smtp: Application.get_env(:idejo_hub, IdejoHub.Forums.Mail, [])[:shared_smtp],
       domain: Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain],
-      exports: Application.fetch_env!(:idejo_hub, IdejoHub.Forums.Export)[:dir]
+      exports: Application.fetch_env!(:idejo_hub, IdejoHub.Forums.Export)[:dir],
+      offsite: Offsite.summary()
     )
   end
 
@@ -91,8 +94,18 @@ defmodule IdejoHubWeb.SettingsLive do
           (forums are <em>name</em>.{@domain}).
           It is set by <code>IDEJO_FORUM_DOMAIN</code>: every forum's address depends on it.
         </p>
-        <p>Backup storage: <strong id="backup-storage">this server, {@exports}</strong>.
-          Off-server copies come with a later version.</p>
+        <p>Backup storage: <strong id="backup-storage">this server, {@exports}</strong>.</p>
+        <p :if={!@offsite} id="offsite-storage">
+          Off-server copies (OP-02): <strong>off</strong>. Set <code>IDEJO_HUB_S3_*</code>
+          and <code>IDEJO_HUB_BACKUP_AGE_RECIPIENT</code>
+          in <code>deploy/.env</code>
+          to turn them on.
+        </p>
+        <p :if={@offsite} id="offsite-storage">
+          Off-server copies (OP-02): every backup, encrypted with age to <code class="break-all">{@offsite.recipient}</code>, to
+          <strong>{@offsite.endpoint}/{@offsite.bucket}/{@offsite.prefix}</strong>
+          (set in <code>deploy/.env</code>).
+        </p>
       </section>
 
       <form id="settings" phx-submit="save" class="space-y-4">

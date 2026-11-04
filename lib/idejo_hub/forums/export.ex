@@ -20,6 +20,9 @@ defmodule IdejoHub.Forums.Export do
     field :file_name, :string
     field :size, :integer
     field :sha256, :string
+    # OP-02: the encrypted off-server copy, once uploaded.
+    field :offsite_key, :string
+    field :offsite_at, :utc_datetime
 
     timestamps(type: :utc_datetime, updated_at: false)
   end

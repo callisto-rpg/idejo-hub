@@ -75,3 +75,10 @@ config :idejo_hub, IdejoHub.Forums, default_version: "0.1.0"
 # OP-10: a stand-in pg_dump (test/support/bin/pg_dump); tests set a Zitadel password.
 config :idejo_hub, IdejoHub.Operations.HubBackup,
   pg_dump: Path.expand("../test/support/bin/pg_dump", __DIR__)
+
+# OP-02: a stand-in age (test/support/bin/age) and S3 (IdejoHub.S3Fake). Off until a test
+# sets a bucket.
+config :idejo_hub, IdejoHub.Operations.Offsite,
+  age: Path.expand("../test/support/bin/age", __DIR__)
+
+config :idejo_hub, :offsite_req_options, plug: {Req.Test, IdejoHub.Operations.Offsite}

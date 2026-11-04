@@ -1,0 +1,17 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# OP-02 tests: stands in for age --encrypt. Writes a marker with the recipient, then the
+# input reversed byte for byte, so a test can tell an encrypted copy from the original.
+recipient="" out="" in=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --encrypt) shift ;;
+    --recipient) recipient="$2"; shift 2 ;;
+    --output) out="$2"; shift 2 ;;
+    *) in="$1"; shift ;;
+  esac
+done
+[ -n "$recipient" ] && [ -n "$out" ] && [ -f "$in" ] || { echo "age: bad arguments" >&2; exit 2; }
+{ printf 'AGE-FAKE %s\n' "$recipient"; rev < "$in"; } > "$out"

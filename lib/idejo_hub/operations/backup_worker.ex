@@ -6,7 +6,8 @@ defmodule IdejoHub.Operations.BackupWorker do
   OP-01: one scheduled backup of one running forum. `idejo-admin backup` runs inside its
   container (Idejo AD-09; it also keeps the forum's own last 7 in its volume), the Hub copies
   the file into its store as kind `backup` (`Forums.Archives`) and keeps that forum's newest
-  14 (`:keep`), deleting older ones. Audited as `forum.backup`.
+  14 (`:keep`), deleting older ones. Audited as `forum.backup`. OP-02: then queues its
+  encrypted off-server copy (`OffsiteWorker`) when storage is configured.
 
   Queued by `Operations.BackupScheduler` through `Forums.backup_forum/2`, which takes the
   forum's action slot (`step: "backing_up"`), so a backup never overlaps another action.
@@ -16,6 +17,7 @@ defmodule IdejoHub.Operations.BackupWorker do
   alias IdejoHub.Forums
   alias IdejoHub.Forums.Archives
   alias IdejoHub.Hosting.{Docker, ForumContainer}
+  alias IdejoHub.Operations.OffsiteWorker
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"forum_id" => id, "actor" => actor}}) do
@@ -25,6 +27,7 @@ defmodule IdejoHub.Operations.BackupWorker do
     with {:ok, run} <- Docker.exec(container, ["/app/bin/idejo-admin", "backup"]),
          {:ok, backup} <- Archives.collect(forum, container, run, "backup") do
       pruned = Archives.prune(forum, "backup", keep())
+      OffsiteWorker.queue(backup)
 
       Forums.finish_action(forum, actor, "forum.backup", %{}, %{
         "file" => backup.file_name,

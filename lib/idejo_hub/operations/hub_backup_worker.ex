@@ -5,7 +5,8 @@ defmodule IdejoHub.Operations.HubBackupWorker do
   @moduledoc """
   OP-10: one backup of the Hub's database and the identity provider's (`HubBackup.run/1`).
   Queued by `BackupScheduler` with the forums' backups, or from the server page
-  (`Operations.backup_hub/1`); one at a time. Audited `hub.backup` (no forum).
+  (`Operations.backup_hub/1`); one at a time. Audited `hub.backup` (no forum). OP-02: each
+  dump's encrypted off-server copy is queued (`OffsiteWorker`) when storage is configured.
   """
   use Oban.Worker,
     queue: :operations,
@@ -14,12 +15,14 @@ defmodule IdejoHub.Operations.HubBackupWorker do
 
   alias IdejoHub.Audit
   alias IdejoHub.Forums.Errors
-  alias IdejoHub.Operations.HubBackup
+  alias IdejoHub.Operations.{HubBackup, OffsiteWorker}
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"actor" => actor}}) do
     case HubBackup.run(keep()) do
       {:ok, backups, pruned} ->
+        Enum.each(backups, &OffsiteWorker.queue/1)
+
         Audit.record(actor, "hub.backup", "ok", nil, %{
           "files" => Enum.map(backups, & &1.file_name),
           "sizes" => Enum.map(backups, & &1.size),
@@ -29,6 +32,8 @@ defmodule IdejoHub.Operations.HubBackupWorker do
         :ok
 
       {:error, kind, reason, done} ->
+        Enum.each(done, &OffsiteWorker.queue/1)
+
         Audit.record(actor, "hub.backup", "failed", nil, %{
           "failed" => kind,
           "error" => Errors.describe(reason),
