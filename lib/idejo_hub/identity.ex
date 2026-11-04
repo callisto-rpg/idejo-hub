@@ -30,6 +30,23 @@ defmodule IdejoHub.Identity do
   @callback send_invite(user_id :: String.t()) :: :ok | {:error, term()}
   @callback configure(smtp :: keyword() | nil, sender :: String.t()) :: :ok | {:error, term()}
 
+  @type sign_in :: %{user_id: String.t(), client_id: String.t(), at: DateTime.t()}
+
+  @callback create_account_client(host :: String.t()) :: {:ok, client()} | {:error, term()}
+  @callback sign_ins_since(DateTime.t() | nil) :: {:ok, [sign_in()]} | {:error, term()}
+  @callback person(user_id :: String.t()) ::
+              {:ok, %{email: String.t(), display_name: String.t()}}
+              | {:error, :not_found | term()}
+  @callback delete_person(user_id :: String.t()) :: :ok | {:error, term()}
+  @callback exchange_code(
+              code :: String.t(),
+              verifier :: String.t(),
+              redirect_uri :: String.t(),
+              client_id :: String.t(),
+              secret :: String.t()
+            ) ::
+              {:ok, id_token_claims :: map()} | {:error, term()}
+
   @doc "Whether the Hub has an identity provider to register forums with."
   @spec enabled?() :: boolean()
   def enabled?, do: config(:adapter) != nil
@@ -49,6 +66,22 @@ defmodule IdejoHub.Identity do
 
   @doc "ID-02, ID-08: the provider's settings (its own sign-up off, passkeys and 2FA on, the Hub's SMTP)."
   def configure(smtp, sender), do: config(:adapter).configure(smtp, sender)
+
+  @doc "ID-05: the Hub's own client, for the members' pages at `https://<id host>/account`."
+  def create_account_client(host), do: config(:adapter).create_account_client(host)
+
+  @doc "ID-05: sign-ins to any client since `since` (oldest first): who, to which client, when."
+  def sign_ins_since(since), do: config(:adapter).sign_ins_since(since)
+
+  @doc "ID-05: a person's email and display name, for their page."
+  def person(user_id), do: config(:adapter).person(user_id)
+
+  @doc "ID-06: deletes the person at the provider (already gone is fine)."
+  def delete_person(user_id), do: config(:adapter).delete_person(user_id)
+
+  @doc "ID-05: the members' pages' code exchange: the ID token's claims, not yet checked."
+  def exchange_code(code, verifier, redirect_uri, client_id, secret),
+    do: config(:adapter).exchange_code(code, verifier, redirect_uri, client_id, secret)
 
   @placeholder_given "Sennoma"
   @placeholder_family "Ulo"

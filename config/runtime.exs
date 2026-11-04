@@ -123,7 +123,8 @@ if config_env() == :prod do
       {Oban.Plugins.Cron,
        crontab: [
          {env_or.("IDEJO_HUB_BACKUP_CRON", "0 2 * * *"), IdejoHub.Operations.BackupScheduler},
-         {"*/15 * * * *", IdejoHub.Operations.StatsWorker}
+         {"*/15 * * * *", IdejoHub.Operations.StatsWorker},
+         {"*/5 * * * *", IdejoHub.Identity.SyncWorker}
        ]}
     ]
 

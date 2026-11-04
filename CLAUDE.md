@@ -297,6 +297,28 @@ Design points (Implementation Prompt, Part B, milestone 2):
   setting changes, retried) applies `Identity.configure/2`: Zitadel's own registration off,
   passkeys allowed, one-time codes and security keys as second factors, and the Hub's SMTP
   as its config "Idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
+- **Member's page** (ID-05, ID-06; `IdejoHub.Identity.Members`, `AccountController`;
+  extra review: DV-06): `https://IDEJO_ID_DOMAIN/account`, signed in through Zitadel as the
+  Hub's own client ("Idejo ID account", `/account/callback`, registered by `SetupWorker`,
+  secret in `identity_state` encrypted as `identity:account:client_secret`): code flow with
+  PKCE, state and nonce (session `account_request`, ten minutes, used once); the code is
+  exchanged at Zitadel's token endpoint inside the bundle (`Identity.exchange_code/5`) and
+  the ID token's issuer, audience, azp, expiry, nonce and subject checked (OIDC Core
+  3.1.3.7: straight from the provider, no key fetch). Session `member` (subject, auth time)
+  for an hour. **Joined forums** come from the provider, never a forum's database: every
+  sign-in is an `oidc_session.added` event (`Identity.sign_ins_since/1`, admin event API),
+  read by `Members.sync/0` (each page visit, `SyncWorker` every five minutes) into
+  `identity_joins` (subject, forum, `joined`/`leaving`/`left`/`deleting`/`deleted`); a
+  sign-in after leaving joins again. Per forum (steward decision 2026-11-03): **Leave**
+  (`idejo-admin leave --oidc-subject SUB`, account kept) or **Delete my account there**
+  (`delete-account`, a box ticked), through `MemberWorker` (queue `operations`): exec in a
+  running forum, a one-off `-identity` container in a suspended one, snoozed while the
+  forum has a `step`; exit 0 or 2 is done; "last owner" refuses, shown on the page.
+  **Delete my Idejo ID** (ID-06) needs a sign-in within five minutes (`prompt=login`) and the
+  email typed: `delete-account` on every forum joined, then `Identity.delete_person/1`;
+  a refusal stops it with the reason (`identity_deletions.error`; asked again, it starts
+  over). Audited as `member:<subject>` (`identity.forum_leave`, `identity.forum_delete`,
+  `identity.delete`), never an email.
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
@@ -403,6 +425,6 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - Later, do not start: FL-07 to FL-10, HN-03.
 
 Current milestone: **3 — Shared identity** (provider decided: Zitadel). Done so far: ID-01
-(bundle, forum clients), ID-07, ID-02 sign-up, ID-08 settings. Next: ID-09 consent in Idejo,
-ID-05/ID-06 members' forums page with leave or delete, then the exit check. Exit checks for each milestone are
+(bundle, forum clients), ID-07, ID-02 sign-up, ID-08 settings, ID-05/ID-06 member's page.
+Next: the exit check. Exit checks for each milestone are
 in the Implementation Prompt, Part B.

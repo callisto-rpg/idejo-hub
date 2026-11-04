@@ -26,7 +26,9 @@ config :idejo_hub, Oban,
      crontab: [
        {"0 2 * * *", IdejoHub.Operations.BackupScheduler},
        # HA-01: forum figures (idejo-admin stats).
-       {"*/15 * * * *", IdejoHub.Operations.StatsWorker}
+       {"*/15 * * * *", IdejoHub.Operations.StatsWorker},
+       # ID-05: sign-ins to forums, read from the identity provider.
+       {"*/5 * * * *", IdejoHub.Identity.SyncWorker}
      ]}
   ]
 

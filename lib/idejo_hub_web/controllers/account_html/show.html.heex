@@ -1,0 +1,89 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash} title="Idejo ID">
+  <h1 class="text-2xl font-semibold">Your Idejo ID</h1>
+  <p :if={@person} id="account-person">
+    Signed in as <strong>{@person.display_name}</strong> ({@person.email}).
+  </p>
+  <form action={~p"/account/sign-out"} method="post">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <button class="btn btn-sm">Sign out</button>
+  </form>
+
+  <section :if={@deletion && @deletion.finished_at} id="account-deleted" class="mt-6">
+    <h2 class="text-xl font-semibold">Your Idejo ID is deleted</h2>
+    <p>Your accounts on the forums below were deleted as each forum's rules say.</p>
+  </section>
+
+  <section id="account-forums" class="mt-6" aria-labelledby="account-forums-heading">
+    <h2 id="account-forums-heading" class="text-xl font-semibold">Forums you have joined</h2>
+    <p :if={@joins == []}>None yet. Sign in to a forum with "Idejo ID" to join it.</p>
+    <ul class="space-y-4">
+      <li
+        :for={join <- @joins}
+        id={"account-forum-#{join.forum.subdomain}"}
+        class="border rounded p-3"
+      >
+        <a href={forum_url(join.forum)} class="font-medium">{join.forum.display_name}</a>
+        <span class="text-sm">· {state_text(join.state)}</span>
+        <p :if={error_text(join.error)} class="text-sm text-error">{error_text(join.error)}</p>
+        <form
+          :if={join.state in ["joined", "left"] and !(@deletion && is_nil(@deletion.error))}
+          action={~p"/account/forums/#{join.forum_id}"}
+          method="post"
+          class="mt-2 space-y-2"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <button :if={join.state == "joined"} name="choice" value="leave" class="btn btn-sm">
+            Leave (keep my account and messages)
+          </button>
+          <div>
+            <label>
+              <input type="checkbox" name="confirm" value="yes" class="checkbox checkbox-sm" />
+              I understand my account there is deleted and my messages show "Deleted user"
+            </label>
+          </div>
+          <button name="choice" value="delete" class="btn btn-sm btn-error">
+            Delete my account there
+          </button>
+        </form>
+      </li>
+    </ul>
+  </section>
+
+  <section
+    :if={!(@deletion && @deletion.finished_at)}
+    id="delete"
+    class="mt-8"
+    aria-labelledby="delete-heading"
+  >
+    <h2 id="delete-heading" class="text-xl font-semibold">Delete my Idejo ID</h2>
+    <p :if={@deletion && is_nil(@deletion.error)} id="account-deleting">
+      Your Idejo ID is being deleted: your forum accounts first, then the ID itself.
+    </p>
+    <p :if={@deletion && @deletion.error} id="account-delete-error" class="text-error">
+      Deleting stopped at {@deletion.error}. Deal with it, then try again.
+    </p>
+    <div :if={!@deletion || @deletion.error}>
+      <p>
+        Your account on every forum above is deleted as each forum's rules say, then your
+        Idejo ID itself. This cannot be undone.
+      </p>
+      <p :if={!@fresh?}>
+        <a href={~p"/account/sign-in?fresh=1"} id="account-reauth" class="btn btn-sm">
+          Sign in again to continue
+        </a>
+      </p>
+      <form :if={@fresh?} action={~p"/account/delete"} method="post" class="space-y-2">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <label class="block">
+          <span class="block">Type your email address to confirm</span>
+          <input type="email" name="email" required autocomplete="off" class="input" />
+        </label>
+        <button class="btn btn-error">Delete my Idejo ID</button>
+      </form>
+    </div>
+  </section>
+</Layouts.app>

@@ -47,10 +47,20 @@ defmodule IdejoHub.SCIsolationTest do
       Path.wildcard(Path.expand("../../lib/**/*.ex", __DIR__))
       |> Enum.map_join("\n", &File.read!/1)
 
-    # Commands the Hub gives idejo-admin: setup, backup, restore, rotate-push-keys, stats.
+    # Commands the Hub gives idejo-admin: setup, backup, restore, rotate-push-keys, stats, and
+    # for a member (ID-05, ID-06) leave and delete-account by their provider subject.
     used = Regex.scan(~r/@admin,\s*"([a-z-]+)"|"\/app\/bin\/idejo-admin",\s*"([a-z-]+)"/, source)
     used = used |> Enum.flat_map(&tl/1) |> Enum.reject(&(&1 == "")) |> Enum.uniq() |> Enum.sort()
-    assert used == ["backup", "restore", "rotate-push-keys", "setup", "stats"]
+
+    assert used == [
+             "backup",
+             "delete-account",
+             "leave",
+             "restore",
+             "rotate-push-keys",
+             "setup",
+             "stats"
+           ]
 
     # No owner-password reset, no remote shell into a forum's node.
     for forbidden <- ["reset-owner-password", "\"rpc\"", "\"remote\"", "\"eval\""] do
@@ -69,11 +79,13 @@ defmodule IdejoHub.SCIsolationTest do
 
     # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's
     # own host they do not exist.
-    for path <- ["/account/sign-up"] do
+    members = ["/account/sign-up", "/account", "/account/sign-in", "/account/callback"]
+
+    for path <- members do
       assert get(recycle(conn), path).status == 404, "#{path} answers on the Hub's host"
     end
 
-    open = open ++ ["/account/sign-up"]
+    open = open ++ members
 
     for %{verb: :get, path: path} <- IdejoHubWeb.Router.__routes__(),
         path not in open,
