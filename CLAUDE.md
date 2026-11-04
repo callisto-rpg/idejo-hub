@@ -186,6 +186,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `backup` keeps 7 in the forum volume, so the 14 live in the Hub's `exports` volume.
   Audited `forum.backup` (actor `schedule`). Exports, final exports and backups all share
   `forum_exports` and `Archives`.
+- **Hub backups** (OP-10, `Operations.HubBackup`, `HubBackupWorker`; extra review: DV-06):
+  `BackupScheduler` also queues one backup of the Hub's own database (`hub`) and Zitadel's
+  (`zitadel`, only when `ZITADEL_DB_PASSWORD` is set): `pg_dump --format=custom`, each as that
+  database's own role (the Hub's from its Repo config; Zitadel's password is passed to the
+  Hub: steward decision 2026-11-04), written as `.part` and renamed, into
+  `<exports dir>/_hub/<kind>-YYYYMMDD-HHMMSS.dump`, with a `hub_backups` row (size,
+  SHA-256); the newest `IDEJO_HUB_BACKUPS_KEPT` of each kind kept. One at a time (Oban
+  unique on the worker); also "Back up the Hub now" on `/server` (`Operations.backup_hub/1`).
+  Audited `hub.backup` (no forum; `failed` names the database and pg_dump's exit code,
+  never its output). The image has `postgresql-client-18` from PGDG (Debian's is older than
+  the server). Tests use `test/support/bin/pg_dump`.
 - **Restore** (OP-03, `Operations.RestoreWorker`): `Forums.restore_forum/4` (running or
   suspended, from the forum's own archives of any kind) marks the host, stops the
   container, puts the file in its backups volume (`Docker.copy_to/3`), runs `idejo-admin
@@ -408,6 +419,12 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - 2026-11-03 — Forum routing (HN-02): no per-forum routes. One wildcard site sends each
   subdomain to `idejo-forum-<subdomain>:4000`; `ask` and `strict_sni_host` decide what is
   reachable (approved over the prompt's "admin API or regenerated Caddyfile").
+- 2026-11-04 — Backups (OP-10, OP-02): the Hub dumps Zitadel's database itself, with
+  `ZITADEL_DB_PASSWORD` (no sidecar). Off-server copies are encrypted with **age** to a
+  public key (`age` binary in the image); the operator keeps the private key off the server,
+  so the Hub cannot read its own off-site copies. S3 endpoint, bucket and keys come from
+  `deploy/.env` (shown, not edited, in Settings). The Hub keeps the newest 14 off-site per
+  forum and per Hub database, deleting older ones (its keys need delete rights).
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)
@@ -426,6 +443,6 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-07 to FL-10, HN-03.
 
-Current milestone: **3 — Shared identity**, done; waiting for the steward before milestone 4.
+Current milestone: **4 — Hub 1.0**, started 2026-11-04 with OP-10 and OP-02 (steward's go-ahead).
 Exit checks for each milestone are
 in the Implementation Prompt, Part B.

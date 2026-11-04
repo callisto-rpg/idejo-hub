@@ -67,3 +67,7 @@ config :phoenix,
 # SC-04: the key that encrypts forum secrets in the Hub database. Test only, never in
 # production (there it comes from HUB_SECRETS_KEY, config/runtime.exs).
 config :idejo_hub, IdejoHub.Secrets, key: "fcjlnmVauctvHV2aRFqBHgQaZIAaJpWxxfs8xi4Eu5c="
+
+# OP-10: a stand-in pg_dump (test/support/bin/pg_dump); tests set a Zitadel password.
+config :idejo_hub, IdejoHub.Operations.HubBackup,
+  pg_dump: Path.expand("../test/support/bin/pg_dump", __DIR__)

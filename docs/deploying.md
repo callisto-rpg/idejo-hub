@@ -89,10 +89,36 @@ $H logs -f hub                                     # the Hub's log
 | `DOCKER_GID` | The group of the Docker socket (filled in by the installer) |
 | `IDEJO_DEFAULT_VERSION` | The Idejo version new forums get (default 0.1.0) |
 | `HUB_SMTP_*` | SMTP for forums; Settings in the Hub can set it instead |
-| `IDEJO_HUB_BACKUP_CRON`, `IDEJO_HUB_BACKUPS_KEPT` | Forum backups: when (default daily 02:00 UTC) and how many (14) |
+| `IDEJO_HUB_BACKUP_CRON`, `IDEJO_HUB_BACKUPS_KEPT` | Backups of forums, the Hub's database and Zitadel's: when (default daily 02:00 UTC) and how many of each (14) |
 | `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` | How long an upgraded forum has to become healthy before it is rolled back (300) |
 
 `deploy/.env.example` explains each one.
+
+## Backups of the Hub and the identity provider (OP-10)
+
+With the forums' backups, the Hub dumps its own database (`hub-…dump`) and Zitadel's
+(`zitadel-…dump`) with `pg_dump`, into the `exports` volume under `/data/exports/_hub/`,
+and keeps the newest 14 of each. **Server** shows the newest of each, whether the last run
+failed, and **Back up the Hub now**.
+
+A dump alone is not enough: the Hub's secrets in it are encrypted with `HUB_SECRETS_KEY` and
+Zitadel's with `ZITADEL_MASTERKEY`, both in `deploy/.env`. Keep a copy of that file away from
+the server.
+
+To put them back (on the same server, or a new one installed with the same `deploy/.env`),
+with the Hub and Zitadel stopped:
+
+```sh
+H="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
+$H stop hub zitadel zitadel-login
+$H run --rm --no-deps -T --entrypoint cat hub /data/exports/_hub/hub-YYYYMMDD-HHMMSS.dump \
+  | $H exec -T db pg_restore -U postgres --clean --if-exists -d idejo_hub
+$H run --rm --no-deps -T --entrypoint cat hub /data/exports/_hub/zitadel-YYYYMMDD-HHMMSS.dump \
+  | $H exec -T db pg_restore -U postgres --clean --if-exists -d zitadel
+$H up -d
+```
+
+Forums are not in these dumps: restore each from its own backup (OP-03).
 
 ## Moving a forum to a standalone Idejo (FL-06)
 

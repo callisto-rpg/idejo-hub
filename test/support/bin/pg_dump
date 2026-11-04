@@ -1,0 +1,18 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# OP-10 tests: stands in for pg_dump. Writes what it was asked to dump to --file; a database
+# named "*_fails" fails as pg_dump does.
+file=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --file) file="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+case "$PGDATABASE" in
+  *_fails) echo "pg_dump: error: connection to server failed" >&2; exit 1 ;;
+esac
+printf 'dump of %s as %s on %s:%s (password %s)\n' \
+  "$PGDATABASE" "$PGUSER" "$PGHOST" "$PGPORT" "${PGPASSWORD:+set}" > "$file"

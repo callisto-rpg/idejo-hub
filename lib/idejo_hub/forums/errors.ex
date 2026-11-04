@@ -19,6 +19,8 @@ defmodule IdejoHub.Forums.Errors do
   def describe(:backup_file_not_named), do: "idejo-admin backup did not name its file"
   def describe({:archive, _reason}), do: "the backup could not be copied out"
   def describe({:command_exit, command, code}), do: "idejo-admin #{command} exited with #{code}"
+  def describe({:pg_dump_exit, code}), do: "pg_dump exited with #{code}"
+  def describe({:pg_dump_missing, _}), do: "pg_dump is not installed"
   def describe({:error, reason}), do: describe(reason)
   def describe({:file, reason}), do: "file: #{reason}"
   def describe({:posix, reason}), do: "file: #{reason}"
