@@ -53,6 +53,11 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
+Supported Idejo versions (Hub NF-06): **0.2.0**, the default for new forums
+(`IDEJO_DEFAULT_VERSION`), and the first with the shared-identity commands and OIDC client
+(AC-09). Forums on 0.1.0 still run, back up and upgrade, but have no `stats` and no shared
+sign-in; upgrade them to 0.2.0.
+
 ## Stack
 
 Same as Idejo, so skills, tooling and visual language are shared (HA): Elixir + Phoenix
@@ -414,6 +419,8 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 
 - [x] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. Done
   2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
+  2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
+  the Hub's default version since then.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).
