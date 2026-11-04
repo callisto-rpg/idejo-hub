@@ -13,6 +13,10 @@ defmodule IdejoHub.Forums.Subdomain do
   - it has no `--`, so it can never look like an internationalised (`xn--`) label.
 
   The reserved list holds names the Hub, mail or common services may need on the same domain.
+  On top of it, when the Hub's own host or the members' sign-in host is one label under the
+  forum domain (`hub.example.com` and `login.example.com` with forums on `example.com`),
+  that label is refused too (`own_labels/0`), whatever the list says: such a forum would
+  claim the Hub's address.
   """
 
   import Ecto.Changeset
@@ -51,12 +55,42 @@ defmodule IdejoHub.Forums.Subdomain do
       name in @reserved ->
         {:error, "is reserved"}
 
+      name in own_labels() ->
+        {:error, "is the address of the Hub or its sign-in"}
+
       true ->
         :ok
     end
   end
 
   def validate(_name), do: {:error, "must be text"}
+
+  @doc """
+  The labels of the Hub's own hosts (its address, `PHX_HOST`, and the sign-in address,
+  `IDEJO_ID_DOMAIN`) that sit one label under the forum domain.
+  """
+  @spec own_labels() :: [String.t()]
+  def own_labels do
+    hosts = [
+      Application.fetch_env!(:idejo_hub, IdejoHubWeb.Endpoint)[:url][:host],
+      Application.get_env(:idejo_hub, IdejoHub.Identity, [])[:domain]
+    ]
+
+    labels_under(hosts, Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain])
+  end
+
+  @doc "The labels of `hosts` that are exactly one label under `domain`."
+  @spec labels_under([String.t() | nil], String.t()) :: [String.t()]
+  def labels_under(hosts, domain) do
+    suffix = "." <> String.downcase(domain)
+
+    for host when is_binary(host) <- hosts,
+        host = String.downcase(host),
+        String.ends_with?(host, suffix),
+        label = String.replace_suffix(host, suffix, ""),
+        label != "" and not String.contains?(label, "."),
+        do: label
+  end
 
   @doc "Adds FL-03's rules to a changeset field."
   @spec validate_subdomain(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
