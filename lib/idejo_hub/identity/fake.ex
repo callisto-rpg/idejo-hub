@@ -11,7 +11,16 @@ defmodule IdejoHub.Identity.Fake do
   def start do
     {:ok, pid} =
       Agent.start_link(fn ->
-        %{clients: %{}, failures: %{}, people: %{}, invites: [], configured: []}
+        %{
+          clients: %{},
+          failures: %{},
+          people: %{},
+          invites: [],
+          configured: [],
+          sign_ins: [],
+          deleted: [],
+          tokens: %{}
+        }
       end)
 
     Process.put(@key, pid)
@@ -61,6 +70,58 @@ defmodule IdejoHub.Identity.Fake do
       }
 
       {{:ok, client}, put_in(s, [:clients, client.app_id], Map.put(client, :host, host))}
+    end)
+  end
+
+  @impl true
+  def create_account_client(host), do: create_client("account:" <> host)
+
+  @doc "Records a sign-in of `user_id` to `client_id` (as a forum's or the Hub's would)."
+  def sign_in(user_id, client_id, at \\ DateTime.utc_now()),
+    do:
+      Agent.update(
+        server(),
+        &%{&1 | sign_ins: &1.sign_ins ++ [%{user_id: user_id, client_id: client_id, at: at}]}
+      )
+
+  @doc "The token endpoint will answer `code` with these ID token claims."
+  def put_code(code, claims), do: Agent.update(server(), &put_in(&1, [:tokens, code], claims))
+
+  @doc "People deleted (user ids)."
+  def deleted, do: Agent.get(server(), & &1.deleted)
+
+  @impl true
+  def sign_ins_since(since) do
+    call(:sign_ins_since, fn s ->
+      {{:ok, Enum.filter(s.sign_ins, &(since == nil or DateTime.compare(&1.at, since) != :lt))},
+       s}
+    end)
+  end
+
+  @impl true
+  def person(user_id) do
+    call(:person, fn s ->
+      case s.people[user_id] do
+        nil -> {{:error, :not_found}, s}
+        p -> {{:ok, %{email: p.email, display_name: p.display_name}}, s}
+      end
+    end)
+  end
+
+  @impl true
+  def delete_person(user_id) do
+    call(:delete_person, fn s ->
+      {:ok, %{s | people: Map.delete(s.people, user_id), deleted: s.deleted ++ [user_id]}}
+    end)
+  end
+
+  @impl true
+  def exchange_code(code, _verifier, _redirect_uri, _client_id, _secret) do
+    call(:exchange_code, fn s ->
+      case Map.pop(s.tokens, code) do
+        {nil, _} -> {{:error, {:status, 400, "token"}}, s}
+        {claims, tokens} -> {{:ok, claims}, %{s | tokens: tokens}}
+      end
     end)
   end
 

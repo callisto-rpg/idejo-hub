@@ -37,6 +37,14 @@ defmodule IdejoHubWeb.Router do
 
     get "/sign-up", SignupController, :new
     post "/sign-up", SignupController, :create
+
+    # ID-05, ID-06: the member's own page (signed in through the provider).
+    get "/", AccountController, :show
+    get "/sign-in", AccountController, :sign_in
+    get "/callback", AccountController, :callback
+    post "/sign-out", AccountController, :sign_out
+    post "/forums/:forum_id", AccountController, :leave
+    post "/delete", AccountController, :delete
   end
 
   # SC-08: sign-in, two-factor setup and code, sign-out.

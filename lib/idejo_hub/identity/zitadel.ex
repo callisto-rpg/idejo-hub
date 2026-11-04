@@ -20,10 +20,16 @@ defmodule IdejoHub.Identity.Zitadel do
   @project "Idejo forums"
 
   @impl true
-  def create_client(host) do
+  def create_client(host), do: create_app(host, host, "/users/oidc/callback")
+
+  # ID-05: the Hub's members' pages sign in like a forum, at their own callback.
+  @impl true
+  def create_account_client(host), do: create_app("Idejo ID account", host, "/account/callback")
+
+  defp create_app(name, host, callback) do
     body = %{
-      "name" => host,
-      "redirectUris" => ["https://#{host}/users/oidc/callback"],
+      "name" => name,
+      "redirectUris" => ["https://#{host}#{callback}"],
       "postLogoutRedirectUris" => ["https://#{host}/"],
       "responseTypes" => ["OIDC_RESPONSE_TYPE_CODE"],
       "grantTypes" => ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"],
@@ -200,6 +206,103 @@ defmodule IdejoHub.Identity.Zitadel do
            do: :ok
     else
       :ok
+    end
+  end
+
+  # ID-05: each sign-in to a client is an `oidc_session.added` event naming the user and the
+  # client; read from the instance's event store, oldest first, a page at a time.
+  @impl true
+  def sign_ins_since(since) do
+    body = %{
+      "limit" => 1000,
+      "asc" => true,
+      "eventTypes" => ["oidc_session.added"]
+    }
+
+    body =
+      if since,
+        do: Map.put(body, "creationDateRange", %{"since" => DateTime.to_iso8601(since)}),
+        else: body
+
+    with {:ok, result} <- request(:post, "/admin/v1/events/_search", body) do
+      {:ok, Enum.flat_map(result["events"] || [], &sign_in/1)}
+    end
+  end
+
+  defp sign_in(%{"payload" => %{"userID" => user, "clientID" => client}, "creationDate" => date}) do
+    case DateTime.from_iso8601(date) do
+      {:ok, at, _offset} -> [%{user_id: user, client_id: client, at: at}]
+      _bad -> []
+    end
+  end
+
+  defp sign_in(_other), do: []
+
+  @impl true
+  def person(user_id) do
+    case request(:get, "/v2/users/#{user_id}", nil) do
+      {:ok, %{"user" => %{"human" => human}}} ->
+        {:ok,
+         %{
+           email: get_in(human, ["email", "email"]),
+           display_name: get_in(human, ["profile", "displayName"])
+         }}
+
+      {:ok, _machine} ->
+        {:error, :not_found}
+
+      {:error, {:status, 404, _}} ->
+        {:error, :not_found}
+
+      error ->
+        error
+    end
+  end
+
+  @impl true
+  def delete_person(user_id) do
+    case request(:delete, "/v2/users/#{user_id}", nil) do
+      {:ok, _} -> :ok
+      {:error, {:status, 404, _}} -> :ok
+      error -> error
+    end
+  end
+
+  # The token endpoint, reached inside the bundle like the API: the ID token comes straight
+  # from the provider over the bundle's own network, so its claims are checked by the caller
+  # (issuer, audience, expiry, nonce) without fetching keys (OpenID Connect Core 3.1.3.7).
+  @impl true
+  def exchange_code(code, verifier, redirect_uri, client_id, secret) do
+    opts =
+      [
+        method: :post,
+        url: Identity.config(:api_url) <> "/oauth/v2/token",
+        headers: [{"host", Identity.config(:domain)}],
+        auth: {:basic, client_id <> ":" <> secret},
+        form: [
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: redirect_uri,
+          code_verifier: verifier
+        ],
+        retry: false,
+        receive_timeout: 15_000
+      ] ++ Application.get_env(:idejo_hub, :zitadel_req_options, [])
+
+    case Req.request(opts) do
+      {:ok, %Req.Response{status: 200, body: %{"id_token" => token}}} -> decode(token)
+      {:ok, %Req.Response{status: status}} -> {:error, {:status, status, "token"}}
+      {:error, exception} -> {:error, {:unreachable, Exception.message(exception)}}
+    end
+  end
+
+  defp decode(token) do
+    with [_header, payload, _signature] <- String.split(token, "."),
+         {:ok, json} <- Base.url_decode64(payload, padding: false),
+         {:ok, claims} when is_map(claims) <- Jason.decode(json) do
+      {:ok, claims}
+    else
+      _bad -> {:error, :bad_token}
     end
   end
 

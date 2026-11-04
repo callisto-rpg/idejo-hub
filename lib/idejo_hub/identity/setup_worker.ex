@@ -16,12 +16,17 @@ defmodule IdejoHub.Identity.SetupWorker do
     unique: [period: :infinity, states: [:available, :scheduled, :retryable]]
 
   alias IdejoHub.{Identity, Settings}
+  alias IdejoHub.Identity.Members
 
   @impl Oban.Worker
   def perform(_job) do
-    if Identity.enabled?(),
-      do: Identity.configure(Settings.shared_smtp(), "noreply@" <> Identity.config(:domain)),
-      else: :ok
+    if Identity.enabled?() do
+      with :ok <-
+             Identity.configure(Settings.shared_smtp(), "noreply@" <> Identity.config(:domain)),
+           do: Members.ensure_account_client()
+    else
+      :ok
+    end
   end
 
   @doc "Queues a run (nothing when the Hub has no identity provider)."
