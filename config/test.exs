@@ -67,3 +67,7 @@ config :phoenix,
 # SC-04: the key that encrypts forum secrets in the Hub database. Test only, never in
 # production (there it comes from HUB_SECRETS_KEY, config/runtime.exs).
 config :idejo_hub, IdejoHub.Secrets, key: "fcjlnmVauctvHV2aRFqBHgQaZIAaJpWxxfs8xi4Eu5c="
+
+# The suite's forums start on 0.1.0 so upgrade tests (OP-04, OP-05) have a newer 0.2.0 to go to;
+# production defaults to 0.2.0 (config.exs, runtime.exs).
+config :idejo_hub, IdejoHub.Forums, default_version: "0.1.0"

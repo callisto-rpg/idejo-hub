@@ -46,7 +46,7 @@ services:
       # ID-01: the identity provider's address, and the Hub's token for its API.
       IDEJO_ID_DOMAIN: ${IDEJO_ID_DOMAIN}
       ZITADEL_TOKEN_FILE: /zitadel-tokens/hub.pat
-      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.1.0}
+      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.2.0}
       # OP-01: forum backups (cron, UTC) and how many are kept per forum.
       IDEJO_HUB_BACKUP_CRON: ${IDEJO_HUB_BACKUP_CRON:-0 2 * * *}
       IDEJO_HUB_BACKUPS_KEPT: ${IDEJO_HUB_BACKUPS_KEPT:-14}
