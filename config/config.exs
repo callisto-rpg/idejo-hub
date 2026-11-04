@@ -58,6 +58,12 @@ config :idejo_hub, IdejoHub.Forums,
 # OP-04: how long an upgraded forum has to answer /health (its migrations run first).
 config :idejo_hub, IdejoHub.Operations, backups_kept: 14, upgrade_health_timeout: 300_000
 
+# OP-10: pg_dump for the Hub's database and the identity provider's (its role and password;
+# ZITADEL_DB_PASSWORD in production, none in development, so only the Hub's is dumped).
+config :idejo_hub, IdejoHub.Operations.HubBackup,
+  pg_dump: "pg_dump",
+  zitadel: [hostname: "db", port: 5432, username: "zitadel", database: "zitadel", password: nil]
+
 # ID-01: the identity provider (Zitadel) at its own host; the Hub's API token file.
 config :idejo_hub, IdejoHub.Identity,
   adapter: nil,

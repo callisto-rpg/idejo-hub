@@ -4,22 +4,43 @@
 defmodule IdejoHubWeb.ServerLive do
   @moduledoc """
   HA-04: the server page: CPU, memory, disk, PostgreSQL sizes and the forum containers
-  (`Operations.Server.snapshot/0`), refreshed every 10 seconds while open.
+  (`Operations.Server.snapshot/0`), refreshed every 10 seconds while open. OP-10: the newest
+  backup of the Hub's database and the identity provider's, the last run's outcome, and
+  "Back up the Hub now" (`Operations.backup_hub/1`).
   """
   use IdejoHubWeb, :live_view
 
-  alias IdejoHub.Operations.Server
+  alias IdejoHub.Operations
+  alias IdejoHub.Operations.{HubBackup, Server}
 
   @refresh 10_000
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: :timer.send_interval(@refresh, :refresh)
-    {:ok, assign(socket, page_title: "Server", server: Server.snapshot())}
+    {:ok, socket |> assign(page_title: "Server", server: Server.snapshot()) |> load_backups()}
   end
 
   @impl true
-  def handle_info(:refresh, socket), do: {:noreply, assign(socket, server: Server.snapshot())}
+  def handle_info(:refresh, socket),
+    do: {:noreply, socket |> assign(server: Server.snapshot()) |> load_backups()}
+
+  @impl true
+  def handle_event("backup_hub", _params, socket) do
+    message =
+      case Operations.backup_hub(socket.assigns.current_operator.email) do
+        {:ok, _job} -> "Hub backup started."
+        {:error, :already_running} -> "A Hub backup is already running."
+      end
+
+    {:noreply, put_flash(socket, :info, message)}
+  end
+
+  defp load_backups(socket),
+    do: assign(socket, hub_backups: HubBackup.latest(), hub_backup_run: HubBackup.last_run())
+
+  defp kind_label("hub"), do: "Hub database"
+  defp kind_label("zitadel"), do: "Identity provider (Zitadel)"
 
   defp bytes(n) when n >= 1_073_741_824, do: "#{Float.round(n / 1_073_741_824, 1)} GB"
   defp bytes(n) when n >= 1_048_576, do: "#{Float.round(n / 1_048_576, 1)} MB"
@@ -80,6 +101,37 @@ defmodule IdejoHubWeb.ServerLive do
             </tr>
           </tbody>
         </table>
+      </section>
+
+      <section id="hub-backups">
+        <h2 class="text-xl font-semibold">Hub backups</h2>
+        <p :if={@hub_backups == %{}}>None yet.</p>
+        <table :if={@hub_backups != %{}} class="table table-sm">
+          <thead>
+            <tr>
+              <th>What</th><th>Newest</th><th>Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr :for={{kind, b} <- Enum.sort(@hub_backups)} id={"hub-backup-#{kind}"}>
+              <td>{kind_label(kind)}</td>
+              <td>{Calendar.strftime(b.inserted_at, "%Y-%m-%d %H:%M")} UTC</td>
+              <td>{bytes(b.size)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p
+          :if={@hub_backup_run && @hub_backup_run.outcome == "failed"}
+          id="hub-backup-failed"
+          class="text-error"
+        >
+          The last Hub backup failed ({@hub_backup_run.details["failed"]}: {@hub_backup_run.details[
+            "error"
+          ]}).
+        </p>
+        <button id="backup-hub" class="btn btn-sm" phx-click="backup_hub">
+          Back up the Hub now
+        </button>
       </section>
 
       <section id="containers">

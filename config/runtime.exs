@@ -134,6 +134,17 @@ if config_env() == :prod do
     upgrade_health_timeout:
       String.to_integer(env_or.("IDEJO_HUB_UPGRADE_HEALTH_SECONDS", "300")) * 1000
 
+  # OP-10: the identity provider's database is dumped as its own role (steward decision
+  # 2026-11-04); without ZITADEL_DB_PASSWORD only the Hub's database is backed up.
+  config :idejo_hub, IdejoHub.Operations.HubBackup,
+    zitadel: [
+      hostname: env_or.("ZITADEL_DB_HOST", "db"),
+      port: 5432,
+      username: "zitadel",
+      database: "zitadel",
+      password: System.get_env("ZITADEL_DB_PASSWORD")
+    ]
+
   # FL-06: forum exports (the `exports` volume, deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Forums.Export, dir: "/data/exports"
 

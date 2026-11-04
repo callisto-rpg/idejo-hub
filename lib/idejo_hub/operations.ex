@@ -3,13 +3,25 @@
 
 defmodule IdejoHub.Operations do
   @moduledoc """
-  Operations across forums (OP). OP-05: `upgrade_all/2`.
+  Operations across forums (OP). OP-05: `upgrade_all/2`. OP-10: `backup_hub/1`.
   """
 
   import Ecto.Query
 
   alias IdejoHub.{Audit, Forums, Repo}
-  alias IdejoHub.Operations.BulkUpgradeWorker
+  alias IdejoHub.Operations.{BulkUpgradeWorker, HubBackupWorker}
+
+  @doc """
+  OP-10: queues a backup of the Hub's database and the identity provider's. One at a time:
+  while one is queued or running, `{:error, :already_running}`.
+  """
+  @spec backup_hub(String.t()) :: {:ok, Oban.Job.t()} | {:error, :already_running}
+  def backup_hub(actor) do
+    case Oban.insert(HubBackupWorker.new(%{"actor" => actor})) do
+      {:ok, %Oban.Job{conflict?: true}} -> {:error, :already_running}
+      {:ok, job} -> {:ok, job}
+    end
+  end
 
   @doc """
   OP-05: upgrades every running forum on an older version to `version`, one after another,
