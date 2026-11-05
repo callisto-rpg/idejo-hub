@@ -115,6 +115,21 @@ $H logs -f hub                                     # the Hub's log
 
 `deploy/.env.example` explains each one.
 
+## Watching your forums (OP-07)
+
+The **Forums** page is the health overview. Every minute the Hub asks each running forum
+whether it is healthy (its database is reachable and up to date) and how much memory it uses:
+
+- **Health**: *up*, or *down since* the time of the first check that found it down. Sort by
+  **Health** to put forums that are down first. A forum being backed up, upgraded or restored
+  is not checked until that is finished; a suspended forum shows "—".
+- **Memory**: what the forum uses, of the limit set when it was created (shown in amber past
+  90%).
+- **Version**, **Last backup** and **Size** (database and uploads, reported by the forum every
+  15 minutes) are in the same row.
+
+The page updates by itself. Emails when a forum stays down come with OP-08.
+
 ## Backups of the Hub and the identity provider (OP-10)
 
 With the forums' backups, the Hub dumps its own database (`hub-…dump`) and Zitadel's

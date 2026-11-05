@@ -28,6 +28,7 @@ defmodule IdejoHub.Hosting.Docker.Fake do
           execs: [],
           runs: [],
           files: %{},
+          memory: %{},
           copied: [],
           runs_seen: [],
           calls: []
@@ -193,6 +194,28 @@ defmodule IdejoHub.Hosting.Docker.Fake do
       case s.containers[id] do
         nil -> {{:error, :not_found}, s}
         c -> {{:ok, elem(run_rule(s.runs, c), 1)}, s}
+      end
+    end)
+  end
+
+  @doc "OP-07: the memory a running container reports (64 MiB unless set)."
+  def put_memory(id, bytes), do: update(&put_in(&1, [:memory, id], bytes))
+
+  @impl true
+  def stats(id) do
+    call(:stats, fn s ->
+      case s.containers[id] do
+        nil ->
+          {{:error, :not_found}, s}
+
+        %{"Running" => true} = c ->
+          limit = get_in(c, ["Spec", "HostConfig", "Memory"]) || 1_073_741_824
+
+          {{:ok, %{memory_bytes: Map.get(s.memory, id, 67_108_864), memory_limit_bytes: limit}},
+           s}
+
+        _stopped ->
+          {{:ok, %{memory_bytes: 0, memory_limit_bytes: 0}}, s}
       end
     end)
   end

@@ -122,6 +122,27 @@ defmodule IdejoHub.Hosting.Docker.Engine do
          do: {:ok, demultiplex(to_string(body))}
   end
 
+  # OP-07: one reading (`stream=false`, `one-shot=true`: no two-sample wait). Memory in use
+  # leaves out the page cache, as `docker stats` does (cgroup v2 `inactive_file`, v1 `cache`).
+  @impl true
+  def stats(id) do
+    case request(:get, "/containers/#{segment(id)}/stats",
+           params: [stream: false, "one-shot": true]
+         ) do
+      {:ok, %{"memory_stats" => %{"usage" => usage, "limit" => limit} = memory}} ->
+        cache =
+          get_in(memory, ["stats", "inactive_file"]) || get_in(memory, ["stats", "cache"]) || 0
+
+        {:ok, %{memory_bytes: max(usage - cache, 0), memory_limit_bytes: limit}}
+
+      {:ok, _other} ->
+        {:error, :no_memory_stats}
+
+      error ->
+        error
+    end
+  end
+
   # The archive endpoint answers a tar holding the file; it is streamed to disk (backups can
   # be large), then the one file is extracted. The tar comes from a forum's container, so it
   # must hold exactly one regular file named like the one asked for: no link, no directory,

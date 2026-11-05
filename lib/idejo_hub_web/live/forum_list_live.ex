@@ -8,6 +8,10 @@ defmodule IdejoHubWeb.ForumListLive do
   address (`?status=`, `?sort=`), so a view can be bookmarked. Changes show live
   (`Forums.subscribe/0`).
 
+  OP-07, the health overview: each running forum's health (its `/health`, up or down since
+  when) and memory use against its limit, both checked every minute
+  (`Operations.HealthWorker`); sorted by health, forums that are down come first.
+
   Members and disk use come from the forum itself (`idejo-admin stats`, kept by
   `Operations.StatsWorker` every 15 minutes), never its database. Without them (an Idejo
   before `stats`), members show "—" and the size is the latest backup's.
@@ -16,7 +20,7 @@ defmodule IdejoHubWeb.ForumListLive do
 
   alias IdejoHub.Forums
 
-  @sorts ~w(subdomain name status version members backup size)
+  @sorts ~w(subdomain name status health version members memory backup size)
 
   @impl true
   def mount(_params, _session, socket) do
@@ -85,10 +89,39 @@ defmodule IdejoHubWeb.ForumListLive do
 
   defp sort(rows, "backup"), do: Enum.sort_by(rows, &backup_at/1, :asc)
 
+  # OP-07: down first, then not checked, then up.
+  defp sort(rows, "health"),
+    do: Enum.sort_by(rows, &{health_rank(&1.forum.health), &1.forum.subdomain})
+
+  defp sort(rows, "memory"), do: Enum.sort_by(rows, &(&1.forum.memory_bytes || -1), :desc)
+
   defp sort(rows, "size"),
     do: Enum.sort_by(rows, &((&1.last_backup && &1.last_backup.size) || 0), :desc)
 
   defp sort(rows, _subdomain), do: Enum.sort_by(rows, & &1.forum.subdomain)
+
+  defp health_rank("down"), do: 0
+  defp health_rank(nil), do: 1
+  defp health_rank("ok"), do: 2
+
+  defp health_title(%{health_at: %DateTime{} = at}),
+    do: "checked #{Calendar.strftime(at, "%H:%M")} UTC"
+
+  defp health_title(%{status: "running"}), do: "not checked yet (every minute)"
+  defp health_title(_forum), do: "checked only while running"
+
+  defp memory(%{memory_bytes: used, memory_limit_bytes: limit})
+       when is_integer(used) and is_integer(limit) and limit > 0,
+       do: "#{size(used)} of #{size(limit)}"
+
+  defp memory(%{memory_bytes: used}) when is_integer(used), do: size(used)
+  defp memory(_forum), do: "—"
+
+  defp memory_high?(%{memory_bytes: used, memory_limit_bytes: limit})
+       when is_integer(used) and is_integer(limit) and limit > 0,
+       do: used > limit * 0.9
+
+  defp memory_high?(_forum), do: false
 
   # Never backed up first: the ones to look at.
   defp backup_at(%{last_backup: nil}), do: 0
@@ -187,8 +220,10 @@ defmodule IdejoHubWeb.ForumListLive do
                 {"name", "Name"},
                 {nil, "Owner"},
                 {"status", "Status"},
+                {"health", "Health"},
                 {"version", "Version"},
                 {"members", "Members"},
+                {"memory", "Memory"},
                 {"backup", "Last backup"},
                 {"size", "Size"}
               ]
@@ -214,8 +249,16 @@ defmodule IdejoHubWeb.ForumListLive do
               <span :if={f.step} class="text-sm">({f.step})</span>
               <span :if={f.error} class="text-sm text-error" title={f.error}>error</span>
             </td>
+            <td title={health_title(f)} class="health">
+              <span :if={f.health == "ok"} class="badge badge-success">up</span>
+              <span :if={f.health == "down"} class="badge badge-error">
+                down since {Calendar.strftime(f.down_since, "%H:%M")} UTC
+              </span>
+              <span :if={!f.health}>—</span>
+            </td>
             <td>{f.idejo_version}</td>
             <td title={members_title(f)}>{if f.members, do: f.members, else: "—"}</td>
+            <td class={["memory", memory_high?(f) && "text-warning"]}>{memory(f)}</td>
             <td>
               <time :if={b} datetime={DateTime.to_iso8601(b.inserted_at)}>
                 {Calendar.strftime(b.inserted_at, "%Y-%m-%d %H:%M")} UTC

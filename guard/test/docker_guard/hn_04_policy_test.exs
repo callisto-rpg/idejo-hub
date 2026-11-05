@@ -225,7 +225,8 @@ defmodule DockerGuard.HN04PolicyTest do
             {"POST", "stop"},
             {"POST", "wait"},
             {"PUT", "archive"},
-            {"GET", "logs"}
+            {"GET", "logs"},
+            {"GET", "stats"}
           ] do
         assert check(method, ["containers", "idejo-forum-tennis", action]) == :ok
       end
@@ -235,6 +236,7 @@ defmodule DockerGuard.HN04PolicyTest do
 
     test "other containers cannot be read, driven or removed" do
       assert check("GET", ["containers", "caddy", "json"]) == {:deny, :container_not_forum}
+      assert check("GET", ["containers", "caddy", "stats"]) == {:deny, :container_not_forum}
       assert check("POST", ["containers", "caddy", "stop"]) == {:deny, :container_not_forum}
       assert check("DELETE", ["containers", "caddy"]) == {:deny, :container_not_forum}
       assert check("GET", ["containers", "missing", "json"]) == {:deny, :unknown_container}
