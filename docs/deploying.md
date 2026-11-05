@@ -10,7 +10,7 @@ installs it (HN-08) and lists the commands an operator needs.
 
 ## What you need
 
-- A server running **Ubuntu 24.04 LTS** (the same as Idejo). Count about **400 MB of memory
+- A server running **Debian 13 (trixie)** (the same as Idejo). Count about **400 MB of memory
   per forum** plus 1 GB for the Hub, its database and Caddy: 4 GB holds four forums.
 - Two domain names you control, for example `hub.example.org` for the Hub and
   `forums.example.org` for the forums.
@@ -43,7 +43,11 @@ every forum.
 
 ## 2. Install
 
+Log in as root or as a user with `sudo`. A fresh Debian server may not have `git` yet, so
+install it first (as root, leave out `sudo`):
+
 ```sh
+sudo apt update && sudo apt install -y git ca-certificates curl
 git clone https://github.com/callisto-rpg/idejo-hub.git
 cd idejo-hub
 sudo deploy/install.sh
@@ -51,8 +55,8 @@ sudo deploy/install.sh
 
 The script:
 
-1. checks the system, and installs Docker's own packages (with the Compose plugin) if
-   missing, after asking;
+1. checks the system, installs `curl`, `openssl` and `ca-certificates` if missing, and
+   Docker's own packages for Debian (with the Compose plugin) if missing, after asking;
 2. asks for the Hub's address, the forum domain, the members' sign-in address (Enter keeps
    `id.<the Hub's address>`) and an email for Let's Encrypt;
 3. writes `deploy/.env` (readable by root only) with new random secrets;

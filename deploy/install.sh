@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# Installs Idejo Hub on a server (HN-08): Ubuntu 24.04 LTS, like Idejo. Run it from a clone
+# Installs Idejo Hub on a server (HN-08): Debian 13 (trixie), like Idejo. Run it from a clone
 # of this repository, as root (with sudo), or as a user who can already run Docker:
 #
 #   sudo deploy/install.sh
@@ -85,10 +85,22 @@ check_email() { [[ $2 =~ ^[^@[:space:]|]+@[^@[:space:]|]+\.[^@[:space:]|]+$ ]] |
 
 say "Checking the server"
 # shellcheck source=/dev/null
-if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = ubuntu ] && [ "${VERSION_ID:-}" = 24.04 ]; then
-  echo "Ubuntu 24.04: supported."
+if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ]; then
+  echo "Debian 13: supported."
 else
-  echo "Warning: Idejo Hub is supported on Ubuntu 24.04 LTS; this is ${PRETTY_NAME:-unknown}. Going on."
+  echo "Warning: Idejo Hub is supported on Debian 13 (trixie); this is ${PRETTY_NAME:-unknown}. Going on."
+fi
+
+# Tools this script needs; a minimal Debian install may lack some of them.
+missing=()
+command -v curl >/dev/null 2>&1 || missing+=(curl)
+command -v openssl >/dev/null 2>&1 || missing+=(openssl)
+[ -r /etc/ssl/certs/ca-certificates.crt ] || missing+=(ca-certificates)
+if [ ${#missing[@]} -gt 0 ]; then
+  say "Installing ${missing[*]}"
+  [ "$(id -u)" = 0 ] || die "${missing[*]} missing: run this as root (sudo) to install them"
+  apt-get update
+  apt-get install -y "${missing[@]}"
 fi
 
 if ! docker compose version >/dev/null 2>&1; then
@@ -98,12 +110,15 @@ if ! docker compose version >/dev/null 2>&1; then
     read -r -p "Docker with the Compose plugin is missing. Install it now? [y/N] " answer
     [ "$answer" = y ] || [ "$answer" = Y ] || die "Docker is needed: see docs/deploying.md"
   fi
+  # Docker's repository for this distribution (debian, or ubuntu on an unsupported system).
+  docker_os=debian
+  [ "${ID:-}" = ubuntu ] && docker_os=ubuntu
   apt-get update
   apt-get install -y ca-certificates curl
   install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  curl -fsSL "https://download.docker.com/linux/$docker_os/gpg" -o /etc/apt/keyrings/docker.asc
   chmod a+r /etc/apt/keyrings/docker.asc
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME:-noble} stable" \
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$docker_os ${VERSION_CODENAME:-trixie} stable" \
     >/etc/apt/sources.list.d/docker.list
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
