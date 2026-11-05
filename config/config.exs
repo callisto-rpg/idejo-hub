@@ -78,6 +78,9 @@ config :idejo_hub, IdejoHub.Identity,
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)
 
+# FL-07: the largest standalone backup the import form takes (IDEJO_HUB_IMPORT_MAX_MB).
+config :idejo_hub, IdejoHub.Forums.Import, max_bytes: 4096 * 1_048_576
+
 # FL-04: where suspended forums are marked for Caddy (a volume shared with it in deploy/).
 config :idejo_hub, IdejoHub.Hosting.Maintenance,
   dir: Path.expand("../tmp/forum-state/suspended", __DIR__)

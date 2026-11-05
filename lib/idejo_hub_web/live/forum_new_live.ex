@@ -25,7 +25,10 @@ defmodule IdejoHubWeb.ForumNewLive do
   @impl true
   def handle_event("validate", %{"forum" => params}, socket) do
     changeset =
-      params |> Forums.change_new_forum() |> availability() |> Map.put(:action, :validate)
+      params
+      |> Forums.change_new_forum()
+      |> Forums.check_available()
+      |> Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
   end
@@ -41,16 +44,6 @@ defmodule IdejoHubWeb.ForumNewLive do
       {:error, changeset} ->
         {:noreply, assign_form(socket, changeset)}
     end
-  end
-
-  # FL-03's rules are in the changeset; this adds "already used", before the database says so.
-  defp availability(changeset) do
-    subdomain = Ecto.Changeset.get_field(changeset, :subdomain)
-
-    if changeset.errors[:subdomain] == nil and is_binary(subdomain) and
-         Forums.get_by_subdomain(subdomain),
-       do: Ecto.Changeset.add_error(changeset, :subdomain, "is already used by another forum"),
-       else: changeset
   end
 
   defp assign_form(socket, changeset) do

@@ -193,6 +193,39 @@ A forum's export is a standard Idejo backup. To run it on its own server:
 Without the key the forum's data still restores; push notifications then need
 `bin/idejo-admin rotate-push-keys` and an SMTP password set in the forum must be entered again.
 
+## Bringing a standalone Idejo forum to the Hub (FL-07)
+
+A standalone install's backup becomes a new forum on the Hub, with its members, messages,
+uploads and settings:
+
+1. On the standalone server, make a backup and copy it out of the app's container (with
+   Idejo's `idejo` shortcut from its deployment guide):
+
+   ```sh
+   idejo exec app bin/idejo-admin backup        # prints "Backup written to /data/backups/idejo-….tar"
+   idejo cp app:/data/backups/idejo-YYYYMMDD-HHMMSS.tar .
+   ```
+
+   and download that file to your computer (`scp`).
+2. Optionally, note the standalone install's `SECRET_KEY_BASE` (its `deploy/.env`). With it,
+   the forum's push keys and an SMTP password set in its Admin → Email keep working. The key
+   then belongs to the Hub forum alone: stop the standalone install. Without it, the forum
+   gets its own key and new push keys (browsers subscribe again on their next visit), and an
+   SMTP password set in the forum must be entered again.
+3. In the Hub: **Forums → Import a standalone backup**. Choose the file, a subdomain, the
+   name, the owner's email and an Idejo version at least as new as the standalone's (an older
+   one refuses the backup), then **Import**.
+
+The Hub checks that the file is an Idejo backup, creates the forum behind the maintenance
+page (no setup: the backup brings its owner), restores the backup and starts it; the forum's
+page shows each step. The file stays in the forum's archives as kind `import`. Members keep
+signing in with their passwords (local accounts stay allowed) and can link an Idejo ID from
+their profile. The forum now answers at its Hub address only: links to the old address,
+including those inside messages, reach the old server.
+
+The largest file the form takes is `IDEJO_HUB_IMPORT_MAX_MB` (default 4096) in `deploy/.env`;
+while importing, the server needs about twice the file's size free.
+
 ## Applying changed settings to forums
 
 A forum's container gets its environment when it is made. After changing email settings in

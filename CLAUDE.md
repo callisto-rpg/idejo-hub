@@ -287,6 +287,19 @@ Design points (Implementation Prompt, Part B, milestone 2):
   are made again: `Forums.recreate_forum/2` (`RecreateWorker`: same version, volumes kept;
   running ones marked, restarted and health-checked, suspended ones left stopped) and
   `recreate_all/1` ("Apply to all forums now" in Settings; "Recreate" on a forum's page).
+- **Import** (FL-07, `Forums.import_forum/4`, `Forums.Import`, `ForumImportLive` at
+  `/forums/import`; steward decision 2026-11-05): a standalone `idejo-admin backup` archive,
+  uploaded by the operator (LiveView upload, at most `IDEJO_HUB_IMPORT_MAX_MB`, 4096), is
+  checked like Idejo's restore does (`Import.check/1`: only `manifest.json`,
+  `database.dump`, `uploads/<name>`; manifest format 1 with its migration; nothing extracted
+  but the manifest), then made a forum like OP-03's restore to new: `create_forum/3`'s
+  `attach:` stores it in the same transaction (`Import.store/2`: `<exports dir>/<subdomain>/
+  idejo-YYYYMMDD-HHMMSS.tar`, never over a kept file; `forum_exports` kind `import`, never
+  pruned; audited `forum.import` with file, size, SHA-256 and which key, never the key), no
+  headless setup, then `RestoreWorker`. Local accounts always on (ID-07: the members'
+  passwords come with it). The standalone's `SECRET_KEY_BASE`, when given (64+ characters),
+  moves with the data; else a new one and `rotate-push-keys`. The form checks its fields
+  and key before taking the file (`Forums.check_available/1`, `valid_import_key?/1`).
 - **Standalone key** (FL-06): `Forums.reveal_secret_key_base/2` hands the operator a forum's
   `SECRET_KEY_BASE` for a standalone restore of its export (Idejo encrypts its secret
   settings with it), audited `forum.secret_key_base.reveal` each time, kept by the Hub.
@@ -449,6 +462,9 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   so the Hub cannot read its own off-site copies. S3 endpoint, bucket and keys come from
   `deploy/.env` (shown, not edited, in Settings). The Hub keeps the newest 14 off-site per
   forum and per Hub database, deleting older ones (its keys need delete rights).
+- 2026-11-05 — FL-07 (import a standalone backup as a new forum) built ahead of "Later", at
+  the steward's request: uploaded from the operator's browser; local accounts stay on; the
+  standalone's `SECRET_KEY_BASE` optional (given, it moves with the data).
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)
@@ -467,7 +483,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   check `deploy/test/m3/run.sh` passed 2026-11-04 (with Idejo built from #268 and #269).
 - [ ] 4 — Hub 1.0 — OP-02, OP-06 to OP-10, SC-02, SC-03, SC-07, SC-10, HA-06 to HA-09, HN-06,
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
-- Later, do not start: FL-07 to FL-10, HN-03.
+- Later, do not start: FL-08 to FL-10, HN-03 (FL-07 built ahead: steward decision 2026-11-05).
 
 Current milestone: **4 — Hub 1.0**, started 2026-11-04 with OP-10 and OP-02 (steward's go-ahead).
 Exit checks for each milestone are

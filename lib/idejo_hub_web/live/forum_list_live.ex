@@ -135,9 +135,14 @@ defmodule IdejoHubWeb.ForumListLive do
     <Layouts.app flash={@flash} current_operator={@current_operator} wide>
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold">Forums</h1>
-        <.link navigate={~p"/forums/new"} id="new-forum-link" class="btn btn-primary btn-sm">
-          New forum
-        </.link>
+        <div class="flex gap-2">
+          <.link navigate={~p"/forums/import"} id="import-forum-link" class="btn btn-sm">
+            Import a standalone backup
+          </.link>
+          <.link navigate={~p"/forums/new"} id="new-forum-link" class="btn btn-primary btn-sm">
+            New forum
+          </.link>
+        </div>
       </div>
 
       <nav aria-label="Filter by status" id="status-filter" class="flex flex-wrap gap-2">

@@ -4,8 +4,9 @@
 defmodule IdejoHub.Forums.Archives do
   @moduledoc """
   Idejo backups the Hub keeps (`forum_exports` rows, files under the exports volume):
-  exports (FL-06, kind `export`), final exports (FL-05, `final`) and scheduled backups
-  (OP-01, `backup`, the newest 14 kept per forum).
+  exports (FL-06, kind `export`), final exports (FL-05, `final`), scheduled backups
+  (OP-01, `backup`, the newest 14 kept per forum) and imported standalone backups (FL-07,
+  `import`, from `Forums.Import`).
 
   Each comes from `idejo-admin backup` (Idejo AD-09) run in the forum's container or a
   one-off one: only a file named `/data/backups/idejo-YYYYMMDD-HHMMSS.tar` in its output is
@@ -69,10 +70,15 @@ defmodule IdejoHub.Forums.Archives do
   # sobelow_skip ["Traversal.FileModule"]
   defp delete_file(export), do: File.rm(Export.path(export))
 
-  # `file` is copy_from/3's result: the exports directory, a validated subdomain, and a name
-  # matched by @backup.
+  @doc """
+  Records `file`, already in `forum`'s directory of the Hub's store, as an archive of `kind`
+  (size and SHA-256 read from the file).
+  """
+  # `file` is copy_from/3's result, or Import.store/2's: the exports directory, a validated
+  # subdomain, and a backup's name.
   # sobelow_skip ["Traversal.FileModule"]
-  defp record(forum, kind, file) do
+  @spec record(map(), String.t(), String.t()) :: {:ok, Export.t()} | {:error, Ecto.Changeset.t()}
+  def record(forum, kind, file) do
     %{
       forum_id: forum.id,
       subdomain: forum.subdomain,
