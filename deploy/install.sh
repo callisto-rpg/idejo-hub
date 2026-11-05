@@ -91,6 +91,32 @@ else
   echo "Warning: Idejo Hub is supported on Debian 13 (trixie); this is ${PRETTY_NAME:-unknown}. Going on."
 fi
 
+# Docker's apt repository for this system (debian, or ubuntu on an unsupported system).
+docker_os=debian
+[ "${ID:-}" = ubuntu ] && docker_os=ubuntu
+docker_repo="https://download.docker.com/linux/$docker_os ${VERSION_CODENAME:-trixie} stable"
+docker_list=/etc/apt/sources.list.d/docker.list
+add_docker_repo() {
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL "https://download.docker.com/linux/$docker_os/gpg" -o /etc/apt/keyrings/docker.asc
+  chmod a+r /etc/apt/keyrings/docker.asc
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] $docker_repo" \
+    >"$docker_list"
+}
+
+# A Docker source for another system or release (an earlier run on Ubuntu's, say) makes
+# every apt-get update fail: take it away now, it is written again when needed.
+stale_docker_repo=false
+if [ -f "$docker_list" ] && ! grep -qF "$docker_repo" "$docker_list"; then
+  if [ "$(id -u)" = 0 ]; then
+    echo "Removing $docker_list: it is not Docker's repository for this system."
+    rm -f "$docker_list"
+    stale_docker_repo=true
+  else
+    echo "Warning: $docker_list is not Docker's repository for this system; apt may fail."
+  fi
+fi
+
 # Tools this script needs; a minimal Debian install may lack some of them.
 missing=()
 command -v curl >/dev/null 2>&1 || missing+=(curl)
@@ -110,18 +136,17 @@ if ! docker compose version >/dev/null 2>&1; then
     read -r -p "Docker with the Compose plugin is missing. Install it now? [y/N] " answer
     [ "$answer" = y ] || [ "$answer" = Y ] || die "Docker is needed: see docs/deploying.md"
   fi
-  # Docker's repository for this distribution (debian, or ubuntu on an unsupported system).
-  docker_os=debian
-  [ "${ID:-}" = ubuntu ] && docker_os=ubuntu
   apt-get update
   apt-get install -y ca-certificates curl
-  install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL "https://download.docker.com/linux/$docker_os/gpg" -o /etc/apt/keyrings/docker.asc
-  chmod a+r /etc/apt/keyrings/docker.asc
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$docker_os ${VERSION_CODENAME:-trixie} stable" \
-    >/etc/apt/sources.list.d/docker.list
+  add_docker_repo
   apt-get update
   apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+fi
+# Docker was already there but its source was removed above: put the right one back, so it
+# keeps getting updates.
+if $stale_docker_repo && [ ! -f "$docker_list" ]; then
+  add_docker_repo
+  echo "Added Docker's repository for this system to $docker_list."
 fi
 docker info >/dev/null 2>&1 || die "this user cannot run Docker: run it with sudo"
 echo "Docker: $(docker --version)"
