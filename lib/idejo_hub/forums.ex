@@ -23,6 +23,7 @@ defmodule IdejoHub.Forums do
     Export,
     ExportWorker,
     Forum,
+    Import,
     Mail,
     RecreateWorker,
     ResumeWorker,
@@ -51,6 +52,11 @@ defmodule IdejoHub.Forums do
   @doc """
   FL-01: records a new forum and queues its creation. `actor` names who asked (the operator;
   operator accounts come with SC-08). Returns the forum as `creating`.
+
+  Options: `secret_key_base:` (else a new one), `job_args:` for `CreateWorker`, and
+  `attach:`, a function given the inserted forum inside the same transaction, returning
+  `{:ok, job_args}` to add (FL-07 stores the imported archive there) or `{:error, reason}`,
+  which records nothing.
   """
   @spec create_forum(map(), String.t(), keyword()) ::
           {:ok, Forum.t()} | {:error, Ecto.Changeset.t()}
@@ -58,6 +64,7 @@ defmodule IdejoHub.Forums do
     changeset = change_new_forum(attrs)
     secret_key_base = Keyword.get_lazy(opts, :secret_key_base, &Secrets.new_secret_key_base/0)
     job_args = Keyword.get(opts, :job_args, %{})
+    attach = Keyword.get(opts, :attach, fn _forum -> {:ok, %{}} end)
 
     changeset =
       case Ecto.Changeset.fetch_field(changeset, :subdomain) do
@@ -79,13 +86,13 @@ defmodule IdejoHub.Forums do
              forum
              |> audit_request(actor)
              |> Repo.insert(),
-           {:ok, _job} <-
-             Oban.insert(
-               CreateWorker.new(Map.merge(%{"forum_id" => forum.id, "actor" => actor}, job_args))
-             ) do
+           {:attach, {:ok, attached}} <- {:attach, attach.(forum)},
+           args = %{"forum_id" => forum.id, "actor" => actor} |> Map.merge(job_args),
+           {:ok, _job} <- Oban.insert(CreateWorker.new(Map.merge(args, attached))) do
         forum
       else
         {:error, %Ecto.Changeset{data: %Forum{}} = changeset} -> Repo.rollback(changeset)
+        {:attach, {:error, reason}} -> Repo.rollback(reason)
         {:error, other} -> raise "FL-01: could not record the request: #{inspect(other)}"
       end
     end)
@@ -230,6 +237,87 @@ defmodule IdejoHub.Forums do
         secret_key_base: key,
         job_args: %{"restore" => %{"export_id" => export.id, "rotate_push_keys" => not move_key?}}
       )
+    end
+  end
+
+  @doc """
+  HA-02: adds "already used" to a form's changeset when its subdomain passes FL-03's rules
+  but a forum (not deleted) has it, before the database says so.
+  """
+  @spec check_available(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  def check_available(changeset) do
+    subdomain = Ecto.Changeset.get_field(changeset, :subdomain)
+
+    if changeset.errors[:subdomain] == nil and is_binary(subdomain) and
+         get_by_subdomain(subdomain),
+       do: Ecto.Changeset.add_error(changeset, :subdomain, "is already used by another forum"),
+       else: changeset
+  end
+
+  @doc "FL-07: whether a standalone `SECRET_KEY_BASE` given for an import can be used (empty: none)."
+  @spec valid_import_key?(String.t() | nil) :: boolean()
+  def valid_import_key?(key), do: match?({:ok, _key, _kept?}, import_key(key))
+
+  @doc "FL-07: a changeset for the import form (the create form's fields)."
+  @spec change_import(map()) :: Ecto.Changeset.t()
+  def change_import(attrs \\ %{}), do: change_new_forum(imported(attrs))
+
+  @doc """
+  FL-07: imports a standalone Idejo backup (the file at `path`, an `idejo-admin backup`
+  archive) as a new forum. The archive is checked first (`Forums.Import.check/1`), then the
+  forum is created (FL-01) like a restore to a new subdomain (OP-03): behind the maintenance
+  page, without headless setup (the archive brings its owner, members and settings), then
+  restored from the archive, kept in the forum's archives as kind `import`.
+
+  Local accounts stay on (ID-07): the members' passwords come with the archive, and none of
+  them has an Idejo ID link yet. Idejo encrypts its secret settings with `SECRET_KEY_BASE`:
+  given the standalone install's (`secret_key_base:`), they keep working (it then belongs
+  to this forum only, SC-04: the standalone install should stop); without it the forum gets
+  its own key and new push keys, and an SMTP password set in the forum's Admin → Email must
+  be entered again. Audited `forum.import` (file, size, SHA-256, which key; never the key).
+  """
+  @spec import_forum(Path.t(), map(), String.t(), keyword()) ::
+          {:ok, Forum.t()} | {:error, Ecto.Changeset.t() | :not_a_backup | :invalid_key | term()}
+  def import_forum(path, attrs, actor, opts \\ []) do
+    with {:ok, key, kept_key?} <- import_key(opts[:secret_key_base]),
+         {:ok, _manifest} <- Import.check(path) do
+      create_forum(imported(attrs), actor,
+        secret_key_base: key,
+        attach: fn forum -> attach_import(forum, path, actor, kept_key?) end
+      )
+    end
+  end
+
+  # FL-07 / ID-07: an imported forum's members have local accounts only.
+  defp imported(attrs),
+    do: attrs |> Map.new(fn {k, v} -> {to_string(k), v} end) |> Map.put("local_accounts", true)
+
+  defp import_key(key) when key in [nil, ""], do: {:ok, Secrets.new_secret_key_base(), false}
+
+  defp import_key(key) when is_binary(key) do
+    key = String.trim(key)
+
+    # Phoenix needs at least 64 bytes; a key never holds spaces.
+    if byte_size(key) >= 64 and not String.match?(key, ~r/\s/),
+      do: {:ok, key, true},
+      else: {:error, :invalid_key}
+  end
+
+  defp attach_import(forum, path, actor, kept_key?) do
+    with {:ok, export} <- Import.store(forum, path),
+         {:ok, _entry} <-
+           actor
+           |> Audit.changeset("forum.import", "requested", forum, %{
+             "file" => export.file_name,
+             "size" => export.size,
+             "sha256" => export.sha256,
+             "secret_key_base" => if(kept_key?, do: "standalone", else: "new")
+           })
+           |> Repo.insert() do
+      {:ok, %{"restore" => %{"export_id" => export.id, "rotate_push_keys" => not kept_key?}}}
+    else
+      {:error, %Ecto.Changeset{data: %Export{}}} -> {:error, :import_not_recorded}
+      error -> error
     end
   end
 

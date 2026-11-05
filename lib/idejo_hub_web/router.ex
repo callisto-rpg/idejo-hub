@@ -66,6 +66,8 @@ defmodule IdejoHubWeb.Router do
       live "/", ForumListLive, :index
       # HA-02
       live "/forums/new", ForumNewLive, :new
+      # FL-07
+      live "/forums/import", ForumImportLive, :new
       # HA-03
       live "/forums/:id", ForumShowLive, :show
       # HA-04

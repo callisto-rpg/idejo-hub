@@ -180,6 +180,10 @@ if config_env() == :prod do
   # FL-06: forum exports (the `exports` volume, deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Forums.Export, dir: "/data/exports"
 
+  # FL-07: the largest standalone backup the import form takes, in MB (default 4096).
+  config :idejo_hub, IdejoHub.Forums.Import,
+    max_bytes: String.to_integer(env_or.("IDEJO_HUB_IMPORT_MAX_MB", "4096")) * 1_048_576
+
   # FL-04: the volume Caddy reads (deploy/docker-compose.yml).
   config :idejo_hub, IdejoHub.Hosting.Maintenance, dir: "/data/forum-state/suspended"
 
