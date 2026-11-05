@@ -412,7 +412,7 @@ guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls p
 deploy/test/hn_08_install_settings.sh  # install.sh's settings step with a stand-in docker (CI)
 ```
 
-Production bundle (HN-08), on Ubuntu 24.04, step by step in `docs/deploying.md`:
+Production bundle (HN-08), on Debian 13 (trixie), step by step in `docs/deploying.md`:
 
 ```sh
 sudo deploy/install.sh    # asks for the domains (sign-in: --id-domain, default id.<hub>,
