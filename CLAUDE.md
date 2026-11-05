@@ -407,12 +407,14 @@ reuse lint                   # SPDX headers (LI-01)
 deploy/test/m2/run.sh        # milestone 2 exit check from the web interface (Docker; ~15 min)
 deploy/test/m3/run.sh        # milestone 3 exit check: sign up, two forums, roles, ban, delete (~6 min)
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
+deploy/test/hn_08_install_settings.sh  # install.sh's settings step with a stand-in docker (CI)
 ```
 
 Production bundle (HN-08), on Ubuntu 24.04, step by step in `docs/deploying.md`:
 
 ```sh
-sudo deploy/install.sh    # asks for the domains; writes deploy/.env once; starts it all
+sudo deploy/install.sh    # asks for the domains (sign-in: --id-domain, default id.<hub>,
+                          # fixed once written); writes deploy/.env once; starts it all
 ```
 
 `deploy/install.sh` never replaces a value already in `deploy/.env` (secrets above all). A new

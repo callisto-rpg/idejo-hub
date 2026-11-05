@@ -25,9 +25,21 @@ Point **three records** at the server, once. Adding a forum never needs a DNS ch
 | `id.hub.example.org` | A (and AAAA for IPv6) | the server's address (members' sign-in, Zitadel) |
 | `*.forums.example.org` | A (and AAAA for IPv6) | the server's address |
 
-The second one is a wildcard: `tennis.forums.example.org`, `chess.forums.example.org` and
+The third one is a wildcard: `tennis.forums.example.org`, `chess.forums.example.org` and
 any other forum name reach the server. Caddy gets a certificate for each forum the first
 time someone visits it, after asking the Hub that the forum exists (HN-02).
+
+The members' sign-in address is `id.<the Hub's address>` unless you choose another when
+installing; it **cannot be changed afterwards** (Zitadel keeps the address it first started
+with).
+
+Everything can also sit under one domain, for example the Hub at `hub.example.com`, sign-in
+at `login.example.com` and forums at `*.example.com`. Then the single `*.example.com` record
+covers all three, and no forum can be named `hub` or `login`. Keep explicit records for
+anything else on that domain that lives on another server (`www`, mail, a shop…): they
+win over the wildcard. Reserve those names in **Settings** too, so no forum takes one. If
+the site at `example.com` sets cookies for the whole domain, browsers also send them to
+every forum.
 
 ## 2. Install
 
@@ -41,7 +53,8 @@ The script:
 
 1. checks the system, and installs Docker's own packages (with the Compose plugin) if
    missing, after asking;
-2. asks for the Hub's address, the forum domain and an email for Let's Encrypt;
+2. asks for the Hub's address, the forum domain, the members' sign-in address (Enter keeps
+   `id.<the Hub's address>`) and an email for Let's Encrypt;
 3. writes `deploy/.env` (readable by root only) with new random secrets;
 4. checks the DNS records above and tells you what is missing;
 5. builds and starts the Hub, its database, Caddy, docker-guard and the socket proxy;
@@ -54,6 +67,9 @@ only adds what is missing. For a scripted install, give everything as options:
 sudo deploy/install.sh --yes --hub-domain hub.example.org --forum-domain forums.example.org \
   --acme-email ops@example.org --operator ops@example.org
 ```
+
+Add `--id-domain login.example.org` to choose the sign-in address (default
+`id.<hub domain>`). Once `deploy/.env` has one, a different `--id-domain` is refused.
 
 **Keep a copy of `deploy/.env` away from the server.** `HUB_SECRETS_KEY` above all: the
 forums' database passwords and keys are stored encrypted with it.
