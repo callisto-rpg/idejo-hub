@@ -141,7 +141,9 @@ Design points (Implementation Prompt, Part B, milestone 2):
   only for existing, non-deleted forums and the Hub's own host. No per-forum routes: the
   wildcard site sends `<subdomain>.IDEJO_FORUM_DOMAIN` to `idejo-forum-<subdomain>:4000`
   (so nothing to re-apply on boot), with `strict_sni_host` so the Host must match the
-  certificate. 502/503/504 go to `GET /internal/forum-unavailable` (being set up, paused,
+  certificate. When the Hub's or the sign-in host is one label under the forum domain, that
+  label is never a forum name (`Subdomain.own_labels/0`, FL-03), so the wildcard cannot claim
+  it. 502/503/504 go to `GET /internal/forum-unavailable` (being set up, paused,
   unavailable, or 404). `/internal/*` is refused from outside by Caddy and excluded from the
   Hub's `force_ssl` (Caddy calls it over plain http).
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
