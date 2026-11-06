@@ -53,10 +53,19 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.0**, the default for new forums
-(`IDEJO_DEFAULT_VERSION`), and the first with the shared-identity commands and OIDC client
-(AC-09). Forums on 0.1.0 still run, back up and upgrade, but have no `stats` and no shared
-sign-in; upgrade them to 0.2.0.
+Supported Idejo versions (Hub NF-06): **0.2.2**, the default for new forums
+(`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
+client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03). Forums on
+0.2.0 and 0.2.1 run as before but accept any custom CSS (their content security policy still
+refuses outside loads); forums on 0.1.0 still run, back up and upgrade, but have no `stats`
+and no shared sign-in. Upgrade them to 0.2.2.
+
+**SC-03** (custom CSS sanitised, third-party scripts forbidden) is Idejo's: a forum's
+stylesheet is its own setting, which the Hub never reads or writes. Idejo 0.2.2 checks it
+before saving (no `@import`, no `url()` but local paths and `data:`, nothing that ran script;
+`Idejo.Settings.Stylesheet`), and every Idejo page's content security policy refuses scripts
+and loads from other hosts (Idejo SP-04, SP-05). The Hub's part: new forums start on 0.2.2 or
+later (`test/idejo_hub/sc_03_custom_css_test.exs`).
 
 ## Stack
 
@@ -526,7 +535,8 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - [x] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. Done
   2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
   2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
-  the Hub's default version since then.
+  the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
+  since.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).
