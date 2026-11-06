@@ -245,6 +245,8 @@ defmodule IdejoHub.Identity.Zitadel do
         {:ok,
          %{
            email: get_in(human, ["email", "email"]),
+           # SC-07: only a verified address shows a forum's log to its owner.
+           email_verified: get_in(human, ["email", "isVerified"]) == true,
            display_name: get_in(human, ["profile", "displayName"])
          }}
 

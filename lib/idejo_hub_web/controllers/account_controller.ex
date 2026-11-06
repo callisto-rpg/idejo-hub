@@ -36,13 +36,32 @@ defmodule IdejoHubWeb.AccountController do
       member ->
         _ = Members.sync()
         subject = member["sub"]
+        person = person(subject)
 
         render(conn, :show,
-          person: person(subject),
+          person: person,
+          owned: owned(person),
           joins: Members.forums_of(subject),
           deletion: Members.deletion(subject),
           fresh?: fresh?(member)
         )
+    end
+  end
+
+  @doc """
+  SC-07: the audit log of a forum the signed-in member owns (its `owner_email` is their
+  verified Idejo ID address), newest 200 entries. Anyone else: not found, whether or not the
+  forum exists. Members who acted show as "a member", never by their identity.
+  """
+  def log(conn, %{"subdomain" => subdomain}) do
+    with %{} = member <- member(conn),
+         %{} = forum <- Enum.find(owned(person(member["sub"])), &(&1.subdomain == subdomain)) do
+      render(conn, :log,
+        forum: forum,
+        entries: IdejoHub.Audit.recent_for_forum(forum.id)
+      )
+    else
+      _ -> conn |> put_status(:not_found) |> put_view(IdejoHubWeb.ErrorHTML) |> render(:"404")
     end
   end
 
@@ -199,6 +218,12 @@ defmodule IdejoHubWeb.AccountController do
       _unavailable -> nil
     end
   end
+
+  # SC-07: the forums whose owner's email is this person's, once their provider has verified it.
+  defp owned(%{email: email, email_verified: true}) when is_binary(email),
+    do: IdejoHub.Forums.owned_by(email)
+
+  defp owned(_person), do: []
 
   defp email_matches?(subject, typed) when is_binary(typed) do
     case person(subject) do

@@ -79,10 +79,18 @@ defmodule IdejoHub.SCIsolationTest do
 
     # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's
     # own host they do not exist.
-    members = ["/account/sign-up", "/account", "/account/sign-in", "/account/callback"]
+    # SC-07's owner log is for its signed-in owner (tested in sc_07_owner_log_test.exs).
+    members = [
+      "/account/sign-up",
+      "/account",
+      "/account/sign-in",
+      "/account/callback",
+      "/account/forums/:subdomain/log"
+    ]
 
     for path <- members do
-      assert get(recycle(conn), path).status == 404, "#{path} answers on the Hub's host"
+      url = String.replace(path, ":subdomain", "x")
+      assert get(recycle(conn), url).status == 404, "#{path} answers on the Hub's host"
     end
 
     open = open ++ members
