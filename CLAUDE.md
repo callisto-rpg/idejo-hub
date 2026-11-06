@@ -535,6 +535,13 @@ Design points (Implementation Prompt, Part B, milestone 2):
   the audit log updates that page. When they would look is the operator's own text
   (`access_policy` in Settings, plain text, at most 4000 characters, blank lines part
   paragraphs); empty, the page says the operator has not said yet.
+- **Member pages' look** (steward request 2026-11-06): pages whose `Layouts.app` `title` is
+  not "Idejo Hub" (the Idejo ID site, the forums directory) sit in `.idejo-member`: Idejo's
+  fonts (Fraunces, Rubik; `priv/static/fonts`, OFL-1.1) and its default theme colours (gold
+  on cream, `#1d1a00` in the dark theme; `assets/css/app.css`, Idejo's own formulas), the
+  small Idejo logo by the title and the full one above the sign-up form
+  (`priv/static/images/logo*.svg`, CC-BY-4.0; NOTICE, REUSE.toml). Operators' pages keep
+  the Hub's theme. A change to Idejo's default colours or fonts is copied here.
 - **Member pages' standards** (Hub NF-07): every page under `/account` passes Idejo's own
   AX-01 audit (`IdejoHubWeb.Accessibility`, ported from Idejo's `test/support`;
   `test/idejo_hub_web/controllers/nf_07_member_pages_test.exs` lists the pages: a new member

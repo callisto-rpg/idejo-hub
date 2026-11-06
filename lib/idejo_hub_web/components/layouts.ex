@@ -48,61 +48,66 @@ defmodule IdejoHubWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <%!-- Hub NF-07 (as Idejo's AX-01): the keyboard's first stop leads past the header. --%>
-    <a
-      href="#main"
-      id="skip-link"
-      class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:p-2 focus:bg-base-100"
-    >
-      Skip to content
-    </a>
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1 flex items-center gap-4">
-        <a :if={@title == "Idejo Hub"} href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
-        <span :if={@title != "Idejo Hub"} class="text-lg font-semibold">{@title}</span>
-        <nav :if={@current_operator} aria-label="Hub" class="flex gap-3 text-sm">
-          <.link navigate={~p"/"}>Forums</.link>
-          <.link navigate={~p"/server"}>Server</.link>
-          <.link navigate={~p"/settings"}>Settings</.link>
-          <.link navigate={~p"/identities"}>Idejo IDs</.link>
-          <.link navigate={~p"/audit"}>Audit log</.link>
-          <.link :if={IdejoHub.Operators.owner?(@current_operator)} navigate={~p"/operators"}>
-            Operators
-          </.link>
-        </nav>
-      </div>
-      <div class="flex-none flex items-center gap-3">
-        <span :if={@current_operator} id="current-operator" class="text-sm">
-          {@current_operator.email}
-        </span>
-        <.form
-          :if={@current_operator}
-          for={%{}}
-          id="sign-out"
-          action={~p"/sign-out"}
-          method="delete"
-        >
-          <button class="btn btn-ghost btn-sm">Sign out</button>
-        </.form>
-        <.theme_toggle />
-      </div>
-    </header>
+    <div class={@title != "Idejo Hub" && "idejo-member min-h-screen"}>
+      <%!-- Hub NF-07 (as Idejo's AX-01): the keyboard's first stop leads past the header. --%>
+      <a
+        href="#main"
+        id="skip-link"
+        class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:p-2 focus:bg-base-100"
+      >
+        Skip to content
+      </a>
+      <header class="navbar px-4 sm:px-6 lg:px-8">
+        <div class="flex-1 flex items-center gap-4">
+          <a :if={@title == "Idejo Hub"} href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
+          <span :if={@title != "Idejo Hub"} class="flex items-center gap-2 text-lg font-semibold">
+            <img src={~p"/images/logo-small.svg"} alt="" class="member-mark" width="32" height="32" />
+            {@title}
+          </span>
+          <nav :if={@current_operator} aria-label="Hub" class="flex gap-3 text-sm">
+            <.link navigate={~p"/"}>Forums</.link>
+            <.link navigate={~p"/server"}>Server</.link>
+            <.link navigate={~p"/settings"}>Settings</.link>
+            <.link navigate={~p"/identities"}>Idejo IDs</.link>
+            <.link navigate={~p"/audit"}>Audit log</.link>
+            <.link :if={IdejoHub.Operators.owner?(@current_operator)} navigate={~p"/operators"}>
+              Operators
+            </.link>
+          </nav>
+        </div>
+        <div class="flex-none flex items-center gap-3">
+          <span :if={@current_operator} id="current-operator" class="text-sm">
+            {@current_operator.email}
+          </span>
+          <.form
+            :if={@current_operator}
+            for={%{}}
+            id="sign-out"
+            action={~p"/sign-out"}
+            method="delete"
+          >
+            <button class="btn btn-ghost btn-sm">Sign out</button>
+          </.form>
+          <.theme_toggle />
+        </div>
+      </header>
 
-    <main id="main" class="px-4 py-10 sm:px-6 lg:px-8">
-      <div class={["mx-auto space-y-4", if(@wide, do: "max-w-6xl", else: "max-w-2xl")]}>
-        {render_slot(@inner_block)}
-      </div>
-    </main>
+      <main id="main" class="px-4 py-10 sm:px-6 lg:px-8">
+        <div class={["mx-auto space-y-4", if(@wide, do: "max-w-6xl", else: "max-w-2xl")]}>
+          {render_slot(@inner_block)}
+        </div>
+      </main>
 
-    <%!-- Hub NF-07: members' pages link the privacy notice, as Idejo's footer does (AD-02). --%>
-    <footer :if={@title != "Idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
-      <div class="mx-auto max-w-2xl">
-        <%!-- Absolute: the directory (forums.<forum domain>) shows this footer too. --%>
-        <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>Privacy</a>
-      </div>
-    </footer>
+      <%!-- Hub NF-07: members' pages link the privacy notice, as Idejo's footer does (AD-02). --%>
+      <footer :if={@title != "Idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
+        <div class="mx-auto max-w-2xl">
+          <%!-- Absolute: the directory (forums.<forum domain>) shows this footer too. --%>
+          <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>Privacy</a>
+        </div>
+      </footer>
 
-    <.flash_group flash={@flash} />
+      <.flash_group flash={@flash} />
+    </div>
     """
   end
 
