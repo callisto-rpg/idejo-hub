@@ -55,7 +55,7 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.10**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.11**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
@@ -67,7 +67,8 @@ custom CSS (their content security policy still refuses outside loads); forums o
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
 0.2.10 (0.2.9 the first with `/logo`, the forum's logo for the directory's cards; before it,
 a card shows no logo; 0.2.10 the first that never names an account after its email and that
-takes and shares the Idejo ID profile, below).
+takes and shares the Idejo ID profile, below; 0.2.11 the first whose community menu fills
+its list: before it, the menu's script got 406 from the forum's `/community`).
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
