@@ -461,8 +461,9 @@ Design points (Implementation Prompt, Part B, milestone 2):
   to docker-guard (read from `deploy/docker-compose.yml`).
 - **Identity provider** (ID-01; steward decision 2026-11-03): Zitadel v4 (pinned by digest)
   and its separate login screen (`zitadel-login`) in the bundle, at `IDEJO_ID_DOMAIN`
-  (`id.<hub domain>`): Caddy sends `/ui/v2/login*` to the login screen and the rest to
-  Zitadel over h2c; the `ask` endpoint allows that host. Its own role and database on the
+  (`id.<hub domain>`): Caddy sends `/ui/v2/login*` to the login screen, `/account*` and the
+  files members' pages load (`/assets/css/*`, `/assets/js/*`, `/images/*`, `/fonts/*`; never
+  Zitadel's own `/assets/v1/*`) to the Hub, and the rest to Zitadel over h2c; the `ask` endpoint allows that host. Its own role and database on the
   shared PostgreSQL (`postgres-init/04-zitadel.sh`; the installer adds them to an existing
   volume), `start-from-init` with its own role as "admin" (never the superuser; its first
   connection to its own database, as `sameuser` allows). The first start makes org "Idejo",

@@ -54,12 +54,17 @@ defmodule IdejoHub.Hosting.NF05HubDownTest do
     assert forums =~ "reverse_proxy idejo-forum-{re.forum.1}:4000"
     assert forums =~ "root /srv/forum-state/suspended"
 
-    # Sign-in is Zitadel's; only the member page (/account) is the Hub's.
+    # Sign-in is Zitadel's; only the members' pages (/account) and the files they load are the
+    # Hub's, never Zitadel's own (its login screen, its /assets/v1/ files).
     identity = site(caddyfile, "{$IDEJO_ID_DOMAIN}")
     assert identity =~ "reverse_proxy h2c://zitadel:8080"
     assert identity =~ "reverse_proxy zitadel-login:3000"
     assert Regex.scan(~r/reverse_proxy hub:4000/, identity) |> length() == 1
-    assert identity =~ "handle /account* {\n\t\treverse_proxy hub:4000"
+
+    assert identity =~
+             "@hub path /account* /assets/css/* /assets/js/* /images/* /fonts/*\n\thandle @hub {\n\t\treverse_proxy hub:4000"
+
+    refute identity =~ ~r{@hub path[^\n]*(/ui/|/assets/v1|/assets/\*)}
   end
 
   test "NF-05 a forum's container needs nothing from the Hub to run" do

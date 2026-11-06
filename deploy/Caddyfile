@@ -67,8 +67,12 @@
 		reverse_proxy zitadel-login:3000
 	}
 
-	# ID-02: members' pages (sign-up, and later their forums) are the Hub's.
-	handle /account* {
+	# ID-02: members' pages (sign-up, and later their forums) are the Hub's, and so are the
+	# files those pages load: the Hub's stylesheet and script, Idejo's logos and fonts. Without
+	# this they went to Zitadel (404), and members' pages showed unstyled. Zitadel's own
+	# files are under /assets/v1/, which stays Zitadel's.
+	@hub path /account* /assets/css/* /assets/js/* /images/* /fonts/*
+	handle @hub {
 		reverse_proxy hub:4000
 	}
 
