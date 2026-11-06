@@ -85,7 +85,9 @@ defmodule IdejoHub.SCIsolationTest do
       "/account",
       "/account/sign-in",
       "/account/callback",
-      "/account/forums/:subdomain/log"
+      "/account/forums/:subdomain/log",
+      # SC-10: the disclosure page, public (tested in sc_10_disclosure_test.exs).
+      "/account/operator-access"
     ]
 
     for path <- members do

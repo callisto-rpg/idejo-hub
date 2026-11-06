@@ -46,6 +46,8 @@ defmodule IdejoHubWeb.Router do
     post "/forums/:forum_id", AccountController, :leave
     # SC-07: the audit log of a forum the member owns.
     get "/forums/:subdomain/log", AccountController, :log
+    # SC-10: what the Hub operator can access, and when they would (public).
+    get "/operator-access", AccountController, :operator_access
     post "/delete", AccountController, :delete
   end
 

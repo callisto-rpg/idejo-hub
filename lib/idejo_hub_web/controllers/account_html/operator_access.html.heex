@@ -1,0 +1,88 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<%!-- SC-10: for forum owners. What the Hub lets its operator do is fact, from how the Hub
+     works; when they would is theirs (Settings → access_policy). --%>
+<Layouts.app flash={@flash} title="Idejo ID">
+  <p><a href={~p"/account"}>← Your Idejo ID</a></p>
+  <h1 class="text-2xl font-semibold">What the Hub operator can access</h1>
+  <p>
+    Your forum runs on a server shared with other forums, run by the operator of this Idejo Hub.
+    You administer your forum inside it, as on a server of your own. This page says what the
+    operator can technically reach, and when they say they would.
+  </p>
+
+  <section id="access-hub" aria-labelledby="access-hub-heading" class="space-y-2">
+    <h2 id="access-hub-heading" class="text-xl font-semibold">Through the Hub</h2>
+    <ul class="list-disc pl-6 space-y-1">
+      <li>
+        <strong>Backups.</strong>
+        Your forum is backed up every day, and before each upgrade, export and deletion: full
+        copies of its database (every message, private conversations included, and members'
+        email addresses) and its uploaded files, kept on this server. The operator can download
+        them. Copies sent off the server are encrypted to a key the operator holds.
+      </li>
+      <li>
+        <strong>Running the forum.</strong>
+        The operator can pause and resume your forum, upgrade it, restore it from a backup
+        (anything written after that backup is lost), export it, and delete it.
+      </li>
+      <li>
+        <strong>Its secret key and email.</strong>
+        The operator can reveal your forum's secret key (needed to move it to a server of your
+        own). When your forum has no email settings of its own, its email goes through the
+        mail server the operator set.
+      </li>
+      <li>
+        <strong>Figures.</strong>
+        The Hub reads your forum's counts (members, topics, messages), its sizes, its memory
+        use and whether it answers; not what is in it.
+      </li>
+      <li>
+        <strong>Not through the Hub.</strong>
+        The Hub cannot open your forum's database while it runs, and the operator is never
+        made an owner or administrator of your forum.
+      </li>
+    </ul>
+  </section>
+
+  <section id="access-server" aria-labelledby="access-server-heading" class="space-y-2">
+    <h2 id="access-server-heading" class="text-xl font-semibold">On the server</h2>
+    <p>
+      Whoever administers the server can read anything stored on it, outside the Hub: your
+      forum's database and files included, as with any hosting.
+    </p>
+  </section>
+
+  <section id="access-identity" aria-labelledby="access-identity-heading" class="space-y-2">
+    <h2 id="access-identity-heading" class="text-xl font-semibold">Members' Idejo IDs</h2>
+    <p>
+      The shared sign-in (Idejo ID) keeps each person's email address and names, and which
+      forums they signed in to. Their passwords are never shown to the Hub or the operator.
+      The operator can lock an Idejo ID for abuse, which stops its sign-ins everywhere, and
+      delete one when asked. As the sign-in service's administrator, the operator could
+      technically change how a person signs in, and so sign in to forums as them.
+    </p>
+  </section>
+
+  <section id="access-log" aria-labelledby="access-log-heading" class="space-y-2">
+    <h2 id="access-log-heading" class="text-xl font-semibold">What is recorded</h2>
+    <p>
+      Everything the Hub does to your forum, and every backup the operator downloads or secret
+      key they reveal, is recorded in your forum's audit log, which you can read from
+      <a href={~p"/account"}>your Idejo ID</a>
+      (Forums you own → Audit log). What someone does on the server outside the Hub is not.
+    </p>
+  </section>
+
+  <section id="access-policy" aria-labelledby="access-policy-heading" class="space-y-2">
+    <h2 id="access-policy-heading" class="text-xl font-semibold">
+      When this operator would access a forum
+    </h2>
+    <p :if={@policy == []} id="access-policy-none">
+      The operator of this Hub has not said yet. Ask them before you rely on it.
+    </p>
+    <p :for={paragraph <- @policy} class="whitespace-pre-line">{paragraph}</p>
+  </section>
+</Layouts.app>

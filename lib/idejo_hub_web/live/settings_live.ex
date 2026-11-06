@@ -189,6 +189,27 @@ defmodule IdejoHubWeb.SettingsLive do
           </label>
         </section>
 
+        <%!-- SC-10: the "when" of the forum owners' disclosure page, in the operator's words. --%>
+        <section id="access-policy" class="space-y-2">
+          <h2 class="text-xl font-semibold">When you would access a forum</h2>
+          <p class="text-sm">
+            Shown to forum owners on <a href={IdejoHub.Identity.issuer() <> "/account/operator-access"}>what the Hub operator can access</a>,
+            under what the Hub lets you do. Say when you would look at a forum's data or act on
+            it (abuse reports, legal requests, recovery…), and how owners can reach you. Plain
+            text; a blank line starts a new paragraph.
+          </p>
+          <label class="block">
+            <span class="block text-sm font-medium">Your policy (at most 4000 characters)</span>
+            <textarea
+              name="settings[access_policy]"
+              id="setting-access_policy"
+              class="textarea w-full"
+              rows="8"
+            >{@values["access_policy"]}</textarea>
+            <span :if={@errors["access_policy"]} class="text-sm text-error">{@errors["access_policy"]}</span>
+          </label>
+        </section>
+
         <button class="btn btn-primary">Save</button>
       </form>
 
