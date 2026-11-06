@@ -53,16 +53,62 @@ defmodule IdejoHub.Forums.HN07FL02MailTest do
 
   describe "HN-07" do
     @tag req: "HN-07"
-    test "each forum sends from its own address, by default noreply@<host>" do
+    test "a new forum sends from the Hub's own sender, unchanged" do
       Fake.exec_result(
         @setup,
         {:ok, %{exit_code: 0, output: "An email … went to owner@example.test"}}
       )
 
+      # Steward request 2026-11-06: the Hub's settings as they are, no address of its own.
       forum = create("mail-tennis")
-      assert forum.mail_from == "noreply@mail-tennis.idejo.test"
-      assert "IDEJO_SMTP_FROM=noreply@mail-tennis.idejo.test" in env()
+      assert forum.mail_from == nil
+      assert "IDEJO_SMTP_FROM=#{IdejoHub.Settings.sender()}" in env()
+      assert IdejoHub.Settings.sender() == "noreply@" <> IdejoHubWeb.Endpoint.host()
       refute Enum.any?(env(), &String.starts_with?(&1, "IDEJO_SMTP_HOST="))
+    end
+
+    @tag req: "HN-07"
+    test "the Hub's email settings reach a new forum exactly, its sender included" do
+      Application.put_env(:idejo_hub, Mail,
+        shared_smtp: [
+          host: "smtp.example.test",
+          port: "465",
+          security: "tls",
+          username: "hub@example.test",
+          password: "pw",
+          from: "hello@example.test"
+        ]
+      )
+
+      create("mail-tennis")
+
+      for var <-
+            ~w(IDEJO_SMTP_HOST=smtp.example.test IDEJO_SMTP_PORT=465 IDEJO_SMTP_SECURITY=tls
+                    IDEJO_SMTP_USERNAME=hub@example.test IDEJO_SMTP_PASSWORD=pw
+                    IDEJO_SMTP_FROM=hello@example.test) do
+        assert var in env(), var
+      end
+
+      # The same sender as the Hub's own email.
+      assert IdejoHub.Mailer.from_address() == "hello@example.test"
+      assert Enum.count(env(), &String.starts_with?(&1, "IDEJO_SMTP_")) == 6
+    end
+
+    @tag req: "HN-07"
+    test "the Hub's sender can be set in Settings, like the rest of its SMTP" do
+      {:ok, _} =
+        IdejoHub.Settings.update(
+          %{"smtp_host" => "smtp.hub.test", "smtp_from" => "forums@hub.test"},
+          "op"
+        )
+
+      assert IdejoHub.Settings.sender() == "forums@hub.test"
+
+      assert {:error, %{"smtp_from" => _}} =
+               IdejoHub.Settings.update(%{"smtp_host" => "s", "smtp_from" => "nope"}, "op")
+
+      create("mail-tennis")
+      assert "IDEJO_SMTP_FROM=forums@hub.test" in env()
     end
 
     @tag req: "HN-07"

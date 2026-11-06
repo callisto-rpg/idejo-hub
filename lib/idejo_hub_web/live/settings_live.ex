@@ -157,6 +157,17 @@ defmodule IdejoHubWeb.SettingsLive do
             <input type="checkbox" name="settings[clear_smtp_password]" value="true" />
             Remove the password
           </label>
+          <.field
+            key="smtp_from"
+            label={"Sender address (empty: #{IdejoHub.Settings.sender()})"}
+            type="email"
+            value={@values["smtp_from"]}
+            errors={@errors}
+          />
+          <p class="text-sm">
+            The Hub's alerts and Idejo ID's emails send from it, and new forums get it as theirs:
+            they send exactly as the Hub does, under their own name.
+          </p>
         </section>
 
         <section id="alerts" class="space-y-2">

@@ -7,7 +7,7 @@ defmodule IdejoHub.Settings do
 
   | Key | What | Default |
   | --- | --- | --- |
-  | `smtp_host`, `smtp_port`, `smtp_security`, `smtp_username`, `smtp_password` | SMTP shared by forums (HN-07). Set here, it replaces `HUB_SMTP_*` as a whole; the password is encrypted (SC-04) | the environment |
+  | `smtp_host`, `smtp_port`, `smtp_security`, `smtp_username`, `smtp_password`, `smtp_from` | SMTP shared by forums (HN-07). Set here, it replaces `HUB_SMTP_*` as a whole; the password is encrypted (SC-04) | the environment |
   | `alert_email` | Where alerts go (OP-08, milestone 4) | none |
   | `reserved_subdomains` | Names refused for new forums, on top of FL-03's | none |
   | `access_policy` | When the operator would access a forum, in their words, on the forum owners' disclosure page (SC-10; plain text, at most 4000 characters) | none |
@@ -26,7 +26,7 @@ defmodule IdejoHub.Settings do
   alias IdejoHub.Identity.SetupWorker
   alias IdejoHub.Settings.Setting
 
-  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains access_policy privacy_notice)
+  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password smtp_from alert_email reserved_subdomains access_policy privacy_notice)
   @secret ~w(smtp_password)
 
   @doc "Every setting's stored value (secrets decrypted), missing ones as nil."
@@ -115,6 +115,9 @@ defmodule IdejoHub.Settings do
   defp check("smtp_security", s) when s in ["starttls", "tls", "none"], do: nil
   defp check("smtp_security", _), do: "must be starttls, tls or none"
 
+  defp check("smtp_from", email),
+    do: if(email =~ ~r/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/, do: nil, else: "must be an email address")
+
   defp check("alert_email", email),
     do: if(email =~ ~r/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/, do: nil, else: "must be an email address")
 
@@ -168,11 +171,26 @@ defmodule IdejoHub.Settings do
           port: s["smtp_port"],
           security: s["smtp_security"],
           username: s["smtp_username"],
-          password: s["smtp_password"]
+          password: s["smtp_password"],
+          from: s["smtp_from"]
         ]
 
       _none ->
         Application.get_env(:idejo_hub, IdejoHub.Forums.Mail, [])[:shared_smtp]
+    end
+  end
+
+  @doc """
+  The Hub's one sender address (steward request 2026-11-06): the shared SMTP's "Sender
+  address" (Settings, else `HUB_SMTP_FROM`), else `noreply@<the Hub's host>`. The Hub's
+  alerts and the identity provider's invites send from it, and new forums get it as their
+  own (`IDEJO_SMTP_FROM`), so they send exactly as the Hub does.
+  """
+  @spec sender() :: String.t()
+  def sender do
+    case (shared_smtp() || [])[:from] do
+      from when is_binary(from) and from != "" -> from
+      _ -> "noreply@" <> IdejoHubWeb.Endpoint.host()
     end
   end
 

@@ -89,7 +89,7 @@ defmodule IdejoHubWeb.ForumNewLive do
         <.input
           field={@form[:mail_from]}
           type="email"
-          label="Sender address (optional; default noreply@ its address)"
+          label="Sender address (optional; default the Hub's, as set in Settings)"
         />
         <.input
           field={@form[:local_accounts]}
