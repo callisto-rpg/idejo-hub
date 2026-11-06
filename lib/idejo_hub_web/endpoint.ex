@@ -7,18 +7,10 @@ defmodule IdejoHubWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  # SC-08: the session cookie is encrypted, HttpOnly, host-only (no Domain, as SC-01 asks of
-  # forums), SameSite=Strict (no operator page is reached from another site) and Secure
-  # outside development and tests.
-  @session_options [
-    store: :cookie,
-    key: "_idejo_hub_key",
-    signing_salt: "+asp2I0Z",
-    encryption_salt: "Gk3vQ0tL",
-    same_site: "Strict",
-    http_only: true,
-    secure: Application.compile_env(:idejo_hub, :secure_cookies, true)
-  ]
+  # SC-08, SC-02: see IdejoHubWeb.SessionCookie.
+  @session_options IdejoHubWeb.SessionCookie.options(
+                     Application.compile_env(:idejo_hub, :secure_cookies, true)
+                   )
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],

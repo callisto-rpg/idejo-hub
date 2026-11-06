@@ -262,8 +262,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   by a code; a code's 30 s step is kept so it works once; the previous step is accepted).
   Between the two, the session holds only `pending_operator_id` for five minutes. Five
   failures in a row lock the account for 15 minutes. Sessions: a random token in the
-  session cookie (encrypted, HttpOnly, SameSite=Strict, host-only, Secure outside dev and
-  tests), its SHA-256 in `operator_tokens`, 12 hours; sign-in renews the session.
+  session cookie (`IdejoHubWeb.SessionCookie`: encrypted, HttpOnly, SameSite=Strict,
+  host-only, Secure outside dev and tests, then named `__Host-idejo_hub` so no subdomain can
+  set it: SC-02), its SHA-256 in `operator_tokens`, 12 hours; sign-in renews the session.
+  **SC-02**: every forum is same-site to the Hub, so SameSite stops nothing from a forum's
+  pages: the CSRF token does. Every route that is not GET goes through `:browser`
+  (`:protect_from_forgery`); GET never changes anything but the audit log (archive
+  downloads); LiveView's socket needs the session's token (`connect_info: [session: …]`) and
+  the Hub's own origin (default `check_origin`, never set off outside development). A new
+  route is checked by `test/idejo_hub_web/sc_02_csrf_test.exs`. Forums: Idejo SP-05, SP-10.
   `bin/hub-admin reset-two-factor EMAIL` clears the setup and ends the sessions. Every
   operator page goes through the router's `:operator` pipeline; pass
   `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
