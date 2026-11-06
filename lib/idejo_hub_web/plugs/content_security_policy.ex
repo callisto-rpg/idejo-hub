@@ -35,7 +35,8 @@ defmodule IdejoHubWeb.Plugs.ContentSecurityPolicy do
         "default-src 'self'",
         "script-src 'self' 'nonce-#{script_nonce}'",
         "style-src 'self' 'nonce-#{style_nonce}'",
-        "img-src 'self' data: blob:",
+        # The forums directory shows each forum's logo, from its own host (`/logo`).
+        "img-src 'self' data: blob: https://*.#{Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain]}",
         "font-src 'self' data:",
         "connect-src 'self'",
         "object-src 'none'",

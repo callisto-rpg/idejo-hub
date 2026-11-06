@@ -38,15 +38,57 @@ defmodule IdejoHub.Community do
       Application.get_env(:idejo_hub, __MODULE__, [])[:url] ||
         "http://hub:4000/internal/community"
 
+  @per_page 10
+
   @doc "Running forums the operator has not hidden, by name."
   @spec directory() :: [Forum.t()]
-  def directory do
-    Repo.all(
-      from f in Forum,
-        where: f.status == "running" and f.listed,
-        order_by: [asc: fragment("lower(?)", f.display_name), asc: f.subdomain]
-    )
+  def directory, do: Repo.all(listed() |> order_by_name())
+
+  @doc """
+  One page of the directory (steward request 2026-11-06): forums whose name or subdomain holds
+  `search` (any case), #{@per_page} a page. `%{forums:, page:, pages:, total:, listed:}`, where
+  `listed` counts every listed forum (search and pages show past #{@per_page}).
+  """
+  @spec directory_page(String.t() | nil, pos_integer()) :: map()
+  def directory_page(search, page) do
+    search = (search || "") |> String.trim() |> String.slice(0, 100)
+
+    matching =
+      if search == "",
+        do: listed(),
+        else:
+          (
+            like = "%" <> String.replace(search, ~r/[\\%_]/, "\\\\\\0") <> "%"
+            from f in listed(), where: ilike(f.display_name, ^like) or ilike(f.subdomain, ^like)
+          )
+
+    total = Repo.aggregate(matching, :count)
+    pages = max(div(total + @per_page - 1, @per_page), 1)
+    page = page |> max(1) |> min(pages)
+
+    %{
+      forums:
+        Repo.all(
+          matching
+          |> order_by_name()
+          |> limit(@per_page)
+          |> offset(^((page - 1) * @per_page))
+        ),
+      page: page,
+      pages: pages,
+      total: total,
+      listed: Repo.aggregate(listed(), :count),
+      search: search
+    }
   end
+
+  @doc "How many forums a directory page holds."
+  def per_page, do: @per_page
+
+  defp listed, do: from(f in Forum, where: f.status == "running" and f.listed)
+
+  defp order_by_name(query),
+    do: order_by(query, [f], asc: fragment("lower(?)", f.display_name), asc: f.subdomain)
 
   @doc """
   The other running forums `subject` joined, for the forum whose client is `client_id` with

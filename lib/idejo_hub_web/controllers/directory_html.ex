@@ -6,4 +6,8 @@ defmodule IdejoHubWeb.DirectoryHTML do
   use IdejoHubWeb, :html
 
   embed_templates "directory_html/*"
+
+  @doc "The address parameters of another page of the same search."
+  def page_params(%{search: ""}, page), do: [page: page]
+  def page_params(%{search: search}, page), do: [q: search, page: page]
 end

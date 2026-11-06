@@ -11,10 +11,29 @@ defmodule IdejoHubWeb.DirectoryController do
 
   alias IdejoHub.{Community, Forums}
 
-  def index(conn, _params) do
+  def index(conn, params) do
+    page =
+      case Integer.parse(to_string(params["page"] || "1")) do
+        {n, ""} when n > 0 -> n
+        _ -> 1
+      end
+
+    result = Community.directory_page(params["q"], page)
+
     render(conn, :index,
       forums:
-        Enum.map(Community.directory(), &{&1.display_name, "https://" <> Forums.host(&1) <> "/"}),
+        Enum.map(result.forums, fn forum ->
+          host = Forums.host(forum)
+          # The forum's logo at Idejo's fixed address (0.2.9; steward request 2026-11-06).
+          %{
+            name: forum.display_name,
+            url: "https://#{host}/",
+            host: host,
+            logo: "https://#{host}/logo"
+          }
+        end),
+      result: result,
+      browse?: result.listed > Community.per_page(),
       page_title: "Forums"
     )
   end

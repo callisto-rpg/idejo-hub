@@ -106,7 +106,7 @@ if config_env() == :prod do
         environment variable IDEJO_FORUM_DOMAIN is missing.
         Set it to the domain forums are subdomains of, for example forums.example.org
         """),
-    default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.2.6")
+    default_version: System.get_env("IDEJO_DEFAULT_VERSION", "0.2.9")
 
   # OP-01: when forums are backed up (cron, UTC) and how many backups are kept per forum.
   # Empty means the default.

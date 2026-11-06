@@ -267,3 +267,32 @@
 /* The Idejo logos: the small one by the title, the full one above the sign-up form. */
 .idejo-member .member-mark { width: 2rem; height: 2rem; border-radius: 0.5rem; }
 .idejo-member .member-logo { display: block; width: 10rem; height: auto; margin: 0 auto 1.5rem; }
+
+/* The forums directory (steward request 2026-11-06): one card per forum, with its logo. */
+.directory-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+.directory-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 1.25rem 1rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.75rem;
+  background: var(--color-base-100);
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow 140ms ease, border-color 140ms ease;
+}
+.directory-card:hover, .directory-card:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+.idejo-member .directory-card { color: var(--color-base-content); }
+.directory-logo { width: 3.5rem; height: 3.5rem; object-fit: contain; border-radius: 0.75rem; }
+.directory-name { font-family: var(--font-title, inherit); font-size: 1.125rem; font-weight: 600; }
+.directory-host { font-size: 0.8125rem; opacity: 0.7; overflow-wrap: anywhere; }
