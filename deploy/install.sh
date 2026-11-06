@@ -206,11 +206,21 @@ if [ -z "$("${COMPOSE[@]}" exec -T db psql -U postgres -tAc "SELECT 1 FROM pg_ro
   "${COMPOSE[@]}" exec -T -e ZITADEL_DB_PASSWORD="$(env_get ZITADEL_DB_PASSWORD)" db \
     sh /docker-entrypoint-initdb.d/04-zitadel.sh
 fi
-"${COMPOSE[@]}" up -d --build --wait
+"${COMPOSE[@]}" up -d --build
 # The Caddyfile is a mounted file: `up` does not restart Caddy when only its content changed
-# (a Hub update adding a site, such as the forums directory), so Caddy reloads it here. A
-# reload keeps serving throughout: forums do not pause.
-"${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+# (a Hub update adding a site or a route), so Caddy reloads it here. A reload keeps serving
+# throughout: forums do not pause. Before waiting for health checks: a slow service (Zitadel
+# after an update) must not leave Caddy on the old routes.
+reloaded=false
+for _ in 1 2 3 4 5 6; do
+  if "${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
+    reloaded=true
+    break
+  fi
+  sleep 5
+done
+$reloaded || echo "Warning: Caddy did not reload deploy/Caddyfile; run: ${COMPOSE[*]} exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile" >&2
+"${COMPOSE[@]}" up -d --wait
 
 if [ -z "$operator" ] && ! $yes; then
   read -r -p "First operator's email (empty to skip; add one later with bin/hub-admin): " operator
