@@ -98,7 +98,9 @@ forums' database passwords and keys are stored encrypted with it.
 
 Open `https://hub.example.org`, sign in with the operator's email and password, and set up
 two-factor sign-in with an authenticator app (SC-08). Then create forums from the Forums
-page.
+page. A new forum requires an Idejo ID to sign in (its owner and administrators keep a
+password too); tick **Also allow local accounts** when creating it, or use **Allow local
+accounts** on its page later, for people without one.
 
 The first operator account is an **owner**. Owners also manage operator accounts on the
 **Operators** page: add one (its one-time password is shown there once), make it an owner or

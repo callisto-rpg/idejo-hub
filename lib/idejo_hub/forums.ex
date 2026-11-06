@@ -31,7 +31,11 @@ defmodule IdejoHub.Forums do
     SuspendWorker
   }
 
-  @doc "Defaults for a new forum's form: the configured Idejo version and limits."
+  @doc """
+  Defaults for a new forum's form: the configured Idejo version and limits, and Idejo ID
+  required (ID-07: local accounts only when the operator allows them; steward decision
+  2026-11-06).
+  """
   @spec defaults() :: map()
   def defaults do
     config = Application.fetch_env!(:idejo_hub, __MODULE__)
@@ -39,7 +43,8 @@ defmodule IdejoHub.Forums do
     %{
       idejo_version: config[:default_version],
       memory_mb: config[:default_memory_mb],
-      cpus: config[:default_cpus]
+      cpus: config[:default_cpus],
+      local_accounts: false
     }
   end
 
@@ -221,7 +226,9 @@ defmodule IdejoHub.Forums do
           "owner_email" => source.owner_email,
           "idejo_version" => source.idejo_version,
           "memory_mb" => source.memory_mb,
-          "cpus" => source.cpus
+          "cpus" => source.cpus,
+          # Its data comes with its members' accounts: the same choice (ID-07).
+          "local_accounts" => source.local_accounts
         },
         attrs
       )

@@ -479,7 +479,11 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `rotate_identity/2` rotates the secret and recreates. `container_params/1` gives
   `IDEJO_OIDC_ISSUER` (`https://IDEJO_ID_DOMAIN`), `_CLIENT_ID`, `_CLIENT_SECRET` (stored
   encrypted, `forum:<slug>:oidc_client_secret`), `_LABEL` ("Idejo ID") and
-  `IDEJO_LOCAL_ACCOUNTS` (`forums.local_accounts`, ID-07; always on without a client). On the
+  `IDEJO_LOCAL_ACCOUNTS` (`forums.local_accounts`, ID-07; always on without a client). New
+  forums require an Idejo ID (steward decision 2026-11-06: `Forums.defaults/0` has
+  `local_accounts: false`, the create form's "Also allow local accounts" unticked); imports
+  keep local accounts on, and a restore to a new subdomain takes its source's choice;
+  owners and administrators keep a password sign-in either way (Idejo AC-09). On the
   forum network Caddy answers to `IDEJO_ID_DOMAIN`, so forums reach the provider inside.
 - **Sign-up** (ID-02, ID-08; steward decision 2026-11-04): members' pages are under
   `/account` on `IDEJO_ID_DOMAIN` only (`Plugs.IdentityHost`, 404 elsewhere; Caddy sends

@@ -144,9 +144,13 @@ defmodule IdejoHub.Operations.OP03RestoreTest do
       forum: source,
       backup: backup
     } do
+      # A source allowing local accounts, unlike new forums' default (ID-07).
+      {:ok, source} = Forums.update_state(source, %{local_accounts: true})
       assert {:ok, new} = Forums.restore_to_new(backup, %{"subdomain" => "op03-b"}, "operator")
       assert new.display_name == source.display_name
       assert new.idejo_version == source.idejo_version
+      # Its members' accounts come with it: the same local-accounts choice (ID-07).
+      assert new.local_accounts == source.local_accounts
       {:ok, new_key} = Forums.secret(new, :secret_key_base)
       {:ok, source_key} = Forums.secret(source, :secret_key_base)
       assert new_key != source_key
