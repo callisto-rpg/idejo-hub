@@ -26,26 +26,29 @@ defmodule IdejoHub.Operations do
   @doc """
   OP-05: upgrades every running forum on an older version to `version`, one after another,
   stopping at the first failure (`BulkUpgradeWorker`). Forums that are not running are left
-  out and listed as skipped. One run at a time.
+  out and listed as skipped, and so are forums pinned to their version (OP-06), listed apart.
+  One run at a time.
   """
   @spec upgrade_all(String.t(), String.t()) ::
-          {:ok, %{run: String.t(), forums: [String.t()], skipped: [String.t()]}}
+          {:ok,
+           %{run: String.t(), forums: [String.t()], skipped: [String.t()], pinned: [String.t()]}}
           | {:error, :invalid_version | :nothing_to_upgrade | :already_running}
   def upgrade_all(version, actor) do
     with {:ok, target} <- parse(version),
          :ok <- not_running() do
-      {upgrade, skipped} =
+      {pinned, older} =
         Forums.list_forums()
         |> Enum.filter(&(Version.compare(Version.parse!(&1.idejo_version), target) == :lt))
-        |> Enum.split_with(&(&1.status == "running"))
+        |> Enum.split_with(& &1.pinned)
 
-      start(version, actor, upgrade, skipped)
+      {upgrade, skipped} = Enum.split_with(older, &(&1.status == "running"))
+      start(version, actor, upgrade, skipped, Enum.map(pinned, & &1.subdomain))
     end
   end
 
-  defp start(_version, _actor, [], _skipped), do: {:error, :nothing_to_upgrade}
+  defp start(_version, _actor, [], _skipped, _pinned), do: {:error, :nothing_to_upgrade}
 
-  defp start(version, actor, upgrade, skipped) do
+  defp start(version, actor, upgrade, skipped, pinned) do
     run = Ecto.UUID.generate()
     subdomains = Enum.map(upgrade, & &1.subdomain)
     skipped = Enum.map(skipped, & &1.subdomain)
@@ -55,7 +58,8 @@ defmodule IdejoHub.Operations do
         "run" => run,
         "version" => version,
         "forums" => subdomains,
-        "skipped" => skipped
+        "skipped" => skipped,
+        "pinned" => pinned
       })
 
     {:ok, _job} =
@@ -70,7 +74,7 @@ defmodule IdejoHub.Operations do
         })
       )
 
-    {:ok, %{run: run, forums: subdomains, skipped: skipped}}
+    {:ok, %{run: run, forums: subdomains, skipped: skipped, pinned: pinned}}
   end
 
   defp parse(version) do

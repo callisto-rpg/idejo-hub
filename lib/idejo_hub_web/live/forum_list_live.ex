@@ -46,9 +46,12 @@ defmodule IdejoHubWeb.ForumListLive do
            String.trim(version),
            socket.assigns.current_operator.email
          ) do
-      {:ok, %{forums: forums, skipped: skipped}} ->
+      {:ok, %{forums: forums, skipped: skipped, pinned: pinned}} ->
         skipped =
-          if skipped == [], do: "", else: " Skipped (not running): #{Enum.join(skipped, ", ")}."
+          if(skipped == [], do: "", else: " Skipped (not running): #{Enum.join(skipped, ", ")}.") <>
+            if pinned == [],
+              do: "",
+              else: " Pinned, left as they are: #{Enum.join(pinned, ", ")}."
 
         {:noreply,
          put_flash(
@@ -256,7 +259,14 @@ defmodule IdejoHubWeb.ForumListLive do
               </span>
               <span :if={!f.health}>—</span>
             </td>
-            <td>{f.idejo_version}</td>
+            <td>
+              {f.idejo_version}
+              <span
+                :if={f.pinned}
+                class="badge badge-sm badge-ghost"
+                title="Pinned: bulk upgrades leave it out"
+              >pinned</span>
+            </td>
             <td title={members_title(f)}>{if f.members, do: f.members, else: "—"}</td>
             <td class={["memory", memory_high?(f) && "text-warning"]}>{memory(f)}</td>
             <td>

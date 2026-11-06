@@ -68,6 +68,17 @@ defmodule IdejoHubWeb.ForumShowLive do
         "Upgrading to #{version}."
       )
 
+  defp run("pin", _p, forum, actor, socket),
+    do: done(socket, Forums.set_pinned(forum, true, actor), "Pinned to #{forum.idejo_version}.")
+
+  defp run("unpin", _p, forum, actor, socket),
+    do:
+      done(
+        socket,
+        Forums.set_pinned(forum, false, actor),
+        "Unpinned: bulk upgrades include it again."
+      )
+
   defp run("restore", %{"archive" => id}, forum, actor, socket) do
     case archive(forum, id) do
       nil -> put_flash(socket, :error, message(:not_its_archive))
@@ -274,6 +285,19 @@ defmodule IdejoHubWeb.ForumShowLive do
             data-confirm="Upgrade? It is backed up first and rolled back if unhealthy."
           >Upgrade</button>
         </form>
+
+        <%!-- OP-06: pinned, "Upgrade all forums" leaves it out; the form above still works. --%>
+        <div :if={@forum.status != "deleted"} id="pin" class="flex gap-2 items-center">
+          <p :if={@forum.pinned} class="text-sm">
+            Pinned to {@forum.idejo_version}: upgrades of all forums leave it out.
+          </p>
+          <button :if={!@forum.pinned} id="pin-version" phx-click="pin" class="btn btn-sm">
+            Pin to {@forum.idejo_version}
+          </button>
+          <button :if={@forum.pinned} id="unpin-version" phx-click="unpin" class="btn btn-sm">
+            Unpin
+          </button>
+        </div>
 
         <div
           :if={@forum.owner_invite == "operator" and (@forum.owner_link_enc || @owner_link)}
