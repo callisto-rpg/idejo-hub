@@ -10,8 +10,12 @@ installs it (HN-08) and lists the commands an operator needs.
 
 ## What you need
 
-- A server running **Debian 13 (trixie)** (the same as Idejo). Count about **400 MB of memory
-  per forum** plus 1 GB for the Hub, its database and Caddy: 4 GB holds four forums.
+- A server running **Debian 13 (trixie)** (the same as Idejo). **Recommended (Hub NF-03): 4 GB
+  of memory and 2 vCPU for up to 8 small forums; 8 GB for up to 20.** Measured on
+  2026-11-06 with 8 idle forums on Idejo 0.2.3: the forums use about 190 MiB each (1.5 GiB
+  in all; each may use up to its limit, 384 MB by default, when busy), the Hub, its
+  database, Zitadel, Caddy and docker-guard about 0.9 GiB: 2.4 GiB in all, leaving room for
+  the system and busy moments. CPU was not measured under load.
 - **1 to 30 forums** per server (NF-01). The database is sized for 30 and some more; past 30
   the Hub warns when you add a forum, and lets you. A server set up before Idejo Hub made
   room for 30 gets it when you run `sudo deploy/install.sh` again (the database restarts, so
