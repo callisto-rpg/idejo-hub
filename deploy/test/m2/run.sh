@@ -5,7 +5,8 @@
 # Hub milestone 2 exit check (Implementation Prompt, Part B): from the Hub's web interface,
 # create four forums, suspend and resume one, back up and restore one, upgrade all four with
 # one deliberately failing (it must roll back alone), export one and restore that export on a
-# standalone Idejo install, delete one. All within 4 GB.
+# standalone Idejo install, delete one. All within 4 GB. Step 4b also checks Hub NF-04:
+# each forum created in under 2 minutes, each upgrade under 1 minute of downtime.
 #
 # Needs Docker. Run from the repository root:  deploy/test/m2/run.sh
 # It removes everything it made, pass or fail, and exits non-zero on any failure.
@@ -30,6 +31,8 @@ budget=$((4 * 1024 * 1024 * 1024))
 
 compose() { docker compose -p "$project" -f "$root/deploy/docker-compose.yml" -f "$work/override.yml" --env-file "$work/.env" "$@"; }
 step() { printf '\n== %s\n' "$*"; }
+# The Hub's own answer to an Elixir expression (rpc also prints the VM's warnings).
+hub_rpc() { compose exec -T hub bin/idejo_hub rpc "$1" 2>/dev/null | tail -n 1; }
 
 cleanup() {
   status=$?
@@ -126,6 +129,40 @@ docker run --rm --name "$browser" --network "${project}_default" "${hosts[@]}" \
          npm init -y >/dev/null && npm install --no-audit --no-fund --silent playwright@1.49.1 &&
          node check.mjs'
 [ -f "$work/out/done" ] || { echo "the browser check did not finish"; exit 1; }
+
+step "4b. Hub NF-04: creating took under 2 minutes, each upgrade under 1 minute of downtime"
+# Read back from the audit log: forum.create's `seconds`, forum.upgrade's `downtime_seconds`.
+timings=$(hub_rpc '
+  import Ecto.Query
+  IdejoHub.Repo.all(from e in IdejoHub.Audit.Entry,
+      where: e.action in ["forum.create", "forum.upgrade"], order_by: e.id,
+      select: {e.action, e.outcome, e.subdomain, e.details})
+  |> Enum.flat_map(fn
+    {"forum.create", "ok", s, d} -> ["create #{s} #{d["seconds"]}"]
+    {"forum.upgrade", o, s, %{"downtime_seconds" => t}} -> ["upgrade-#{o} #{s} #{t}"]
+    _ -> []
+  end)
+  |> Enum.join(";")
+  |> IO.puts()')
+creates=0; upgrades=0
+IFS=';' read -ra rows <<<"$timings"
+for row in "${rows[@]}"; do
+  read -r kind forum secs <<<"$row"
+  case "$kind" in
+    create)
+      creates=$((creates + 1))
+      [ "$secs" -lt 120 ] || { echo "creating $forum took ${secs}s"; exit 1; }
+      echo "  ok  $forum created in ${secs}s" ;;
+    upgrade-ok)
+      upgrades=$((upgrades + 1))
+      [ "$secs" -lt 60 ] || { echo "upgrading $forum: ${secs}s of downtime"; exit 1; }
+      echo "  ok  $forum upgraded with ${secs}s of downtime" ;;
+    upgrade-failed) echo "  note  $forum's failed upgrade, rolled back: ${secs}s of downtime" ;;
+  esac
+done
+if [ "$creates" -lt 4 ] || [ "$upgrades" -lt 3 ]; then
+  echo "timings missing: $creates creations, $upgrades upgrades ($timings)"; exit 1
+fi
 
 step "5. charlie's export, restored on a standalone Idejo (no Hub)"
 docker network create "$standalone" >/dev/null

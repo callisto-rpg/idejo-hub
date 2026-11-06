@@ -138,7 +138,10 @@ for f in alpha bravo; do
   done
   [ "$s" = "running" ] || { echo "$f: $s ($(hub_rpc "IO.write(IdejoHub.Forums.get_by_subdomain(\"$f\").error || \"\")"))"; exit 1; }
   issuer=$(docker exec "idejo-forum-$f" printenv IDEJO_OIDC_ISSUER)
-  ok "$f running, signing in through $issuer"
+  # Hub NF-04: under 2 minutes from the request to a running forum.
+  secs=$(hub_rpc "IO.write(IdejoHub.Repo.get_by!(IdejoHub.Audit.Entry, action: \"forum.create\", outcome: \"ok\", subdomain: \"$f\").details[\"seconds\"])")
+  if [ -z "$secs" ] || [ "$secs" -ge 120 ]; then echo "$f: created in ${secs:-?}s"; exit 1; fi
+  ok "$f running in ${secs}s (Hub NF-04: under 2 minutes), signing in through $issuer"
 done
 
 browse() {

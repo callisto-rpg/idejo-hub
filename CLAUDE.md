@@ -284,13 +284,19 @@ Design points (Implementation Prompt, Part B, milestone 2):
   with its data; a live source's is never shared (SC-04), so the new forum gets its own and
   a one-off `rotate-push-keys --yes`, and a panel SMTP password must be entered again.
 - **Upgrade** (OP-04, `Operations.UpgradeWorker`): `Forums.upgrade_forum/3` (running, a newer
-  exact version only): mark the host, `idejo-admin backup` in the container kept as kind
-  `upgrade` (never pruned), pull the image (failures so far change nothing), then
+  exact version only): pull the image while the forum still runs (Hub NF-04; a failed pull
+  changes nothing), mark the host, `idejo-admin backup` in the container kept as kind
+  `upgrade` (never pruned; a failure so far removes the mark), then
   `ForumContainer.recreate/1` (stop, remove, create on the new version; volumes never
   touched) with `IDEJO_SOURCE_URL` following `forums.idejo_version` (LB-03), start, `/health`
   within `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` (300). Failure: recreate on the old version,
   restore the pre-upgrade backup in a one-off, start, health → `running` on the old version,
   audited `rolled_back: true`; if that fails too, stopped and marked as `suspended`.
+  **Hub NF-04**: the `forum.upgrade` entry's `downtime_seconds` (mark to unmark) and
+  `forum.create`'s `seconds` (request to running) are asserted on real containers by
+  `deploy/test/m2/run.sh` step 4b (upgrades under 60 s; measured 52 s each on 0.1.0 →
+  0.1.1 with half a CPU) and `deploy/test/m3/run.sh` step 4 (creation under 120 s;
+  measured 23–45 s).
 - **Upgrade all** (OP-05, `Operations.upgrade_all/2`, `Operations.BulkUpgradeWorker`): the
   running forums on an older version, by subdomain (others listed as skipped), one run at a
   time. Each step starts the next forum's OP-04 upgrade with `bulk:` (the run) in its
