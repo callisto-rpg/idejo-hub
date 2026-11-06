@@ -241,13 +241,14 @@ defmodule IdejoHub.Identity.Zitadel do
   @impl true
   def person(user_id) do
     case request(:get, "/v2/users/#{user_id}", nil) do
-      {:ok, %{"user" => %{"human" => human}}} ->
+      {:ok, %{"user" => %{"human" => human} = user}} ->
         {:ok,
          %{
            email: get_in(human, ["email", "email"]),
            # SC-07: only a verified address shows a forum's log to its owner.
            email_verified: get_in(human, ["email", "isVerified"]) == true,
-           display_name: get_in(human, ["profile", "displayName"])
+           display_name: get_in(human, ["profile", "displayName"]),
+           state: state(user["state"])
          }}
 
       {:ok, _machine} ->
@@ -258,6 +259,78 @@ defmodule IdejoHub.Identity.Zitadel do
 
       error ->
         error
+    end
+  end
+
+  # HA-06: humans only (not the Hub's machine users); email, display name or username
+  # containing the text, any case.
+  @impl true
+  def search_people(text) do
+    match = fn field, key ->
+      %{field => %{key => text, "method" => "TEXT_QUERY_METHOD_CONTAINS_IGNORE_CASE"}}
+    end
+
+    queries =
+      [%{"typeQuery" => %{"type" => "TYPE_HUMAN"}}] ++
+        if String.trim(text) == "",
+          do: [],
+          else: [
+            %{
+              "orQuery" => %{
+                "queries" => [
+                  match.("emailQuery", "emailAddress"),
+                  match.("displayNameQuery", "displayName"),
+                  match.("userNameQuery", "userName")
+                ]
+              }
+            }
+          ]
+
+    body = %{"query" => %{"limit" => 50, "asc" => true}, "queries" => queries}
+
+    with {:ok, result} <- request(:post, "/v2/users", body) do
+      {:ok, for(%{"human" => human} = user <- result["result"] || [], do: listed(user, human))}
+    end
+  end
+
+  defp listed(user, human) do
+    %{
+      id: user["userId"],
+      email: get_in(human, ["email", "email"]),
+      email_verified: get_in(human, ["email", "isVerified"]) == true,
+      display_name: get_in(human, ["profile", "displayName"]),
+      username: user["username"],
+      state: state(user["state"])
+    }
+  end
+
+  defp state("USER_STATE_" <> state), do: String.downcase(state)
+  defp state(_unknown), do: "unknown"
+
+  # Zitadel refuses to lock a locked person, or unlock one who is not: both are done already.
+  @impl true
+  def lock_person(user_id) do
+    case request(:post, "/v2/users/#{user_id}/lock", %{}) do
+      {:ok, _} -> :ok
+      {:error, {:status, _, "User is not active or initial" <> _}} -> already(user_id, "locked")
+      error -> error
+    end
+  end
+
+  @impl true
+  def unlock_person(user_id) do
+    case request(:post, "/v2/users/#{user_id}/unlock", %{}) do
+      {:ok, _} -> :ok
+      {:error, {:status, _, "User is not locked" <> _}} -> :ok
+      error -> error
+    end
+  end
+
+  defp already(user_id, wanted) do
+    case person(user_id) do
+      {:ok, %{state: ^wanted}} -> :ok
+      {:ok, %{state: other}} -> {:error, {:state, other}}
+      error -> error
     end
   end
 

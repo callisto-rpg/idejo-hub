@@ -56,6 +56,7 @@ defmodule IdejoHubWeb.Layouts do
           <.link navigate={~p"/"}>Forums</.link>
           <.link navigate={~p"/server"}>Server</.link>
           <.link navigate={~p"/settings"}>Settings</.link>
+          <.link navigate={~p"/identities"}>Idejo IDs</.link>
           <.link navigate={~p"/audit"}>Audit log</.link>
         </nav>
       </div>

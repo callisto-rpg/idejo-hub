@@ -396,6 +396,22 @@ Design points (Implementation Prompt, Part B, milestone 2):
   a refusal stops it with the reason (`identity_deletions.error`; asked again, it starts
   over). Audited as `member:<subject>` (`identity.forum_leave`, `identity.forum_delete`,
   `identity.delete`), never an email.
+- **Identity administration** (HA-06, `Identity.Admin`, `IdentitiesLive` at `/identities`,
+  `IdentityShowLive` at `/identities/:id`; extra review: DV-06): search Idejo IDs at the
+  provider (`Identity.search_people/1`: Zitadel `POST /v2/users`, humans only, email,
+  display name or username containing the text, any case, 50 at most; states `active`,
+  `locked`, `inactive`, `initial`); lock one for abuse with a reason, and unlock
+  (`lock_person/1`, `unlock_person/1`: `POST /v2/users/<id>/lock|unlock`; Zitadel refusing
+  because it is so already counts as done): the provider then refuses its sign-ins to every
+  forum and to the members' page; forum sessions already open are the forum's (bans there).
+  Deletion requests: the members' own (ID-06) listed under way, stopped (with why: Retry,
+  `Admin.retry/2`) or finished; one asked of the operator runs the same deletion
+  (`Admin.delete/4`: the ID's email typed again, who asked and how;
+  `Members.delete_identity/3` with the operator as actor). Audited `identity.lock`,
+  `identity.unlock` (with `reason`), `identity.delete` (`requested`, by the operator, with
+  `reason` or `retry`), by provider id (`subject`), never the email; each ID's page lists its
+  entries (`Admin.log/1`). Checked against Zitadel v4.20.1 (search, lock, unlock and their
+  repeats; replies in `test/idejo_hub/identity/ha_06_zitadel_test.exs`).
 - **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
   `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
   is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
