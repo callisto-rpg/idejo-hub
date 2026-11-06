@@ -130,6 +130,14 @@ whether it is healthy (its database is reachable and up to date) and how much me
 
 The page updates by itself.
 
+## Cookies and forms (SC-02)
+
+Every forum lives under the same domain as the Hub, so to a browser they are the same
+"site": a forum's page could send requests to the Hub with your session. The Hub refuses any
+change that does not carry the token of a page it served itself, and its session cookie
+(`__Host-idejo_hub`) cannot be set or replaced from a forum's address. After the update that
+brought this name, operators sign in again once.
+
 ## Idejo IDs (HA-06)
 
 **Idejo IDs**, in the header, is where you look after the shared sign-in:
