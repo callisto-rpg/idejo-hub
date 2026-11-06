@@ -103,6 +103,20 @@ leaving), and Remove deletes its client. Approved ones join the directory; the p
 leads back to a registered one. Audited `identity.outside_forum.register`, `.listing`,
 `.approve`, `.refuse`, `.remove`. Tests: `outside_forums_test.exs`.
 
+**Idejo ID profile** (steward decisions 2026-11-06; `Identity.Profiles`, table
+`identity_profiles`): an Idejo ID's public username and picture, never the email (the
+provider's own username stays the email, for signing in). Sign-up asks the username (Idejo's
+rules: letters, digits, underscores, 3 to 30; unique among IDs, any case); the member page
+(`#account-profile`) renames it and removes the picture. Pictures are WebP up to 512 KB
+(Idejo's avatars), public at `/account/pictures/<key>.webp` on the sign-in host (a new key
+at each change; `nosniff`, sandboxed). Forums ask, with their client credentials, about a
+person who signed in there (`Community.member_of_client?/3`: hosted forums by
+`identity_joins`, outside ones by `outside_joins`, recorded by `Members.sync/0`; read again
+once when not found): `GET`/`POST /internal/community/profile` (hosted) or
+`/account/api/profile` (outside), `{username, picture}`; `POST` with `username` and a Base64
+WebP `picture` fills only what the ID lacks (`Profiles.fill/2`: a later link never
+overwrites; a taken username is skipped). Tests: `identity_profile_test.exs`.
+
 **Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
 `RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own
 interface untouched (the one rule). `deploy/test/nf_02_idle_memory.sh` runs one forum as the

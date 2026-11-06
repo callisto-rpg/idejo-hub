@@ -29,6 +29,9 @@ defmodule IdejoHubWeb.SC02CSRFTest do
         not String.starts_with?(path, "/dev"),
         # The outside forums' JSON API: no session, no cookie (checked below).
         not String.starts_with?(path, "/account/api/"),
+        # Forums on the forum network, with their client credentials (Caddy refuses
+        # /internal/* from outside): no session either.
+        not String.starts_with?(path, "/internal/"),
         do: {verb, path}
   end
 
@@ -37,7 +40,7 @@ defmodule IdejoHubWeb.SC02CSRFTest do
       for %{path: "/account/api/" <> _ = path, verb: verb} <- IdejoHubWeb.Router.__routes__(),
           do: {verb, path}
 
-    assert length(api) == 4
+    assert length(api) == 6
     # Only the API's controller, through the :api pipeline (no :fetch_session, no forgery
     # protection): the router source says so.
     router = File.read!("lib/idejo_hub_web/router.ex")

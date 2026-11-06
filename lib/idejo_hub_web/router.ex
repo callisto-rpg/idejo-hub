@@ -51,6 +51,15 @@ defmodule IdejoHubWeb.Router do
     post "/registrations/verify", RegistryController, :verify
     get "/listing", RegistryController, :show_listing
     put "/listing", RegistryController, :update_listing
+    get "/profile", CommunityController, :profile
+    post "/profile", CommunityController, :fill_profile
+  end
+
+  # An Idejo ID's picture, public (steward decisions 2026-11-06).
+  scope "/account/pictures", IdejoHubWeb do
+    pipe_through [:identity_host]
+
+    get "/:key", PictureController, :show
   end
 
   scope "/account", IdejoHubWeb do
@@ -72,6 +81,8 @@ defmodule IdejoHubWeb.Router do
     # Hub NF-07: the privacy notice for members (public).
     get "/privacy", AccountController, :privacy
     post "/delete", AccountController, :delete
+    post "/profile", AccountController, :update_profile
+    post "/profile/picture", AccountController, :remove_picture
   end
 
   # SC-08: sign-in, two-factor setup and code, sign-out.
@@ -130,6 +141,8 @@ defmodule IdejoHubWeb.Router do
     get "/forum-unavailable", CaddyController, :forum_unavailable
     # Idejo's community menu, asked by forums on the forum network (steward decision 2026-11-06).
     get "/community", CommunityController, :index
+    get "/community/profile", CommunityController, :profile
+    post "/community/profile", CommunityController, :fill_profile
   end
 
   # Other scopes may use custom stacks.

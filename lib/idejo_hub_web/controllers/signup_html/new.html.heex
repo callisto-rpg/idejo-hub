@@ -35,6 +35,25 @@ SPDX-License-Identifier: AGPL-3.0-only
       <span :if={@errors["email"]} class="text-sm text-error">{@errors["email"]}</span>
     </label>
     <label class="block">
+      <span class="block font-medium">Username</span>
+      <span class="block text-sm">
+        Your public name on the forums, like @{"ada_l"}: 3 to 30 letters, digits or underscores.
+        Never your email.
+      </span>
+      <input
+        type="text"
+        name="signup[username]"
+        value={@form[:username].value}
+        required
+        minlength="3"
+        maxlength="30"
+        pattern="[A-Za-z0-9_]+"
+        autocomplete="username"
+        class="input w-full"
+      />
+      <span :if={@errors["username"]} class="text-sm text-error">{@errors["username"]}</span>
+    </label>
+    <label class="block">
       <span class="block font-medium">Display name</span>
       <span class="block text-sm">The name people see on the forums you join.</span>
       <input

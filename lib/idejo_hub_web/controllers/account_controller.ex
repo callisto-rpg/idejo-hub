@@ -20,7 +20,7 @@ defmodule IdejoHubWeb.AccountController do
   require Logger
 
   alias IdejoHub.Identity
-  alias IdejoHub.Identity.Members
+  alias IdejoHub.Identity.{Members, Profiles}
 
   @request_key "account_request"
   @member_key "member"
@@ -43,6 +43,7 @@ defmodule IdejoHubWeb.AccountController do
           owned: owned(person),
           joins: Members.forums_of(subject),
           deletion: Members.deletion(subject),
+          profile: Profiles.get(subject),
           fresh?: fresh?(member)
         )
     end
@@ -214,6 +215,34 @@ defmodule IdejoHubWeb.AccountController do
           {:error, :deleting} ->
             back(conn, "Your Idejo ID is already being deleted.")
         end
+    end
+  end
+
+  @doc """
+  The Idejo ID's public profile (steward decisions 2026-11-06): change the username, or
+  remove the picture (a forum fills it again when an account there is linked).
+  """
+  def update_profile(conn, %{"profile" => %{"username" => username}}) do
+    with %{"sub" => subject} <- member(conn) || :signed_out,
+         {:ok, _profile} <- Profiles.set_username(subject, username) do
+      conn
+      |> put_flash(:info, "Your username is now @#{String.trim(username)}.")
+      |> redirect(to: ~p"/account")
+    else
+      :signed_out -> redirect(conn, to: ~p"/account")
+      {:error, :taken} -> back(conn, "Another Idejo ID already has that username.")
+      {:error, :invalid} -> back(conn, "A username has 3 to 30 letters, digits or underscores.")
+    end
+  end
+
+  def remove_picture(conn, _params) do
+    case member(conn) do
+      %{"sub" => subject} ->
+        {:ok, _} = Profiles.remove_picture(subject)
+        conn |> put_flash(:info, "Your picture is removed.") |> redirect(to: ~p"/account")
+
+      nil ->
+        redirect(conn, to: ~p"/account")
     end
   end
 

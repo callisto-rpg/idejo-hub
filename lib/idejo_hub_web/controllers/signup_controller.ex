@@ -13,9 +13,9 @@ defmodule IdejoHubWeb.SignupController do
   use IdejoHubWeb, :controller
 
   alias IdejoHub.{Identity, RateLimit, Settings}
-  alias IdejoHub.Identity.OutsideForums
+  alias IdejoHub.Identity.{OutsideForums, Profiles}
 
-  @fields ~w(email display_name given_name family_name)
+  @fields ~w(email username display_name given_name family_name)
   @limit 5
   @window 3600
 
@@ -34,11 +34,16 @@ defmodule IdejoHubWeb.SignupController do
     with true <- Settings.shared_smtp() != nil || {:error, :closed},
          {:ok, person} <- validate(params),
          :ok <- RateLimit.hit({:signup, client_ip(conn)}, @limit, @window),
-         {:ok, user_id} <- Identity.create_person(person),
+         {:ok, user_id} <- Identity.create_person(Map.delete(person, :username)),
+         {:ok, _profile} <- Profiles.set_username(user_id, person.username),
          :ok <- Identity.send_invite(user_id) do
       render(conn, :sent, email: person.email)
     else
       {:error, errors} when is_map(errors) ->
+        conn |> put_status(422) |> render(:new, form: form(params), errors: errors, open?: true)
+
+      {:error, :taken} ->
+        errors = %{"username" => "Another Idejo ID already has that username."}
         conn |> put_status(422) |> render(:new, form: form(params), errors: errors, open?: true)
 
       {:error, :exists} ->
@@ -111,6 +116,17 @@ defmodule IdejoHubWeb.SignupController do
         "Give your email address."
       )
       |> check(
+        "username",
+        match?({:ok, _}, Profiles.check_username(params["username"])) and
+          not String.contains?(params["username"], "@"),
+        "Choose a username: 3 to 30 letters, digits or underscores."
+      )
+      |> check(
+        "username",
+        params["username"] == "" or Profiles.available?(params["username"]),
+        "Another Idejo ID already has that username."
+      )
+      |> check(
         "display_name",
         params["display_name"] != "" and String.length(params["display_name"]) <= 100,
         "Give the name people see (up to 100 characters)."
@@ -132,6 +148,7 @@ defmodule IdejoHubWeb.SignupController do
       {:ok,
        %{
          email: String.downcase(params["email"]),
+         username: params["username"],
          display_name: params["display_name"],
          given_name: blank_to(params["given_name"], given),
          family_name: blank_to(params["family_name"], family),
