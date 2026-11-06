@@ -288,6 +288,11 @@ Design points (Implementation Prompt, Part B, milestone 2):
   queues the next step, failure (rolled back or not) stops the run. Audited
   `forums.upgrade_all` (no forum): `requested` with the list, then `ok` with `done`, or
   `failed` with `done`, `failed`, `not_attempted`. A busy forum is waited for (snooze).
+- **Pin** (OP-06, `Forums.set_pinned/3`, `forums.pinned`): a pinned forum is left out of
+  upgrade all (listed as `pinned` in the run's `requested` entry and the flash), and skipped
+  by `BulkUpgradeWorker` when pinned after the run was asked for; a single upgrade still
+  works. "Pin to X.Y.Z" / "Unpin" on the forum's page (`#pin`), a "pinned" badge by the
+  version in the list. Audited `forum.pin` / `forum.unpin` with the version.
 - **Operator sign-in** (SC-08, `IdejoHub.Operators`, `IdejoHubWeb.OperatorAuth`,
   `SessionController`; extra review: DV-06): operators are made only by `bin/hub-admin
   create-operator EMAIL` (`IdejoHub.Release`; random password shown once; no sign-up page) and

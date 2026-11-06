@@ -48,6 +48,8 @@ defmodule IdejoHub.Forums.Forum do
     field :oidc_client_id, :string
     field :oidc_client_secret_enc, :binary, redact: true
     field :local_accounts, :boolean, default: true
+    # OP-06: left out of bulk upgrades (OP-05) while true.
+    field :pinned, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -130,7 +132,8 @@ defmodule IdejoHub.Forums.Forum do
       :oidc_app_id,
       :oidc_client_id,
       :oidc_client_secret_enc,
-      :local_accounts
+      :local_accounts,
+      :pinned
     ])
     |> validate_inclusion(:status, @statuses)
     |> validate_inclusion(:health, ~w(ok down))

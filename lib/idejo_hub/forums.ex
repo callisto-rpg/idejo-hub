@@ -364,6 +364,22 @@ defmodule IdejoHub.Forums do
     do: recreate_forum(forum, actor, rotate_secret: true, action: "forum.identity.rotate")
 
   @doc """
+  OP-06: pins a forum to its version, so bulk upgrades (OP-05) leave it out, or unpins it. A
+  single upgrade of a pinned forum stays possible. Audited `forum.pin` / `forum.unpin`.
+  """
+  @spec set_pinned(Forum.t(), boolean(), String.t()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state | Ecto.Changeset.t()}
+  def set_pinned(%Forum{status: "deleted"}, _pinned?, _actor), do: {:error, :invalid_state}
+
+  def set_pinned(%Forum{} = forum, pinned?, actor) when is_boolean(pinned?) do
+    with {:ok, forum} <- update_state(forum, %{pinned: pinned?}) do
+      action = if pinned?, do: "forum.pin", else: "forum.unpin"
+      {:ok, _} = Audit.record(actor, action, "ok", forum, %{"version" => forum.idejo_version})
+      {:ok, forum}
+    end
+  end
+
+  @doc """
   ID-07: whether the forum also allows local accounts (people without an Idejo identity).
   Takes effect when its container is made again, which this queues.
   """

@@ -13,8 +13,9 @@ defmodule IdejoHub.Operations.BulkUpgradeWorker do
   (rolled back or not), the run stops there: the forums after it are not touched, and the
   audit lists what was done, where it stopped and what was left.
 
-  A forum that is no longer running, or is already on that version or newer, is skipped. One
-  busy with another action is waited for (snoozed a minute).
+  A forum that is no longer running, is already on that version or newer, or was pinned to its
+  version meanwhile (OP-06), is skipped. One busy with another action is waited for (snoozed
+  a minute).
   """
   use Oban.Worker, queue: :operations, max_attempts: 1
 
@@ -30,7 +31,7 @@ defmodule IdejoHub.Operations.BulkUpgradeWorker do
     forum = Forums.get_forum!(id)
 
     cond do
-      forum.status != "running" or not older?(forum, run["version"]) ->
+      forum.status != "running" or forum.pinned or not older?(forum, run["version"]) ->
         next(
           %{run | "remaining" => rest}
           |> Map.update("skipped", [forum.subdomain], &(&1 ++ [forum.subdomain]))
