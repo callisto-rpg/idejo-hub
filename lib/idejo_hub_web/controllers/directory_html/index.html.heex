@@ -1,0 +1,19 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<%!-- The forums directory (steward decision 2026-11-06). --%>
+<Layouts.app flash={@flash} title="Forums">
+  <h1 class="text-2xl font-semibold">Forums</h1>
+  <p>
+    The forums on this server. Each is run by its own owner; one Idejo ID signs you in to all
+    of them.
+  </p>
+  <p :if={@forums == []} id="directory-empty">No forums are listed yet.</p>
+  <ul :if={@forums != []} id="directory" class="space-y-2">
+    <li :for={{name, url} <- @forums}>
+      <a href={url} class="font-medium">{name}</a>
+      <span class="text-sm opacity-70">{URI.parse(url).host}</span>
+    </li>
+  </ul>
+</Layouts.app>
