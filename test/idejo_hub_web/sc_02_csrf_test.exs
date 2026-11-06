@@ -24,7 +24,7 @@ defmodule IdejoHubWeb.SC02CSRFTest do
   defp checked(conn), do: Plug.Conn.put_private(conn, :plug_skip_csrf_protection, false)
 
   defp state_changing_routes do
-    for %{verb: verb, path: path} <- IdejoHubWeb.Router.__routes__(),
+    for %{verb: verb, path: path, plug: plug} <- IdejoHubWeb.Router.__routes__(),
         verb not in [:get, :head, :options],
         not String.starts_with?(path, "/dev"),
         # The outside forums' JSON API: no session, no cookie (checked below).
@@ -32,7 +32,7 @@ defmodule IdejoHubWeb.SC02CSRFTest do
         # Forums on the forum network, with their client credentials (Caddy refuses
         # /internal/* from outside): no session either.
         not String.starts_with?(path, "/internal/"),
-        do: {verb, path}
+        do: {verb, path, plug}
   end
 
   test "SC-02 the outside forums' API takes no session: nothing for a CSRF token to protect" do
@@ -68,16 +68,20 @@ defmodule IdejoHubWeb.SC02CSRFTest do
     {signed_in, _operator, _password} = sign_in(conn)
     routes = state_changing_routes()
     # Operator sign-in and sign-out, the members' pages: the list is not empty by accident.
-    assert {:post, "/sign-in"} in routes
-    assert {:post, "/account/delete"} in routes
+    assert {:post, "/sign-in", IdejoHubWeb.SessionController} in routes
+    assert {:post, "/account/delete", IdejoHubWeb.AccountController} in routes
+    assert {:post, "/sign-out", IdejoHubWeb.DirectoryController} in routes
 
-    for {verb, path} <- routes do
+    for {verb, path, plug} <- routes do
       url = String.replace(path, ~r/:[a-z_]+/, "1")
 
       base =
-        if String.starts_with?(path, "/account"),
-          do: %{build_conn() | host: @id_host},
-          else: recycle(signed_in)
+        cond do
+          String.starts_with?(path, "/account") -> %{build_conn() | host: @id_host}
+          # The forums directory's own routes (its sign-out) answer on its host only.
+          plug == IdejoHubWeb.DirectoryController -> %{build_conn() | host: "forums.idejo.test"}
+          true -> recycle(signed_in)
+        end
 
       assert_error_sent 403, fn ->
         base |> checked() |> dispatch(@endpoint, verb, url, %{})

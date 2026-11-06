@@ -24,6 +24,8 @@ defmodule IdejoHubWeb.AccountController do
 
   @request_key "account_request"
   @member_key "member"
+  @return_key "account_return"
+  @directory_salt "directory member"
   @request_seconds 600
   @session_seconds 3600
   @fresh_seconds 300
@@ -149,10 +151,13 @@ defmodule IdejoHubWeb.AccountController do
         "at" => now()
       }
 
+      return = get_session(conn, @return_key)
+
       conn
       |> configure_session(renew: true)
+      |> delete_session(@return_key)
       |> put_session(@member_key, member)
-      |> redirect(to: ~p"/account" <> if(request["fresh"], do: "#delete", else: ""))
+      |> redirect(to: return_path(return, request))
     else
       reason ->
         Logger.warning("ID-05: member sign-in refused: #{tag(reason)}")
@@ -246,6 +251,42 @@ defmodule IdejoHubWeb.AccountController do
     end
   end
 
+  @doc """
+  The forums directory asks who is looking (steward request 2026-11-06): with a member
+  signed in here, back to `https://forums.<domain>/signed-in` with a token signed by the
+  Hub, two minutes, naming the member and the directory's own `state` (so a link made by
+  someone else cannot sign anyone in); else through sign-in first.
+  """
+  def directory(conn, %{"state" => state}) when is_binary(state) and byte_size(state) in 16..64 do
+    case member(conn) do
+      %{"sub" => subject} ->
+        token =
+          Phoenix.Token.sign(IdejoHubWeb.Endpoint, @directory_salt, %{
+            "sub" => subject,
+            "state" => state
+          })
+
+        redirect(conn,
+          external:
+            IdejoHub.Community.directory_url() <>
+              "signed-in?" <> URI.encode_query(%{"token" => token})
+        )
+
+      nil ->
+        conn
+        |> put_session(
+          @return_key,
+          "/account/directory?" <> URI.encode_query(%{"state" => state})
+        )
+        |> redirect(to: ~p"/account/sign-in")
+    end
+  end
+
+  def directory(conn, _params), do: redirect(conn, external: IdejoHub.Community.directory_url())
+
+  @doc false
+  def directory_salt, do: @directory_salt
+
   ## Helpers
 
   defp member(conn) do
@@ -257,6 +298,12 @@ defmodule IdejoHubWeb.AccountController do
         nil
     end
   end
+
+  # Only the directory's hand-off may be returned to; anything else goes to the account page.
+  defp return_path("/account/directory?" <> _ = path, _request), do: path
+
+  defp return_path(_return, request),
+    do: ~p"/account" <> if(request["fresh"], do: "#delete", else: "")
 
   defp fresh?(%{"auth_time" => at}) when is_integer(at), do: now() - at <= @fresh_seconds
   defp fresh?(_member), do: false

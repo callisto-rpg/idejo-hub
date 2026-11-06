@@ -278,19 +278,44 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   height: 100%;
   padding: 1.25rem 1rem;
   border: 1px solid var(--color-base-300);
   border-radius: 0.75rem;
   background: var(--color-base-100);
   text-align: center;
-  text-decoration: none;
   transition: box-shadow 140ms ease, border-color 140ms ease;
 }
-.directory-card:hover, .directory-card:focus-visible {
+.directory-card:hover, .directory-card:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 1px var(--color-primary);
+}
+.directory-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.directory-join, .directory-open { min-width: 6rem; }
+/* "Open": a forum the visitor joined. */
+.directory-open { --btn-color: #2e9e5b; --btn-fg: #ffffff; }
+/* "All forums": a title on a line across the page, under the visitor's own forums. */
+.directory-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.directory-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--color-base-300);
 }
 .idejo-member .directory-card { color: var(--color-base-content); }
 .directory-logo { width: 3.5rem; height: 3.5rem; object-fit: contain; border-radius: 0.75rem; }

@@ -5,7 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 <%!-- The forums directory (steward decisions 2026-11-06): cards with each forum's logo; past
      ten forums, a search and pages. Plain HTML, no JavaScript needed. --%>
 <Layouts.app flash={@flash} title="Forums" wide>
-  <h1 class="text-2xl font-semibold">Forums</h1>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold">Forums</h1>
+    <a :if={!@signed_in?} id="directory-sign-in" href={~p"/sign-in"} class="btn btn-sm">
+      Sign in to see your forums
+    </a>
+    <form :if={@signed_in?} action={~p"/sign-out"} method="post">
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <button id="directory-sign-out" class="btn btn-sm btn-ghost">Sign out</button>
+    </form>
+  </div>
 
   <form
     :if={@browse?}
@@ -35,14 +44,17 @@ SPDX-License-Identifier: AGPL-3.0-only
     No forum matches “{@result.search}”.
   </p>
 
+  <%!-- The visitor's own forums first (steward request 2026-11-06), then all of them. --%>
+  <section :if={@mine != []} id="directory-mine" aria-labelledby="directory-mine-heading">
+    <h2 id="directory-mine-heading" class="sr-only">Your forums</h2>
+    <ul class="directory-grid">
+      <li :for={forum <- @mine}><.forum_card forum={forum} id_prefix="mine" /></li>
+    </ul>
+  </section>
+  <h2 :if={@mine != []} id="directory-all" class="directory-divider">All forums</h2>
+
   <ul :if={@forums != []} id="directory" class="directory-grid">
-    <li :for={forum <- @forums}>
-      <a href={forum.url} class="directory-card">
-        <img src={forum.logo} alt="" class="directory-logo" width="56" height="56" loading="lazy" />
-        <span class="directory-name">{forum.name}</span>
-        <span class="directory-host">{forum.host}</span>
-      </a>
-    </li>
+    <li :for={forum <- @forums}><.forum_card forum={forum} id_prefix="all" /></li>
   </ul>
 
   <nav

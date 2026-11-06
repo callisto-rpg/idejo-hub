@@ -86,6 +86,44 @@ defmodule IdejoHub.Community do
     }
   end
 
+  @doc """
+  The hosts of the forums `subject` joined (steward request 2026-11-06): running hosted
+  forums they are still a member of, and outside forums they signed in to.
+  """
+  @spec joined_hosts(String.t()) :: MapSet.t(String.t())
+  def joined_hosts(subject) do
+    suffix = "." <> Application.fetch_env!(:idejo_hub, Forums)[:domain]
+
+    hosted =
+      Repo.all(
+        from j in Join,
+          join: f in assoc(j, :forum),
+          where: j.subject == ^subject and j.state == "joined" and f.status == "running",
+          select: fragment("? || ?", f.subdomain, ^suffix)
+      )
+
+    outside =
+      Repo.all(
+        from j in "outside_joins",
+          join: o in IdejoHub.Identity.OutsideForum,
+          on: o.id == j.outside_forum_id,
+          where: j.subject == ^subject and o.status == "registered",
+          select: o.host
+      )
+
+    MapSet.new(hosted ++ outside)
+  end
+
+  @doc "The listed forums among `hosts`, by name, all of them: `[%{name:, host:}]`."
+  @spec directory_of(MapSet.t(String.t())) :: [%{name: String.t(), host: String.t()}]
+  def directory_of(hosts) do
+    Repo.all(
+      from e in subquery(entries()),
+        where: e.host in ^MapSet.to_list(hosts),
+        order_by: [asc: fragment("lower(?)", e.name), asc: e.host]
+    )
+  end
+
   @doc "How many forums a directory page holds."
   def per_page, do: @per_page
 
