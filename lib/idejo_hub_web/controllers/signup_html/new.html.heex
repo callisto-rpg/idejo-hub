@@ -4,6 +4,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 --%>
 <Layouts.app flash={@flash} title="Idejo ID">
   <h1 class="text-2xl font-semibold">Create your Idejo ID</h1>
+  <p :if={@back} id="signup-from" class="text-sm">
+    Afterwards, you go back to <a href={@back.sign_in}>{@back.name}</a> to sign in.
+  </p>
   <p>One sign-in for every forum on this server. Each forum keeps its own profile and roles.</p>
   <p id="signup-privacy" class="text-sm">
     What your Idejo ID keeps, and why: <a href={~p"/account/privacy"}>Privacy</a>.
@@ -17,6 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
   <form :if={@open?} id="signup" action={~p"/account/sign-up"} method="post" class="space-y-4">
     <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <input :if={@back} type="hidden" name="return_to" value={@back.return_to} />
     <label class="block">
       <span class="block font-medium">Email</span>
       <input
