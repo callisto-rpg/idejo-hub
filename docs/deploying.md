@@ -176,10 +176,12 @@ forum's owner sees the part about their forum from their Idejo ID page.
 
 ## Commands
 
-All from the repository's directory:
+All from the repository's directory. `deploy/.env` holds the secrets and is readable by
+root only, so every command goes through `sudo` (without it, Compose stops with "open
+…/deploy/.env: permission denied" and nothing happens):
 
 ```sh
-H="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
+H="sudo docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
 $H exec hub bin/hub-admin create-operator EMAIL    # another operator (one-time password)
 $H exec hub bin/hub-admin create-operator EMAIL --role owner   # another owner
 $H exec hub bin/hub-admin reset-two-factor EMAIL   # an operator lost their authenticator
@@ -296,7 +298,7 @@ To put them back (on the same server, or a new one installed with the same `depl
 with the Hub and Zitadel stopped:
 
 ```sh
-H="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
+H="sudo docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
 $H stop hub zitadel zitadel-login
 $H run --rm --no-deps -T --entrypoint cat hub /data/exports/_hub/hub-YYYYMMDD-HHMMSS.dump \
   | $H exec -T db pg_restore -U postgres --clean --if-exists -d idejo_hub
