@@ -62,7 +62,7 @@ defmodule IdejoHubWeb.ForumListLive do
     end
   end
 
-  defp upgrade_all_message(:invalid_version), do: "Give an exact version, for example 0.2.0."
+  defp upgrade_all_message(:invalid_version), do: "Give an exact version, for example 0.2.2."
 
   defp upgrade_all_message(:nothing_to_upgrade),
     do: "Every running forum is already on that version or newer."
@@ -199,7 +199,7 @@ defmodule IdejoHubWeb.ForumListLive do
       <form id="upgrade-all" phx-submit="upgrade_all" class="flex gap-2 items-end">
         <label>
           Upgrade all running forums to
-          <input name="version" class="input input-sm" placeholder="0.2.0" required />
+          <input name="version" class="input input-sm" placeholder="0.2.2" required />
         </label>
         <button
           class="btn btn-sm"

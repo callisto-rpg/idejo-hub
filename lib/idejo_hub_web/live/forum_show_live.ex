@@ -158,7 +158,7 @@ defmodule IdejoHubWeb.ForumShowLive do
   defp message(:invalid_state), do: "Not now: the forum is busy, or not in a state for this."
   defp message(:confirmation_required), do: "Type the forum's subdomain exactly to delete it now."
   defp message(:not_newer), do: "Choose a version newer than the current one."
-  defp message(:invalid_version), do: "Give an exact version, for example 0.2.0."
+  defp message(:invalid_version), do: "Give an exact version, for example 0.2.2."
   defp message(:not_its_archive), do: "That archive belongs to another forum."
   defp message(other), do: "Not done: #{inspect(other)}"
 
@@ -267,7 +267,7 @@ defmodule IdejoHubWeb.ForumShowLive do
           class="flex gap-2 items-end"
         >
           <label>Upgrade to version
-          <input name="version" class="input input-sm" required placeholder="0.2.0" /></label>
+          <input name="version" class="input input-sm" required placeholder="0.2.2" /></label>
           <button
             class="btn btn-sm"
             data-confirm="Upgrade? It is backed up first and rolled back if unhealthy."
