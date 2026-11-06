@@ -11,9 +11,12 @@ defmodule IdejoHub.OperatorFixtures do
 
   @endpoint IdejoHubWeb.Endpoint
 
-  @doc "A new operator and their password."
-  def operator_fixture(email \\ "op#{System.unique_integer([:positive])}@hub.idejo.test") do
-    {:ok, operator, password} = Operators.create_operator(email)
+  @doc "A new operator and their password (HA-07: `role` nil is the default rule)."
+  def operator_fixture(
+        email \\ "op#{System.unique_integer([:positive])}@hub.idejo.test",
+        role \\ nil
+      ) do
+    {:ok, operator, password} = Operators.create_operator(email, role)
     {operator, password}
   end
 
@@ -28,8 +31,9 @@ defmodule IdejoHub.OperatorFixtures do
   Signs a conn in through the real pages (password, two-factor setup, code). Returns the
   conn, the operator and their password.
   """
-  def sign_in(conn) do
-    {operator, password} = operator_fixture()
+  def sign_in(conn, role \\ nil) do
+    {operator, password} =
+      operator_fixture("op#{System.unique_integer([:positive])}@hub.idejo.test", role)
 
     conn =
       post(conn, "/sign-in", %{"session" => %{"email" => operator.email, "password" => password}})

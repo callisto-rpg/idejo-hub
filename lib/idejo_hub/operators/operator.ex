@@ -16,17 +16,26 @@ defmodule IdejoHub.Operators.Operator do
     field :totp_last_step, :integer
     field :failed_attempts, :integer, default: 0
     field :locked_until, :utc_datetime
+    # HA-07: owners also manage operator accounts.
+    field :role, :string, default: "operator"
 
     timestamps(type: :utc_datetime)
   end
 
-  def create_changeset(email, hashed_password) do
+  @roles ~w(owner operator)
+
+  @doc "HA-07: the roles an operator account can have."
+  def roles, do: @roles
+
+  def create_changeset(email, hashed_password, role \\ "operator") do
     %__MODULE__{}
     |> change(
       email: email |> String.trim() |> String.downcase(),
-      hashed_password: hashed_password
+      hashed_password: hashed_password,
+      role: role
     )
-    |> validate_required([:email, :hashed_password])
+    |> validate_required([:email, :hashed_password, :role])
+    |> validate_inclusion(:role, @roles)
     |> validate_format(:email, ~r/\A[^@\s]+@[^@\s]+\z/, message: "must be an email address")
     |> validate_length(:email, max: 254)
     |> unique_constraint(:email)

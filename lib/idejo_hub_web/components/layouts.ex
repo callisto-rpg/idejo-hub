@@ -58,6 +58,9 @@ defmodule IdejoHubWeb.Layouts do
           <.link navigate={~p"/settings"}>Settings</.link>
           <.link navigate={~p"/identities"}>Idejo IDs</.link>
           <.link navigate={~p"/audit"}>Audit log</.link>
+          <.link :if={IdejoHub.Operators.owner?(@current_operator)} navigate={~p"/operators"}>
+            Operators
+          </.link>
         </nav>
       </div>
       <div class="flex-none flex items-center gap-3">
