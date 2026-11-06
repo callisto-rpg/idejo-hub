@@ -687,6 +687,11 @@ defmodule IdejoHub.Forums do
       "IDEJO_OIDC_CLIENT_ID" => forum.oidc_client_id,
       "IDEJO_OIDC_CLIENT_SECRET" => secret,
       "IDEJO_OIDC_LABEL" => IdejoHub.Identity.label(),
+      # Idejo 0.2.6 (steward decision 2026-11-06): "No Idejo ID yet? Create one" under the
+      # button leads to the Hub's sign-up page, which then leads back to this forum.
+      "IDEJO_OIDC_SIGN_UP_URL" =>
+        IdejoHub.Identity.issuer() <>
+          "/account/sign-up?" <> URI.encode_query(%{"return_to" => "https://#{host(forum)}/"}),
       "IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum),
       # Idejo's community menu (Idejo 0.2.5; steward decision 2026-11-06): the member's other
       # forums, asked of the Hub with this client's credentials, and the directory.

@@ -18,11 +18,16 @@ defmodule IdejoHubWeb.SignupController do
   @limit 5
   @window 3600
 
-  def new(conn, _params) do
-    render(conn, :new, form: form(%{}), errors: %{}, open?: Settings.shared_smtp() != nil)
+  def new(conn, params) do
+    conn
+    |> back(params)
+    |> render(:new, form: form(%{}), errors: %{}, open?: Settings.shared_smtp() != nil)
   end
 
-  def create(conn, %{"signup" => params}) do
+  def create(conn, %{"signup" => _} = all) do
+    conn = back(conn, all)
+    params = all["signup"]
+
     params = Map.new(@fields, &{&1, (params[&1] || "") |> to_string() |> String.trim()})
 
     with true <- Settings.shared_smtp() != nil || {:error, :closed},
@@ -65,6 +70,27 @@ defmodule IdejoHubWeb.SignupController do
         )
     end
   end
+
+  # Arriving from a forum (its "No Idejo ID yet? Create one", Idejo's IDEJO_OIDC_SIGN_UP_URL;
+  # steward decision 2026-11-06): `return_to` is that forum's address. Only a running forum's
+  # own `https://<host>/` counts, so the page never sends anyone elsewhere; the forum's name
+  # and sign-in then show on the page and after sending.
+  defp back(conn, %{"return_to" => "https://" <> _ = url}) do
+    with %URI{scheme: "https", host: host, path: path, query: nil, userinfo: nil, port: 443} <-
+           URI.parse(url),
+         true <- path in [nil, "", "/"],
+         %{status: "running"} = forum <- IdejoHub.Forums.for_host(host) do
+      assign(conn, :back, %{
+        name: forum.display_name,
+        return_to: "https://#{host}/",
+        sign_in: "https://#{host}/users/sign-in"
+      })
+    else
+      _ -> assign(conn, :back, nil)
+    end
+  end
+
+  defp back(conn, _params), do: assign(conn, :back, nil)
 
   defp validate(params) do
     errors =

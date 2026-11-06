@@ -49,7 +49,7 @@ services:
       # OP-10: the Hub dumps the identity provider's database as its role (steward decision
       # 2026-11-04).
       ZITADEL_DB_PASSWORD: ${ZITADEL_DB_PASSWORD}
-      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.2.5}
+      IDEJO_DEFAULT_VERSION: ${IDEJO_DEFAULT_VERSION:-0.2.6}
       # OP-01: forum backups (cron, UTC) and how many are kept per forum.
       IDEJO_HUB_BACKUP_CRON: ${IDEJO_HUB_BACKUP_CRON:-0 2 * * *}
       IDEJO_HUB_BACKUPS_KEPT: ${IDEJO_HUB_BACKUPS_KEPT:-14}

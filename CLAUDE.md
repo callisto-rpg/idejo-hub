@@ -55,15 +55,17 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.5**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.6**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
-the first with the community menu (below). Forums on 0.2.4 run without that menu.
+the first with the community menu (below), 0.2.6 the first whose sign-in shows "No Idejo ID
+yet? Create one" (`IDEJO_OIDC_SIGN_UP_URL`, below). Forums on 0.2.5 run without that link,
+on 0.2.4 also without the menu.
 Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
 custom CSS (their content security policy still refuses outside loads); forums on 0.1.0
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
-0.2.5.
+0.2.6.
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -487,7 +489,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   (`Identity.create_person/1`, username = email; `:exists` for a used email) and Zitadel
   emails the invite (`send_invite/1`: verify, then password or passkey on its login pages);
   the Hub never sees a password. Five per address an hour (`IdejoHub.RateLimit`, ETS);
-  closed while the Hub has no SMTP. `Identity.SetupWorker` (at boot and after an SMTP
+  closed while the Hub has no SMTP. Forums lead there (steward decision 2026-11-06): Zitadel's own sign-in
+  screen cannot link to it, so each forum gets Idejo's `IDEJO_OIDC_SIGN_UP_URL` (0.2.6:
+  "No Idejo ID yet? Create one" under its button), this page with `return_to` its own
+  `https://<host>/`; the page names that forum and, once sent, links back to its sign-in
+  (`#signup-back`). Only a running forum's own `https://<host>/` is followed (no path,
+  query, port or user), anything else ignored. `Identity.SetupWorker` (at boot and after an SMTP
   setting changes, retried) applies `Identity.configure/2`: Zitadel's own registration off,
   passkeys allowed, one-time codes and security keys as second factors, and the Hub's SMTP
   as its config "Idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
@@ -669,7 +676,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
   the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
   since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06; Idejo
-  `v0.2.5` (the community menu) since.
+  `v0.2.5` (the community menu); Idejo `v0.2.6` ("No Idejo ID yet? Create one") since.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).

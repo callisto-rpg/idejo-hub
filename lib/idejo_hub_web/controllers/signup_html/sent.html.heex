@@ -8,4 +8,8 @@ SPDX-License-Identifier: AGPL-3.0-only
     We sent a link to <strong>{@email}</strong>. Open it to confirm the address and choose a
     password or a passkey; then sign in to any forum on this server with "Idejo ID".
   </p>
+  <p :if={@back} id="signup-back">
+    Then go back to <a href={@back.sign_in} class="font-medium">{@back.name}</a>
+    and choose "Sign in with Idejo ID".
+  </p>
 </Layouts.app>
