@@ -38,6 +38,19 @@ defmodule IdejoHub.Identity do
               {:ok, %{email: String.t(), display_name: String.t()}}
               | {:error, :not_found | term()}
   @callback delete_person(user_id :: String.t()) :: :ok | {:error, term()}
+  # HA-06: identity administration. A person as listed: the provider's id, their email (and
+  # whether verified), names, and state (`active`, `locked`, `inactive`, `initial`).
+  @type listed :: %{
+          id: String.t(),
+          email: String.t() | nil,
+          email_verified: boolean(),
+          display_name: String.t() | nil,
+          username: String.t() | nil,
+          state: String.t()
+        }
+  @callback search_people(text :: String.t()) :: {:ok, [listed()]} | {:error, term()}
+  @callback lock_person(user_id :: String.t()) :: :ok | {:error, term()}
+  @callback unlock_person(user_id :: String.t()) :: :ok | {:error, term()}
   @callback exchange_code(
               code :: String.t(),
               verifier :: String.t(),
@@ -75,6 +88,15 @@ defmodule IdejoHub.Identity do
 
   @doc "ID-05: a person's email and display name, for their page."
   def person(user_id), do: config(:adapter).person(user_id)
+
+  @doc "HA-06: people whose email, name or username contains `text` (any case), at most 50."
+  def search_people(text), do: config(:adapter).search_people(text)
+
+  @doc "HA-06: locks a person for abuse: the provider refuses their sign-ins (already locked is fine)."
+  def lock_person(user_id), do: config(:adapter).lock_person(user_id)
+
+  @doc "HA-06: unlocks a person (not locked is fine)."
+  def unlock_person(user_id), do: config(:adapter).unlock_person(user_id)
 
   @doc "ID-06: deletes the person at the provider (already gone is fine)."
   def delete_person(user_id), do: config(:adapter).delete_person(user_id)

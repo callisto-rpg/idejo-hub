@@ -130,6 +130,21 @@ whether it is healthy (its database is reachable and up to date) and how much me
 
 The page updates by itself.
 
+## Idejo IDs (HA-06)
+
+**Idejo IDs**, in the header, is where you look after the shared sign-in:
+
+- **Search** by email, name or username. Each ID's page shows its state, the forums it
+  joined and what the audit log holds about it.
+- **Lock** an Idejo ID for abuse (give a reason; it is kept in the audit log). Its holder can
+  then sign in neither to any forum through Idejo ID nor to their Idejo ID page. A session
+  already open on a forum is that forum's own: its moderators ban there. **Unlock** undoes it.
+- **Deletion requests**: members delete their Idejo ID themselves from their page; the list
+  shows those under way, stopped (with why, for example a forum's last owner, and **Retry**)
+  and finished. When someone asks *you* (by email, by letter), open their ID, type its email
+  again and say who asked and how: their account on every forum they joined is deleted as
+  that forum's rules say, then the ID.
+
 ## The audit log (SC-07)
 
 **Audit log**, in the header, lists everything done to the Hub and its forums: who did it

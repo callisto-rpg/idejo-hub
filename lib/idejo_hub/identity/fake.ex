@@ -99,6 +99,44 @@ defmodule IdejoHub.Identity.Fake do
   end
 
   @impl true
+  def search_people(text) do
+    call(:search_people, fn s ->
+      needle = String.downcase(text)
+
+      found =
+        for {id, p} <- Enum.sort(s.people),
+            Enum.any?(
+              [p.email, p.display_name],
+              &String.contains?(String.downcase(&1 || ""), needle)
+            ),
+            do: %{
+              id: id,
+              email: p.email,
+              email_verified: Map.get(p, :email_verified, false),
+              display_name: p.display_name,
+              username: p.email,
+              state: Map.get(p, :state, "active")
+            }
+
+      {{:ok, found}, s}
+    end)
+  end
+
+  @impl true
+  def lock_person(user_id), do: set_state(:lock_person, user_id, "locked")
+
+  @impl true
+  def unlock_person(user_id), do: set_state(:unlock_person, user_id, "active")
+
+  defp set_state(fun, user_id, state) do
+    call(fun, fn s ->
+      if s.people[user_id],
+        do: {:ok, put_in(s, [:people, user_id, :state], state)},
+        else: {{:error, :not_found}, s}
+    end)
+  end
+
+  @impl true
   def person(user_id) do
     call(:person, fn s ->
       case s.people[user_id] do
@@ -110,7 +148,8 @@ defmodule IdejoHub.Identity.Fake do
             %{
               email: p.email,
               email_verified: Map.get(p, :email_verified, false),
-              display_name: p.display_name
+              display_name: p.display_name,
+              state: Map.get(p, :state, "active")
             }}, s}
       end
     end)

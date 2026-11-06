@@ -78,6 +78,9 @@ defmodule IdejoHubWeb.Router do
       live "/settings", SettingsLive, :edit
       # SC-07
       live "/audit", AuditLive, :index
+      # HA-06
+      live "/identities", IdentitiesLive, :index
+      live "/identities/:id", IdentityShowLive, :show
     end
 
     # HA-03: archive download (audited).

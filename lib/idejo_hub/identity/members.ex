@@ -204,8 +204,9 @@ defmodule IdejoHub.Identity.Members do
   then the person at the provider. Queued; the member's page shows how far it is. Asked
   again after a forum refused (`error` set), it starts over.
   """
-  @spec delete_identity(String.t()) :: {:ok, Deletion.t()} | {:error, :deleting}
-  def delete_identity(subject) do
+  @spec delete_identity(String.t(), String.t() | nil, map()) ::
+          {:ok, Deletion.t()} | {:error, :deleting}
+  def delete_identity(subject, by \\ nil, details \\ %{}) do
     result =
       case Repo.get(Deletion, subject) do
         nil ->
@@ -222,8 +223,15 @@ defmodule IdejoHub.Identity.Members do
       _ = sync()
       {:ok, _} = Oban.insert(MemberWorker.new(%{"subject" => subject, "choice" => "identity"}))
 
+      # HA-06: an operator handling a request made to them is the actor.
       {:ok, _} =
-        Audit.record(actor(subject), "identity.delete", "requested", nil, %{"subject" => subject})
+        Audit.record(
+          by || actor(subject),
+          "identity.delete",
+          "requested",
+          nil,
+          Map.put(details, "subject", subject)
+        )
 
       {:ok, deletion}
     end
