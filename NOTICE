@@ -17,8 +17,9 @@ keeps Idejo's own "Source code" link and attribution notice.
 
 Members' pages use Idejo's look:
 
-  The Idejo logos (priv/static/images/logo.svg, logo-small.svg), © Mariano Pictet,
-  licensed under CC-BY 4.0; see LICENSES/CC-BY-4.0.txt.
+  The Idejo logos (priv/static/images/logo.svg, logo-small.svg, logo.png,
+  logo-small.png; the PNGs also brand the identity provider's sign-in screens),
+  © Mariano Pictet, licensed under CC-BY 4.0; see LICENSES/CC-BY-4.0.txt.
 
   Fraunces (priv/static/fonts/fraunces-*), Copyright 2020 The Fraunces Project
   Authors (github.com/undercasetype/Fraunces), and Rubik (priv/static/fonts/rubik-*),
