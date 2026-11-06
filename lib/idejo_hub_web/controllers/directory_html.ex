@@ -14,13 +14,17 @@ defmodule IdejoHubWeb.DirectoryHTML do
   attr :forum, :map, required: true
   attr :id_prefix, :string, required: true
 
+  attr :compact, :boolean,
+    default: false,
+    doc: "My Forums (steward request 2026-11-07): half height, logo left, no address, Open gold"
+
   def forum_card(assigns) do
     ~H"""
-    <div class="directory-card" id={"#{@id_prefix}-#{@forum.host}"}>
+    <div class={["directory-card", @compact && "is-compact"]} id={"#{@id_prefix}-#{@forum.host}"}>
       <a href={@forum.url} class="directory-link">
         <img src={@forum.logo} alt="" class="directory-logo" width="56" height="56" loading="lazy" />
         <span class="directory-name">{@forum.name}</span>
-        <span class="directory-host">{@forum.host}</span>
+        <span :if={!@compact} class="directory-host">{@forum.host}</span>
       </a>
       <a
         :if={!@forum.joined?}
@@ -33,7 +37,7 @@ defmodule IdejoHubWeb.DirectoryHTML do
       <a
         :if={@forum.joined?}
         href={@forum.url}
-        class="btn btn-sm btn-success directory-open"
+        class={["btn btn-sm directory-open", if(@compact, do: "btn-primary", else: "btn-success")]}
         aria-label={"Open #{@forum.name}"}
       >
         Open

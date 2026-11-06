@@ -90,7 +90,10 @@ case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`, hoste
 outside forums together). Each card has **Join** (`btn-primary`, Idejo's gold: the forum's
 `/users/oidc`) or, for a forum the visitor joined (`Community.joined_hosts/1`: hosted joins
 still `joined`, outside forums signed in to), **Open** (green); signed in with joined forums,
-the first page shows them first, above an "All forums" line (steward request 2026-11-06).
+the first page shows them first under "My Forums", above an "All Forums" line (steward
+requests 2026-11-06, 2026-11-07): My Forums cards are compact (`forum_card` `compact`: half
+height, logo left of the name, no address, Open in gold); All Forums keeps its cards.
+"Sign in to see your forums" is a full-size gold button.
 The directory learns who is looking from the sign-in host: "Sign in to see your forums"
 (`/sign-in`, a random `state` in its session) → `/account/directory?state=` (signed in there,
 or through its sign-in first, `account_return`) → `/signed-in?token=` (`Phoenix.Token`, two
