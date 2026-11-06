@@ -65,6 +65,32 @@ defmodule IdejoHub.Release do
     end)
   end
 
+  @doc """
+  HA-08: `bin/hub-admin forums|create|backup|upgrade|suspend|resume …`, run inside the
+  running Hub (`rpc`). Prints the outcome; exits 2 for an unknown forum, 1 on failure
+  (`exit({:shutdown, code})`, never halting the Hub).
+  """
+  def cli(command, args) do
+    case run_cli(command, args) do
+      {:ok, lines} when is_list(lines) ->
+        Enum.each(lines, &IO.puts/1)
+
+      {:ok, message} ->
+        IO.puts(message)
+
+      {:error, message, code} ->
+        IO.puts(:stderr, message)
+        exit({:shutdown, code})
+    end
+  end
+
+  defp run_cli("forums", []), do: {:ok, IdejoHub.CLI.list()}
+  defp run_cli("create", [s, name, email]), do: IdejoHub.CLI.create(s, name, email)
+  defp run_cli("backup", [s]), do: IdejoHub.CLI.backup(s)
+  defp run_cli("upgrade", [s, version]), do: IdejoHub.CLI.upgrade(s, version)
+  defp run_cli("suspend", [s]), do: IdejoHub.CLI.suspend(s)
+  defp run_cli("resume", [s]), do: IdejoHub.CLI.resume(s)
+
   # Runs `fun` with the repo started (eval: the server may not be running) and exits
   # non-zero on failure, never halting a running node.
   defp with_repo(fun) do

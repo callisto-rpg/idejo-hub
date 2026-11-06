@@ -417,6 +417,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `SECRET_KEY_BASE` for a standalone restore of its export (Idejo encrypts its secret
   settings with it), audited `forum.secret_key_base.reveal` each time, kept by the Hub.
   The forum list also starts OP-05 (`#upgrade-all`, `Operations.upgrade_all/2`).
+- **Command line** (HA-08, `IdejoHub.CLI`, `Release.cli/2`): `bin/hub-admin forums`,
+  `create`, `backup`, `upgrade`, `suspend`, `resume` run inside the running Hub (`rpc`; the
+  script checks it runs), each argument Base64-encoded into the code it sends (never
+  interpolated). Each action starts through `Forums` as actor `command line`, then waits
+  for its first `ok`/`failed` audit entry after it began (every action writes one; 30
+  minutes at most), printing the outcome; exit 0 done, 1 failed or refused (with the
+  reason), 2 no such forum, 64 usage (`exit({:shutdown, code})`, never halting the Hub). A
+  new action for scripts joins `CLI`, `Release.run_cli/2` and the script's usage.
 - **Isolation checks** (`test/idejo_hub/sc_isolation_test.exs`): SC-01 host-only cookies,
   SC-05 limits on every container spec, SC-06 the only `idejo-admin` commands the Hub runs
   are `setup`, `backup`, `restore`, `rotate-push-keys` (a new one updates that test, after
@@ -565,6 +573,7 @@ mix test --only req:FL-01    # one requirement's tests
 mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
 reuse lint                   # SPDX headers (LI-01)
 # in the Hub's container: bin/hub-admin create-operator EMAIL [--role owner|operator] | reset-two-factor EMAIL (SC-08, HA-07)
+# and, with the Hub running (HA-08): forums | create SUBDOMAIN NAME EMAIL | backup S | upgrade S VERSION | suspend S | resume S
 (cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
 deploy/test/m2/run.sh        # milestone 2 exit check from the web interface (Docker; ~15 min)
 deploy/test/m3/run.sh        # milestone 3 exit check: sign up, two forums, roles, ban, delete (~6 min)
