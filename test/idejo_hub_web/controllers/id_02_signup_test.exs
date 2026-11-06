@@ -10,7 +10,7 @@ defmodule IdejoHubWeb.ID02SignupTest do
   use Oban.Testing, repo: IdejoHub.Repo
 
   alias IdejoHub.{Identity, Settings}
-  alias IdejoHub.Identity.{Fake, SetupWorker}
+  alias IdejoHub.Identity.{Fake, Profiles, SetupWorker}
 
   @moduletag req: "ID-02"
 
@@ -23,7 +23,11 @@ defmodule IdejoHubWeb.ID02SignupTest do
     %{conn: %{conn | host: "id.idejo.test"}}
   end
 
-  defp sign_up(conn, params), do: post(conn, ~p"/account/sign-up", %{"signup" => params})
+  # A username of its own unless the test gives one (they are unique among Idejo IDs).
+  defp sign_up(conn, params) do
+    params = Map.put_new(params, "username", "user_#{System.unique_integer([:positive])}")
+    post(conn, ~p"/account/sign-up", %{"signup" => params})
+  end
 
   test "ID-02 the page is on the identity host only", %{conn: conn} do
     assert html_response(get(conn, ~p"/account/sign-up"), 200) =~ "Create your Idejo ID"
@@ -62,8 +66,14 @@ defmodule IdejoHubWeb.ID02SignupTest do
   end
 
   test "ID-02 required fields and an email already used", %{conn: conn} do
-    html = html_response(sign_up(conn, %{"email" => "nope", "display_name" => ""}), 422)
+    html =
+      html_response(
+        sign_up(conn, %{"email" => "nope", "display_name" => "", "username" => "a@b.c"}),
+        422
+      )
+
     assert html =~ "Give your email address."
+    assert html =~ "Choose a username"
     assert html =~ "Give the name people see"
     assert Fake.people() == %{}
 
@@ -104,5 +114,27 @@ defmodule IdejoHubWeb.ID02SignupTest do
     sender = IdejoHub.Settings.sender()
     assert [{smtp, ^sender}] = Fake.configured()
     assert smtp[:host] == "smtp.hub.test"
+  end
+
+  test "ID-02 the username chosen is the Idejo ID's public name; never twice, never an email", %{
+    conn: conn
+  } do
+    # An address of its own: sign-ups are limited per address.
+    conn = %{conn | remote_ip: {10, 3, 0, 7}}
+
+    html_response(
+      sign_up(conn, %{"email" => "u1@x.test", "display_name" => "U", "username" => "Ada_L"}),
+      200
+    )
+
+    [user_id] = Map.keys(Fake.people())
+    assert Profiles.get(user_id).username == "Ada_L"
+    # Zitadel's own username stays the email, for signing in.
+    refute Fake.people()[user_id] |> Map.get(:username) == "Ada_L"
+
+    assert html_response(
+             sign_up(conn, %{"email" => "u2@x.test", "display_name" => "U", "username" => "ada_l"}),
+             422
+           ) =~ "Another Idejo ID already has that username."
   end
 end

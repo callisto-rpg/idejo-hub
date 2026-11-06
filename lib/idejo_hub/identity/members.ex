@@ -38,8 +38,26 @@ defmodule IdejoHub.Identity.Members do
     with true <- Identity.enabled?() || :ok,
          {:ok, sign_ins} <- Identity.sign_ins_since(state.events_since) do
       forums = forums_by_client()
+      outside = outside_by_client()
 
       for s <- sign_ins, forum_id = forums[s.client_id], do: record(s.user_id, forum_id, s.at)
+
+      # Outside forums (steward decisions 2026-11-06): who signed in there, so the forum
+      # may read and fill that person's Idejo ID profile.
+      for s <- sign_ins, outside_id = outside[s.client_id] do
+        Repo.insert_all(
+          "outside_joins",
+          [
+            %{
+              subject: s.user_id,
+              outside_forum_id: outside_id,
+              first_at: DateTime.truncate(s.at, :second)
+            }
+          ],
+          on_conflict: :nothing,
+          conflict_target: [:subject, :outside_forum_id]
+        )
+      end
 
       case List.last(sign_ins) do
         nil -> :ok
@@ -48,6 +66,15 @@ defmodule IdejoHub.Identity.Members do
 
       :ok
     end
+  end
+
+  defp outside_by_client do
+    from(f in IdejoHub.Identity.OutsideForum,
+      where: not is_nil(f.client_id),
+      select: {f.client_id, f.id}
+    )
+    |> Repo.all()
+    |> Map.new()
   end
 
   defp forums_by_client do

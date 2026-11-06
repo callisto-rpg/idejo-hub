@@ -93,7 +93,7 @@ defmodule IdejoHubWeb.NF07MemberPagesTest do
     sent =
       conn
       |> post(~p"/account/sign-up", %{
-        "signup" => %{"email" => "new@x.test", "display_name" => "New"}
+        "signup" => %{"email" => "new@x.test", "display_name" => "New", "username" => "new_one"}
       })
       |> html_response(200)
 

@@ -18,7 +18,7 @@ defmodule IdejoHub.Community do
 
   alias IdejoHub.{Forums, Repo}
   alias IdejoHub.Forums.Forum
-  alias IdejoHub.Identity.{Join, OutsideForums}
+  alias IdejoHub.Identity.{Join, Members, OutsideForums}
 
   @doc "The directory's host: `forums.<forum domain>`."
   @spec directory_host() :: String.t()
@@ -134,6 +134,43 @@ defmodule IdejoHub.Community do
     else
       _ -> {:error, :unauthorized}
     end
+  end
+
+  @doc """
+  Whether the forum whose client is `client_id` with `secret` (hosted or outside) may see
+  and fill `subject`'s Idejo ID profile: that person signed in there. Sign-ins are read
+  again once when not found (a first sign-in moments ago).
+  """
+  @spec member_of_client?(term(), term(), term()) :: boolean()
+  def member_of_client?(client_id, secret, subject)
+      when is_binary(client_id) and is_binary(secret) and is_binary(subject) and subject != "" do
+    case client(client_id, secret) do
+      nil ->
+        false
+
+      forum ->
+        signed_in?(forum, subject) or (Members.sync() == :ok and signed_in?(forum, subject))
+    end
+  end
+
+  def member_of_client?(_client_id, _secret, _subject), do: false
+
+  defp client(client_id, secret) do
+    with %Forum{} = forum <- forum_of_client(client_id),
+         {:ok, stored} <- Forums.secret(forum, :oidc_client_secret),
+         true <- Plug.Crypto.secure_compare(stored, secret) do
+      forum
+    else
+      _ -> OutsideForums.authenticate(client_id, secret)
+    end
+  end
+
+  defp signed_in?(%Forum{id: id}, subject), do: joined?(subject, id)
+
+  defp signed_in?(%IdejoHub.Identity.OutsideForum{id: id}, subject) do
+    Repo.exists?(
+      from j in "outside_joins", where: j.subject == ^subject and j.outside_forum_id == ^id
+    )
   end
 
   defp forum_of_client(client_id) when is_binary(client_id) and client_id != "",

@@ -12,6 +12,61 @@ SPDX-License-Identifier: AGPL-3.0-only
     <button class="btn btn-sm">Sign out</button>
   </form>
 
+  <%!-- The Idejo ID's public face (steward decisions 2026-11-06): what forums give a new
+       member. Never the email. --%>
+  <section id="account-profile" class="mt-6 space-y-3" aria-labelledby="account-profile-heading">
+    <h2 id="account-profile-heading" class="text-xl font-semibold">Public profile</h2>
+    <p class="text-sm">
+      Forums you join with your Idejo ID start your account there with this username and
+      picture. Others see them; your email stays private.
+    </p>
+    <div class="flex items-center gap-3">
+      <img
+        :if={@profile.picture_key}
+        id="account-picture"
+        src={IdejoHub.Identity.Profiles.picture_url(@profile)}
+        alt="Your picture"
+        width="64"
+        height="64"
+        class="rounded-full"
+      />
+      <span :if={!@profile.picture_key} id="account-no-picture" class="text-sm">
+        No picture yet: linking an account that has one on a forum adds it here.
+      </span>
+      <form
+        :if={@profile.picture_key}
+        action={~p"/account/profile/picture"}
+        method="post"
+      >
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <button class="btn btn-sm">Remove picture</button>
+      </form>
+    </div>
+    <form
+      id="account-username"
+      action={~p"/account/profile"}
+      method="post"
+      class="flex flex-wrap items-end gap-2"
+    >
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <label>
+        <span class="block font-medium">Username</span>
+        <input
+          type="text"
+          name="profile[username]"
+          value={@profile.username}
+          required
+          minlength="3"
+          maxlength="30"
+          pattern="[A-Za-z0-9_]+"
+          autocomplete="username"
+          class="input"
+        />
+      </label>
+      <button class="btn btn-sm btn-primary">Save</button>
+    </form>
+  </section>
+
   <section :if={@deletion && @deletion.finished_at} id="account-deleted" class="mt-6">
     <h2 class="text-xl font-semibold">Your Idejo ID is deleted</h2>
     <p>Your accounts on the forums below were deleted as each forum's rules say.</p>

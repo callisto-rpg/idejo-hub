@@ -74,7 +74,7 @@ defmodule IdejoHubWeb.ID02SignupReturnTest do
     sent =
       conn
       |> post(~p"/account/sign-up", %{
-        "signup" => %{"email" => "new@x.test", "display_name" => "New"},
+        "signup" => %{"email" => "new@x.test", "display_name" => "New", "username" => "new_one"},
         "return_to" => "https://su-club.idejo.test/"
       })
       |> html_response(200)

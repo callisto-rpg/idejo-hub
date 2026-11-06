@@ -77,7 +77,8 @@ defmodule IdejoHub.SCIsolationTest do
       "/internal/forum-unavailable",
       # Idejo's community menu: a forum's client credentials, not a sign-in (tested in
       # community_directory_test.exs).
-      "/internal/community"
+      "/internal/community",
+      "/internal/community/profile"
     ]
 
     # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's
@@ -95,7 +96,11 @@ defmodule IdejoHub.SCIsolationTest do
       "/account/privacy",
       # Outside forums' listing: their client credentials, not a sign-in (tested in
       # outside_forums_test.exs).
-      "/account/api/listing"
+      "/account/api/listing",
+      # Idejo ID profiles: forums' client credentials; pictures are public (tested in
+      # identity_profile_test.exs).
+      "/account/api/profile",
+      "/account/pictures/:key"
     ]
 
     for path <- members do
