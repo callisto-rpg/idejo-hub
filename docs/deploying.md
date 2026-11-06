@@ -105,6 +105,67 @@ The first operator account is an **owner**. Owners also manage operator accounts
 an operator, remove it (HA-07). Operators do everything else. The last owner always stays an
 owner, and the command line below can make another at any time.
 
+## Daily use
+
+Everything below is on the Hub's pages (`https://hub.example.org`); most of it also on the
+command line (Commands, below). Every action is recorded in the **Audit log**, and the
+forum's owner sees the part about their forum from their Idejo ID page.
+
+- **Create a forum**: **Forums** → **New forum**: its subdomain (checked while you type),
+  its name and its owner's email. It is ready in about a minute; the owner is emailed a link
+  to choose their password (if the email cannot be sent, the forum's page shows **Show the
+  owner's link once**). You never become an owner or administrator of a forum: its owner
+  runs it from inside, as on a server of their own.
+- **Watch them**: the **Forums** list shows each forum's health, memory, members, size and
+  last backup, checked every minute; **Server** shows the machine (load, memory, disk,
+  databases). Alerts come by email (below).
+- **Pause a forum**: its page → **Suspend**. Visitors see a maintenance page; nothing is
+  deleted. **Resume** brings it back.
+- **Back up**: every forum is backed up every night (02:00 UTC; the newest 14 kept). Its page
+  → **Back up now** for one more, **Export** for a file to download.
+- **Restore**: its page → an archive → **Restore here** (the forum's current data is
+  replaced), or **Restore to new** with another subdomain.
+- **Upgrade**: a forum's page → **Upgrade** with the version; or every running forum, one
+  after another, from **Forums** → "Upgrade all running forums to" a version → **Upgrade
+  all** (it stops at the first failure). Each is backed up first, and rolled back by itself
+  if the new version does not start. Before upgrading, check that your Hub release supports
+  that version (Supported Idejo versions, above).
+- **Pin a forum to its version**: its page → **Pin to X.Y.Z**: upgrades of all forums leave
+  it out, an upgrade from its own page still works (OP-06); **Unpin** to include it again.
+- **Delete a forum**: its page → **Delete (30-day grace)**: a final export is made and kept,
+  the forum stops, and it is purged after 30 days (**Cancel deletion** until then);
+  **Delete now** asks you to type its subdomain.
+- **Members' Idejo IDs**: **Idejo IDs** (below) to find one, lock it for abuse or handle a
+  deletion request.
+
+## When something goes wrong
+
+- **A forum is down**: the list shows "down since …" and, after 5 minutes, you get an
+  email. Open its page: its health and the audit log say what happened last. **Recreate
+  (apply settings)** remakes its container with its data kept; **Restore here** puts back a
+  backup.
+- **An upgrade failed**: the Hub has already rolled it back to its previous version and the
+  pre-upgrade backup; the audit log says why. Nothing to do but read it before trying again.
+- **An operator lost their authenticator**: `bin/hub-admin reset-two-factor EMAIL`
+  (Commands); they set it up again at their next sign-in.
+- **The Hub itself is down**: forums keep running and members stay signed in (Hub NF-05);
+  only new Idejo ID sign-ups, the members' page and the Hub's own pages wait. Look at
+  `$H logs hub` and start it again with `$H up -d`.
+- **Updating the Hub**: in the repository's directory, `git pull`, then
+  `sudo deploy/install.sh` again: it keeps `deploy/.env`, rebuilds and restarts what
+  changed. Forums keep running while the Hub restarts; when Caddy itself is updated, they
+  are unreachable for a few seconds.
+- **The disk fills up**: an alert comes above 85%. Old backups beyond the newest 14 per forum
+  are removed by themselves; exports, final exports and pre-upgrade backups stay in the
+  `exports` volume until you remove them.
+- **The whole server is lost**: what you need from away from the server is your copy of
+  `deploy/.env` (its `HUB_SECRETS_KEY` and `ZITADEL_MASTERKEY` above all), your age key, and
+  the off-server copies (OP-02). On a new server: install with that `deploy/.env` in place
+  (step 2), put back the identity provider's dump so members keep their Idejo IDs (Backups of
+  the Hub and the identity provider, below), then bring each forum back from its decrypted
+  copy with **Import a standalone backup** (below), under its old subdomain. This path has
+  not been rehearsed end to end yet: try it on a spare server before you need it.
+
 ## Commands
 
 All from the repository's directory:
