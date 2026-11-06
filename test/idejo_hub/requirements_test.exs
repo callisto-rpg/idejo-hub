@@ -31,9 +31,9 @@ defmodule IdejoHub.RequirementsTest do
   # LB-02: the licence is the steward's choice after legal review (AGPL-3.0-only for now).
   @by_review ~w(LB-02)
 
-  # NF-02: a steward decision on Idejo's release mode. LB-04: Idejo's trademark policy
-  # (LI-07) is not written yet.
-  @pending ~w(NF-02 LB-04)
+  # LB-04: Idejo's trademark policy (LI-07) is not written yet (steward decision 2026-11-06:
+  # wait for it).
+  @pending ~w(LB-04)
 
   defp musts do
     spec = File.read!(Path.join(@root, "Idejo Hub — Spec Sheet.md"))
