@@ -16,6 +16,15 @@ Usage: bin/hub-admin COMMAND
                            Without --role: the first account is an owner, later ones
                            operators (HA-07); owners also manage accounts in the Hub
   reset-two-factor EMAIL   remove an operator's two-factor setup and end their sessions
+
+  Forums (HA-08), with the Hub running; each waits for the action to end and exits 0 when
+  done, 1 when it failed, 2 for an unknown forum:
+  forums                                  list forums: subdomain, status, version, health
+  create SUBDOMAIN NAME OWNER_EMAIL       create a forum (the owner is emailed their link)
+  backup SUBDOMAIN                        back a running forum up
+  upgrade SUBDOMAIN VERSION               upgrade it (backed up first, rolled back if unhealthy)
+  suspend SUBDOMAIN                       suspend it (its page says it is paused)
+  resume SUBDOMAIN                        resume a suspended forum
 USAGE
 }
 
@@ -33,6 +42,20 @@ case "${1:-}" in
     fun=$(printf '%s' "$1" | tr '-' '_')
     # The email goes through an environment variable, never into the Elixir code.
     HUB_ADMIN_EMAIL="$2" exec ./idejo_hub eval "IdejoHub.Release.$fun(System.fetch_env!(\"HUB_ADMIN_EMAIL\"))"
+    ;;
+  forums | create | backup | upgrade | suspend | resume)
+    case "$1:$#" in
+      forums:1 | backup:2 | suspend:2 | resume:2 | upgrade:3 | create:4) ;;
+      *) usage >&2; exit 64 ;;
+    esac
+    ./idejo_hub pid >/dev/null 2>&1 || { echo "The Hub is not running: start it first." >&2; exit 1; }
+    cmd=$1; shift
+    # Runs inside the Hub (rpc), so each argument travels Base64-encoded: never Elixir code.
+    list=""
+    for arg in "$@"; do
+      list="$list${list:+, }Base.decode64!(\"$(printf '%s' "$arg" | base64 | tr -d '\n')\")"
+    done
+    exec ./idejo_hub rpc "IdejoHub.Release.cli(\"$cmd\", [$list])"
     ;;
   *)
     usage >&2

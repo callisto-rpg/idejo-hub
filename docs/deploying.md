@@ -114,9 +114,20 @@ H="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
 $H exec hub bin/hub-admin create-operator EMAIL    # another operator (one-time password)
 $H exec hub bin/hub-admin create-operator EMAIL --role owner   # another owner
 $H exec hub bin/hub-admin reset-two-factor EMAIL   # an operator lost their authenticator
+$H exec hub bin/hub-admin forums                   # list forums: subdomain, status, version, health
+$H exec hub bin/hub-admin create SUBDOMAIN "NAME" OWNER_EMAIL
+$H exec hub bin/hub-admin backup SUBDOMAIN
+$H exec hub bin/hub-admin upgrade SUBDOMAIN VERSION   # backed up first, rolled back if unhealthy
+$H exec hub bin/hub-admin suspend SUBDOMAIN
+$H exec hub bin/hub-admin resume SUBDOMAIN
 $H ps                                              # what is running
 $H logs -f hub                                     # the Hub's log
 ```
+
+The forum commands (HA-08) need the Hub running. Each waits for the action to end, as the
+Hub's pages would show it, and exits 0 when done, 1 when it failed (with the reason) and 2
+for an unknown forum, so scripts can rely on them. They are recorded in the audit log as
+"command line".
 
 ## Settings in deploy/.env
 
