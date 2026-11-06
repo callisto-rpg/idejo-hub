@@ -32,6 +32,7 @@ SPDX-License-Identifier: AGPL-3.0-only
       <li :for={forum <- @owned} id={"account-owned-#{forum.subdomain}"}>
         <a href={forum_url(forum)} class="font-medium">{forum.display_name}</a>
         · <a href={~p"/account/forums/#{forum.subdomain}/log"}>Audit log</a>
+        · <a href={~p"/account/operator-access"}>What the Hub operator can access</a>
       </li>
     </ul>
   </section>

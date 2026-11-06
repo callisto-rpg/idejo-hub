@@ -10,6 +10,7 @@ defmodule IdejoHub.Settings do
   | `smtp_host`, `smtp_port`, `smtp_security`, `smtp_username`, `smtp_password` | SMTP shared by forums (HN-07). Set here, it replaces `HUB_SMTP_*` as a whole; the password is encrypted (SC-04) | the environment |
   | `alert_email` | Where alerts go (OP-08, milestone 4) | none |
   | `reserved_subdomains` | Names refused for new forums, on top of FL-03's | none |
+  | `access_policy` | When the operator would access a forum, in their words, on the forum owners' disclosure page (SC-10; plain text, at most 4000 characters) | none |
 
   The forum domain stays in the environment (`IDEJO_FORUM_DOMAIN`): every forum's address,
   certificate and links depend on it. Backups are kept in the exports volume; off-server
@@ -24,7 +25,7 @@ defmodule IdejoHub.Settings do
   alias IdejoHub.Identity.SetupWorker
   alias IdejoHub.Settings.Setting
 
-  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains)
+  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains access_policy)
   @secret ~w(smtp_password)
 
   @doc "Every setting's stored value (secrets decrypted), missing ones as nil."
@@ -123,6 +124,9 @@ defmodule IdejoHub.Settings do
       do: nil,
       else: "lowercase letters, digits and hyphens only: #{Enum.join(bad, ", ")}"
   end
+
+  defp check("access_policy", text),
+    do: if(String.length(text) <= 4000, do: nil, else: "at most 4000 characters")
 
   defp check(_key, _value), do: nil
 

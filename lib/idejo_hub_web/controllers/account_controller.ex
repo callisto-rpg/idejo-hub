@@ -54,6 +54,21 @@ defmodule IdejoHubWeb.AccountController do
   forum exists. Members who acted show as "a member", never by their identity.
   """
   def log(conn, %{"subdomain" => subdomain}) do
+    log_page(conn, subdomain)
+  end
+
+  @doc """
+  SC-10: for forum owners, what the Hub's operator can technically access, and when they
+  would (`access_policy`, written by the operator in Settings). Public: an owner may read it
+  before choosing this Hub.
+  """
+  def operator_access(conn, _params) do
+    policy = IdejoHub.Settings.get("access_policy")
+    paragraphs = if policy, do: String.split(policy, ~r/\R\s*\R/, trim: true), else: []
+    render(conn, :operator_access, policy: paragraphs, page_title: "What the operator can access")
+  end
+
+  defp log_page(conn, subdomain) do
     with %{} = member <- member(conn),
          %{} = forum <- Enum.find(owned(person(member["sub"])), &(&1.subdomain == subdomain)) do
       render(conn, :log,

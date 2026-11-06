@@ -437,6 +437,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   a refusal stops it with the reason (`identity_deletions.error`; asked again, it starts
   over). Audited as `member:<subject>` (`identity.forum_leave`, `identity.forum_delete`,
   `identity.delete`), never an email.
+- **Disclosure for forum owners** (SC-10, `AccountController.operator_access/2`): a public
+  page on the sign-in host, `/account/operator-access` (plain HTML, linked from the member's
+  page and the owner's audit log): what the operator can reach through the Hub (backups,
+  their downloads, pause/restore/upgrade/export/delete, the secret key, shared SMTP, figures;
+  not the live database, never owner), on the server (everything, as any hosting), and in
+  Idejo IDs (emails, names, forums joined; never passwords; lock, delete, and as the
+  provider's administrator could change a sign-in), and what the audit log records. Every
+  statement follows how the Hub works: a change to backups, downloads, secrets, identity or
+  the audit log updates that page. When they would look is the operator's own text
+  (`access_policy` in Settings, plain text, at most 4000 characters, blank lines part
+  paragraphs); empty, the page says the operator has not said yet.
 - **Identity administration** (HA-06, `Identity.Admin`, `IdentitiesLive` at `/identities`,
   `IdentityShowLive` at `/identities/:id`; extra review: DV-06): search Idejo IDs at the
   provider (`Identity.search_people/1`: Zitadel `POST /v2/users`, humans only, email,
