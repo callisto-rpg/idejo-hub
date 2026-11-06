@@ -79,7 +79,8 @@ defmodule IdejoHub.Identity.ID01ForumClientsTest do
     assert env["IDEJO_OIDC_CLIENT_ID"] == client.client_id
     assert env["IDEJO_OIDC_CLIENT_SECRET"] == client.client_secret
     assert env["IDEJO_OIDC_LABEL"] == "Idejo ID"
-    assert env["IDEJO_LOCAL_ACCOUNTS"] == "on"
+    # Idejo ID required by default (ID-07; steward decision 2026-11-06).
+    assert env["IDEJO_LOCAL_ACCOUNTS"] == "off"
   end
 
   @tag req: "ID-01"
@@ -172,5 +173,17 @@ defmodule IdejoHub.Identity.ID01ForumClientsTest do
              })
 
     assert env("id01-a")["IDEJO_LOCAL_ACCOUNTS"] == "on"
+  end
+
+  @tag req: "ID-07"
+  test "ID-07 new forums require an Idejo ID unless the operator allows local accounts" do
+    # The form's box starts unticked; a forum made without a choice requires an Idejo ID.
+    refute Ecto.Changeset.get_field(Forums.change_new_forum(), :local_accounts)
+    {:ok, forum} = create("id01-a")
+    refute forum.local_accounts
+
+    {:ok, allowed} = create("id01-b", %{"local_accounts" => "true"})
+    assert allowed.local_accounts
+    assert env("id01-b")["IDEJO_LOCAL_ACCOUNTS"] == "on"
   end
 end
