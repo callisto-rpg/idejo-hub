@@ -120,6 +120,9 @@ defmodule IdejoHub.EarlierMustsTest do
     assert install =~ ~s([ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ])
     # An update's new Caddyfile (a mounted file `up` does not notice) is loaded.
     assert install =~ "exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+    # Before the health checks' wait, which stops the script when a service is slow.
+    [before_wait, _] = String.split(install, ~s("${COMPOSE[@]}" up -d --wait\n), parts: 2)
+    assert before_wait =~ "caddy reload"
     assert read("docs/deploying.md") =~ "Debian 13 (trixie)"
     # deploy/test/hn_08_install_settings.sh runs the installer's settings step in CI.
     assert File.exists?(Path.join(@root, "deploy/test/hn_08_install_settings.sh"))
