@@ -15,7 +15,7 @@ defmodule IdejoHub.Operations.HubBackupWorker do
 
   alias IdejoHub.Audit
   alias IdejoHub.Forums.Errors
-  alias IdejoHub.Operations.{HubBackup, OffsiteWorker}
+  alias IdejoHub.Operations.{Alerts, HubBackup, OffsiteWorker}
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"actor" => actor}}) do
@@ -40,6 +40,8 @@ defmodule IdejoHub.Operations.HubBackupWorker do
           "files" => Enum.map(done, & &1.file_name)
         })
 
+        # OP-08.
+        Alerts.backup_failed("the Hub", nil, Errors.describe(reason))
         {:error, reason}
     end
   end

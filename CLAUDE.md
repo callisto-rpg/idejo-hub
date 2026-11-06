@@ -69,7 +69,8 @@ same as Idejo's, pinned in `.tool-versions` (DV-04).
 As built by Foundations:
 
 - Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
-  Node), no mailer yet (alerts, OP, add Swoosh when needed).
+  Node). Swoosh (MIT) with gen_smtp (BSD-2-Clause; ranch ISC, idna MIT) for the Hub's own
+  email, OP-08's alerts (`IdejoHub.Mailer`, added 2026-11-06).
 - Req (Apache-2.0) for HTTP to docker-guard. `docker_guard` is a path dependency in tests
   only, so the Hub's tests check that what the Hub sends is what the guard allows.
 - Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a
@@ -275,7 +276,19 @@ Design points (Implementation Prompt, Part B, milestone 2):
   cleared when it answers, for OP-08; `memory_bytes`, `memory_limit_bytes`). Forums not
   running keep no health. Columns Health ("up", "down since HH:MM UTC") and Memory ("used of
   limit", amber past 90%), sortable (`?sort=health`: down first). Disk use stays with the
-  15-minute `stats` (an `idejo-admin` run per forum each minute would cost a release boot). HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
+  15-minute `stats` (an `idejo-admin` run per forum each minute would cost a release boot).
+  OP-08 alerts (`Operations.Alerts`), emailed to Settings' alert address through
+  `IdejoHub.Mailer` (Swoosh SMTP over `Settings.shared_smtp/0`, read at each send, as Idejo's
+  port rule: `tls` on 465, else `starttls`; peer verified; from `noreply@<Hub host>`,
+  "Idejo Hub"): after each health check, a forum `down_since` 5 minutes or more
+  (`check_forums/1`) and the store's disk (`check_disk/1`: above 85%, cleared under 80%) open
+  an `alerts` row (unique `key`: `forum_down:<slug>`, `disk`) and send one email, its end
+  (answering again; under 80%) one more; a forum leaving `running` drops its row silently. A
+  failed forum backup (`BackupWorker`), Hub backup (`HubBackupWorker`) or off-server copy's
+  last attempt (`OffsiteWorker`) sends one each (`backup_failed/3`). Every email is audited
+  `alert.email` (`ok`, or `failed` with the reason: no alert address, no SMTP, the server's
+  answer). Tests: `Swoosh.Adapters.Test`, and `config :idejo_hub, Alerts, disk: :unavailable`
+  so no test reads the machine's disk. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
   checked while typing (FL-03 rules and free), created as the signed-in operator's email.
   HA-03 forum page at `/forums/:id` (`ForumShowLive`): health (`start_async`), actions
   through `Forums` as the operator (suspend, resume, back up, export, upgrade, restore here

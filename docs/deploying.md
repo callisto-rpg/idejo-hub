@@ -128,7 +128,21 @@ whether it is healthy (its database is reachable and up to date) and how much me
 - **Version**, **Last backup** and **Size** (database and uploads, reported by the forum every
   15 minutes) are in the same row.
 
-The page updates by itself. Emails when a forum stays down come with OP-08.
+The page updates by itself.
+
+## Alerts by email (OP-08)
+
+Set an **Alert email** in **Settings** (and an SMTP server there, or `HUB_SMTP_HOST` in
+`deploy/.env`: alerts use the same server as forums). The Hub then writes to it, from
+`noreply@` its own address, when:
+
+- a forum has been **down for 5 minutes** (one email, and one more when it answers again);
+- a **backup fails**: a forum's, the Hub's own, or an off-server copy after its last attempt;
+- the disk holding the Hub's store is **above 85%** full (one email, and one more once it is
+  back under 80%).
+
+Each email, sent or not, is in the audit log (`alert.email`); one that could not be sent says
+why (no alert email set, no SMTP server, or the server's answer).
 
 ## Backups of the Hub and the identity provider (OP-10)
 
