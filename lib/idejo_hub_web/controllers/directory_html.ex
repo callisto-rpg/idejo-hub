@@ -7,6 +7,41 @@ defmodule IdejoHubWeb.DirectoryHTML do
 
   embed_templates "directory_html/*"
 
+  @doc """
+  A forum's card: its logo, name and host link to it; **Join** (Idejo's yellow) opens its
+  sign-in with Idejo ID, or **Open** (green) for a forum the visitor joined.
+  """
+  attr :forum, :map, required: true
+  attr :id_prefix, :string, required: true
+
+  def forum_card(assigns) do
+    ~H"""
+    <div class="directory-card" id={"#{@id_prefix}-#{@forum.host}"}>
+      <a href={@forum.url} class="directory-link">
+        <img src={@forum.logo} alt="" class="directory-logo" width="56" height="56" loading="lazy" />
+        <span class="directory-name">{@forum.name}</span>
+        <span class="directory-host">{@forum.host}</span>
+      </a>
+      <a
+        :if={!@forum.joined?}
+        href={@forum.join}
+        class="btn btn-sm btn-primary directory-join"
+        aria-label={"Join #{@forum.name}"}
+      >
+        Join
+      </a>
+      <a
+        :if={@forum.joined?}
+        href={@forum.url}
+        class="btn btn-sm btn-success directory-open"
+        aria-label={"Open #{@forum.name}"}
+      >
+        Open
+      </a>
+    </div>
+    """
+  end
+
   @doc "The address parameters of another page of the same search."
   def page_params(%{search: ""}, page), do: [page: page]
   def page_params(%{search: search}, page), do: [q: search, page: page]

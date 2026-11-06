@@ -78,6 +78,9 @@ defmodule IdejoHub.SCIsolationTest do
       # Idejo's community menu: a forum's client credentials, not a sign-in (tested in
       # community_directory_test.exs).
       "/internal/community",
+      # The forums directory's sign-in hand-off: a token signed by the Hub, not an operator
+      # page (tested in community_directory_test.exs).
+      "/signed-in",
       "/internal/community/profile"
     ]
 
@@ -100,6 +103,8 @@ defmodule IdejoHub.SCIsolationTest do
       # Idejo ID profiles: forums' client credentials; pictures are public (tested in
       # identity_profile_test.exs).
       "/account/api/profile",
+      # The forums directory's hand-off: who is signed in here (community_directory_test.exs).
+      "/account/directory",
       "/account/pictures/:key"
     ]
 

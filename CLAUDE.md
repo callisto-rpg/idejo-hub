@@ -55,7 +55,7 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.9**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.10**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
@@ -65,8 +65,9 @@ on 0.2.4 also without the menu.
 Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
 custom CSS (their content security policy still refuses outside loads); forums on 0.1.0
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
-0.2.9 (the first with `/logo`, the forum's logo for the directory's cards; before it, a card
-shows no logo).
+0.2.10 (0.2.9 the first with `/logo`, the forum's logo for the directory's cards; before it,
+a card shows no logo; 0.2.10 the first that never names an account after its email and that
+takes and shares the Idejo ID profile, below).
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -85,7 +86,15 @@ the forum runs (Hub NF-05). The directory shows one card per forum with its logo
 0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
 `https://*.<forum domain>`), and past ten listed forums a search (name or host, any
 case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`, hosted and
-outside forums together). Tests: `community_directory_test.exs`.
+outside forums together). Each card has **Join** (`btn-primary`, Idejo's gold: the forum's
+`/users/oidc`) or, for a forum the visitor joined (`Community.joined_hosts/1`: hosted joins
+still `joined`, outside forums signed in to), **Open** (green); signed in with joined forums,
+the first page shows them first, above an "All forums" line (steward request 2026-11-06).
+The directory learns who is looking from the sign-in host: "Sign in to see your forums"
+(`/sign-in`, a random `state` in its session) → `/account/directory?state=` (signed in there,
+or through its sign-in first, `account_return`) → `/signed-in?token=` (`Phoenix.Token`, two
+minutes, naming the subject and that `state`) → its own session, twelve hours. Tests:
+`community_directory_test.exs`.
 
 **Outside forums** (steward decisions 2026-11-06; `Identity.OutsideForums`,
 `RegistryController`, `OutsideForumsLive`; extra review: DV-06): an Idejo server hosted

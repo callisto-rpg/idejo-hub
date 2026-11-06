@@ -35,6 +35,10 @@ defmodule IdejoHubWeb.Router do
   scope "/", IdejoHubWeb, host: "forums." do
     pipe_through [:directory_host, :browser]
     get "/", DirectoryController, :index
+    # Who is looking, from the sign-in host (steward request 2026-11-06).
+    get "/sign-in", DirectoryController, :sign_in
+    get "/signed-in", DirectoryController, :signed_in
+    post "/sign-out", DirectoryController, :sign_out
   end
 
   # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).
@@ -82,6 +86,7 @@ defmodule IdejoHubWeb.Router do
     get "/privacy", AccountController, :privacy
     post "/delete", AccountController, :delete
     post "/profile", AccountController, :update_profile
+    get "/directory", AccountController, :directory
     post "/profile/picture", AccountController, :remove_picture
   end
 

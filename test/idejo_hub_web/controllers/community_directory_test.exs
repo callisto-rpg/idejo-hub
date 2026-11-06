@@ -15,8 +15,9 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
   alias IdejoHub.{Audit, Community, Forums, Repo, Secrets}
   alias IdejoHub.Forums.Forum
   alias IdejoHub.Hosting.ForumContainer
-  alias IdejoHub.Identity.Join
-  alias IdejoHubWeb.Accessibility
+  alias IdejoHub.Identity
+  alias IdejoHub.Identity.{Fake, Join}
+  alias IdejoHubWeb.{Accessibility, AccountController}
 
   @directory "forums.idejo.test"
 
@@ -156,10 +157,19 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     html = %{build_conn() | host: @directory} |> get(~p"/") |> html_response(200)
     doc = LazyHTML.from_document(html)
 
-    card =
-      LazyHTML.query(doc, ~s(#directory a.directory-card[href="https://dir-card.idejo.test/"]))
+    card = LazyHTML.query(doc, ~s(#directory [id="all-dir-card.idejo.test"]))
 
     assert LazyHTML.text(card) =~ "Chess"
+
+    assert LazyHTML.attribute(LazyHTML.query(card, "a.directory-link"), "href") == [
+             "https://dir-card.idejo.test/"
+           ]
+
+    # Not signed in: every forum offers Join, its sign-in with Idejo ID.
+    assert LazyHTML.attribute(LazyHTML.query(card, "a.directory-join"), "href") == [
+             "https://dir-card.idejo.test/users/oidc"
+           ]
+
     # Idejo's fixed logo address (0.2.9), allowed by the page's policy.
     assert LazyHTML.attribute(LazyHTML.query(card, "img.directory-logo"), "src") == [
              "https://dir-card.idejo.test/logo"
@@ -223,5 +233,100 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     # A search keeps its pages.
     club = conn |> get(~p"/?q=club") |> html_response(200)
     assert club =~ ~r{href="/\?(q=club&amp;page=2|page=2&amp;q=club)"}
+  end
+
+  describe "who is looking (steward request 2026-11-06)" do
+    setup do
+      original = Application.get_env(:idejo_hub, Identity)
+
+      Application.put_env(
+        :idejo_hub,
+        Identity,
+        Keyword.put(original, :adapter, Fake)
+      )
+
+      Fake.start()
+      on_exit(fn -> Application.put_env(:idejo_hub, Identity, original) end)
+      :ok
+    end
+
+    # Through the sign-in host, as a browser would, for a member signed in there as `subject`.
+    defp signed_in_directory(subject) do
+      start = %{build_conn() | host: @directory} |> get(~p"/sign-in")
+      "https://id.idejo.test/account/directory?" <> query = redirected_to(start, 302)
+
+      back =
+        %{build_conn() | host: "id.idejo.test"}
+        |> init_test_session(%{
+          "member" => %{"sub" => subject, "at" => System.system_time(:second)}
+        })
+        |> get("/account/directory?" <> query)
+
+      "https://forums.idejo.test/signed-in?" <> token_query = redirected_to(back, 302)
+      done = start |> recycle() |> Map.put(:host, @directory) |> get("/signed-in?" <> token_query)
+      assert redirected_to(done, 302) == "/"
+      done |> recycle() |> Map.put(:host, @directory)
+    end
+
+    test "joined forums say Open, in green, first and above All forums" do
+      chess = forum!("dj-chess", %{display_name: "Chess"})
+      forum!("dj-go", %{display_name: "Go"})
+      join!("ada", chess)
+
+      html = signed_in_directory("ada") |> get(~p"/") |> html_response(200)
+      doc = LazyHTML.from_document(html)
+
+      mine = LazyHTML.query(doc, "#directory-mine .directory-card")
+      assert Enum.count(mine) == 1
+      assert LazyHTML.text(mine) =~ "Chess"
+
+      assert LazyHTML.attribute(LazyHTML.query(mine, "a.directory-open.btn-success"), "href") ==
+               ["https://dj-chess.idejo.test/"]
+
+      assert LazyHTML.text(LazyHTML.query(doc, "#directory-all")) == "All forums"
+
+      # All forums, the joined ones too.
+      all = LazyHTML.query(doc, "#directory .directory-card")
+      assert Enum.count(all) == 2
+      assert Enum.count(LazyHTML.query(all, "a.directory-open")) == 1
+      assert LazyHTML.text(LazyHTML.query(all, "a.directory-join.btn-primary")) =~ "Join"
+      refute html =~ "directory-sign-in"
+    end
+
+    test "nothing joined: no own section; a token for another session is refused" do
+      forum!("dj-solo", %{display_name: "Solo"})
+      html = signed_in_directory("bea") |> get(~p"/") |> html_response(200)
+      refute html =~ "directory-mine"
+      refute html =~ "All forums"
+
+      # A hand-off made for someone else's session does not sign this one in.
+      token =
+        Phoenix.Token.sign(
+          IdejoHubWeb.Endpoint,
+          AccountController.directory_salt(),
+          %{
+            "sub" => "ada",
+            "state" => "someone-elses-state"
+          }
+        )
+
+      conn =
+        %{build_conn() | host: @directory}
+        |> get(~p"/sign-in")
+        |> recycle()
+        |> Map.put(:host, @directory)
+        |> get("/signed-in?token=" <> token)
+
+      assert html_response(conn |> recycle() |> Map.put(:host, @directory) |> get(~p"/"), 200) =~
+               "directory-sign-in"
+    end
+
+    test "not signed in on the sign-in host: through its sign-in first, then back" do
+      start = %{build_conn() | host: @directory} |> get(~p"/sign-in")
+      "https://id.idejo.test/account/directory?" <> query = redirected_to(start, 302)
+      conn = %{build_conn() | host: "id.idejo.test"} |> get("/account/directory?" <> query)
+      assert redirected_to(conn, 302) == "/account/sign-in"
+      assert get_session(conn, "account_return") == "/account/directory?" <> query
+    end
   end
 end
