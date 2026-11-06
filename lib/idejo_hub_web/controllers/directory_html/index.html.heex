@@ -2,18 +2,73 @@
 SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 --%>
-<%!-- The forums directory (steward decision 2026-11-06). --%>
-<Layouts.app flash={@flash} title="Forums">
+<%!-- The forums directory (steward decisions 2026-11-06): cards with each forum's logo; past
+     ten forums, a search and pages. Plain HTML, no JavaScript needed. --%>
+<Layouts.app flash={@flash} title="Forums" wide>
   <h1 class="text-2xl font-semibold">Forums</h1>
-  <p>
-    The forums on this server. Each is run by its own owner; one Idejo ID signs you in to all
-    of them.
+
+  <form
+    :if={@browse?}
+    id="directory-search"
+    action={~p"/"}
+    method="get"
+    role="search"
+    class="flex gap-2"
+  >
+    <label class="grow">
+      <span class="sr-only">Search the forums</span>
+      <input
+        type="search"
+        name="q"
+        value={@result.search}
+        placeholder="Search the forums"
+        class="input w-full"
+      />
+    </label>
+    <button class="btn btn-primary">Search</button>
+  </form>
+
+  <p :if={@forums == [] and @result.search == ""} id="directory-empty">
+    No forums are listed yet.
   </p>
-  <p :if={@forums == []} id="directory-empty">No forums are listed yet.</p>
-  <ul :if={@forums != []} id="directory" class="space-y-2">
-    <li :for={{name, url} <- @forums}>
-      <a href={url} class="font-medium">{name}</a>
-      <span class="text-sm opacity-70">{URI.parse(url).host}</span>
+  <p :if={@forums == [] and @result.search != ""} id="directory-none">
+    No forum matches “{@result.search}”.
+  </p>
+
+  <ul :if={@forums != []} id="directory" class="directory-grid">
+    <li :for={forum <- @forums}>
+      <a href={forum.url} class="directory-card">
+        <img src={forum.logo} alt="" class="directory-logo" width="56" height="56" loading="lazy" />
+        <span class="directory-name">{forum.name}</span>
+        <span class="directory-host">{forum.host}</span>
+      </a>
     </li>
   </ul>
+
+  <nav
+    :if={@browse? and @result.pages > 1}
+    aria-label="Pages"
+    id="directory-pages"
+    class="flex items-center justify-between gap-2"
+  >
+    <a
+      :if={@result.page > 1}
+      href={~p"/?#{page_params(@result, @result.page - 1)}"}
+      rel="prev"
+      class="btn btn-sm"
+    >
+      Previous
+    </a>
+    <span :if={@result.page == 1}></span>
+    <span class="text-sm">Page {@result.page} of {@result.pages}</span>
+    <a
+      :if={@result.page < @result.pages}
+      href={~p"/?#{page_params(@result, @result.page + 1)}"}
+      rel="next"
+      class="btn btn-sm"
+    >
+      Next
+    </a>
+    <span :if={@result.page == @result.pages}></span>
+  </nav>
 </Layouts.app>

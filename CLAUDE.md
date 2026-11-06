@@ -55,7 +55,7 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.6**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.9**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
@@ -65,7 +65,8 @@ on 0.2.4 also without the menu.
 Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
 custom CSS (their content security policy still refuses outside loads); forums on 0.1.0
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
-0.2.6.
+0.2.9 (the first with `/logo`, the forum's logo for the directory's cards; before it, a card
+shows no logo).
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -78,7 +79,29 @@ subdomain (FL-03), so no forum can take it. Every forum with a client gets Idejo
 from outside): `CommunityController` answers `GET ?subject=` with HTTP Basic, the asking
 forum's own client id and secret, only about a person who joined that forum, with the other
 running forums they joined (`identity_joins`). With the Hub down the menu lists nothing and
-the forum runs (Hub NF-05). Tests: `community_directory_test.exs`.
+the forum runs (Hub NF-05). The directory shows one card per forum with its logo (Idejo
+0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
+`https://*.<forum domain>`), and past ten listed forums a search (name or host, any
+case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`, hosted and
+outside forums together). Tests: `community_directory_test.exs`.
+
+**Outside forums** (steward decisions 2026-11-06; `Identity.OutsideForums`,
+`RegistryController`, `OutsideForumsLive`; extra review: DV-06): an Idejo server hosted
+elsewhere signs in with this Hub's Idejo ID. JSON under `/account/api` on the sign-in host
+(the `:api` pipeline: no session, so no CSRF token; `sc_02_csrf_test.exs` checks it):
+`POST registrations` (host, name; ten an hour per address) answers a `registration` key and
+a `proof`; the forum serves the proof at `https://<host>/.well-known/idejo-id-registration`
+(`Identity.Proof`: public addresses only, the checked one asked, https, no redirects) and
+`POST registrations/verify` makes its client (`Identity.create_client/1`), or renews a known
+host's secret, and answers issuer, client id and secret once (only hashes stored). Asking
+again changes nothing until proven. Hosts under the forum domain and the Hub's own are
+refused. With its client credentials (Basic) the forum reads and sets its directory listing
+(`GET`/`PUT listing`: `none`, `requested`, `approved`, `refused`): an operator approves or
+refuses at `/outside-forums` (a new name asks again; a refused one asks again only after
+leaving), and Remove deletes its client. Approved ones join the directory; the page's
+`img-src` names their hosts (`:csp_img_hosts`, the CSP header written at send). Sign-up
+leads back to a registered one. Audited `identity.outside_forum.register`, `.listing`,
+`.approve`, `.refuse`, `.remove`. Tests: `outside_forums_test.exs`.
 
 **Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
 `RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own
@@ -701,7 +724,8 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
   the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
   since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06; Idejo
-  `v0.2.5` (the community menu); Idejo `v0.2.6` ("No Idejo ID yet? Create one") since.
+  `v0.2.5` (the community menu); Idejo `v0.2.6` ("No Idejo ID yet? Create one"); Idejo
+  `v0.2.9` (`/logo`, for the directory's cards) since.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).

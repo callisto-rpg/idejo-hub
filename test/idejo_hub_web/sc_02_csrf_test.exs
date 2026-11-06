@@ -27,7 +27,36 @@ defmodule IdejoHubWeb.SC02CSRFTest do
     for %{verb: verb, path: path} <- IdejoHubWeb.Router.__routes__(),
         verb not in [:get, :head, :options],
         not String.starts_with?(path, "/dev"),
+        # The outside forums' JSON API: no session, no cookie (checked below).
+        not String.starts_with?(path, "/account/api/"),
         do: {verb, path}
+  end
+
+  test "SC-02 the outside forums' API takes no session: nothing for a CSRF token to protect" do
+    api =
+      for %{path: "/account/api/" <> _ = path, verb: verb} <- IdejoHubWeb.Router.__routes__(),
+          do: {verb, path}
+
+    assert length(api) == 4
+    # Only the API's controller, through the :api pipeline (no :fetch_session, no forgery
+    # protection): the router source says so.
+    router = File.read!("lib/idejo_hub_web/router.ex")
+
+    assert router =~
+             ~s(scope "/account/api", IdejoHubWeb do\n    pipe_through [:identity_host, :api])
+
+    [_, api_pipeline] = Regex.run(~r/pipeline :api do\n(.*?)\n  end/s, router)
+    refute api_pipeline =~ "session"
+
+    # The :api pipeline neither fetches nor sets a session.
+    conn =
+      %{build_conn() | host: @id_host}
+      |> put_req_cookie("_idejo_hub_key", "anything")
+      |> put("/account/api/listing", %{"listed" => true})
+
+    assert conn.status == 401
+    assert get_resp_header(conn, "set-cookie") == []
+    refute Map.has_key?(conn.private, :plug_session)
   end
 
   test "SC-02 every state-changing route refuses a request without the CSRF token", %{

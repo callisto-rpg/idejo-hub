@@ -75,7 +75,7 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     names =
       html
       |> LazyHTML.from_document()
-      |> LazyHTML.query("#directory li a")
+      |> LazyHTML.query("#directory .directory-name")
       |> Enum.map(&LazyHTML.text/1)
 
     assert names == ["Archery", "Bridge"]
@@ -149,5 +149,79 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     env = ForumContainer.spec(params)["Env"]
     assert "IDEJO_COMMUNITY_URL=http://hub:4000/internal/community" in env
     assert "IDEJO_COMMUNITY_DIRECTORY_URL=https://forums.idejo.test/" in env
+  end
+
+  test "the directory shows each forum as a card with its logo, no introduction" do
+    forum!("dir-card", %{display_name: "Chess"})
+    html = %{build_conn() | host: @directory} |> get(~p"/") |> html_response(200)
+    doc = LazyHTML.from_document(html)
+
+    card =
+      LazyHTML.query(doc, ~s(#directory a.directory-card[href="https://dir-card.idejo.test/"]))
+
+    assert LazyHTML.text(card) =~ "Chess"
+    # Idejo's fixed logo address (0.2.9), allowed by the page's policy.
+    assert LazyHTML.attribute(LazyHTML.query(card, "img.directory-logo"), "src") == [
+             "https://dir-card.idejo.test/logo"
+           ]
+
+    assert [csp] =
+             %{build_conn() | host: @directory}
+             |> get(~p"/")
+             |> get_resp_header("content-security-policy")
+
+    assert csp =~ "img-src 'self' data: blob: https://*.idejo.test"
+    refute html =~ "The forums on this server"
+    # Ten or fewer forums: no search, no pages.
+    refute html =~ "directory-search"
+    refute html =~ "directory-pages"
+  end
+
+  test "past ten forums, a search and pages" do
+    for n <- 1..23,
+        do:
+          forum!("dir-#{String.pad_leading("#{n}", 2, "0")}", %{
+            display_name: "Club #{String.pad_leading("#{n}", 2, "0")}"
+          })
+
+    forum!("dir-chess", %{display_name: "Chess 50%"})
+    conn = %{build_conn() | host: @directory}
+
+    first = conn |> get(~p"/") |> html_response(200)
+    doc = LazyHTML.from_document(first)
+    assert doc |> LazyHTML.query("#directory li") |> Enum.count() == 10
+    assert doc |> LazyHTML.query(~s(#directory-search input[name="q"])) |> Enum.count() == 1
+    assert LazyHTML.text(LazyHTML.query(doc, "#directory-pages")) =~ "Page 1 of 3"
+    assert first =~ ~s(href="/?page=2")
+
+    last = conn |> get(~p"/?page=3") |> html_response(200)
+
+    assert last |> LazyHTML.from_document() |> LazyHTML.query("#directory li") |> Enum.count() ==
+             4
+
+    # Past the last page: the last one.
+    assert conn |> get(~p"/?page=9") |> html_response(200) =~ "Page 3 of 3"
+
+    # By name or subdomain, any case; % and _ are only themselves.
+    found = conn |> get(~p"/?q=CHESS") |> html_response(200)
+
+    assert found
+           |> LazyHTML.from_document()
+           |> LazyHTML.query("#directory .directory-name")
+           |> Enum.map(&LazyHTML.text/1) == ["Chess 50%"]
+
+    assert conn |> get(~p"/?#{%{q: "50%"}}") |> html_response(200) =~ "Chess 50%"
+    assert conn |> get(~p"/?#{%{q: "_"}}") |> html_response(200) =~ "directory-none"
+
+    assert conn
+           |> get(~p"/?#{%{q: "dir-1"}}")
+           |> html_response(200)
+           |> LazyHTML.from_document()
+           |> LazyHTML.query("#directory li")
+           |> Enum.count() == 10
+
+    # A search keeps its pages.
+    club = conn |> get(~p"/?q=club") |> html_response(200)
+    assert club =~ ~r{href="/\?(q=club&amp;page=2|page=2&amp;q=club)"}
   end
 end

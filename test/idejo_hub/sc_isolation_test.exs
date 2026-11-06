@@ -92,7 +92,10 @@ defmodule IdejoHub.SCIsolationTest do
       # SC-10: the disclosure page, public (tested in sc_10_disclosure_test.exs).
       "/account/operator-access",
       # Hub NF-07: the privacy notice, public (tested in nf_07_member_pages_test.exs).
-      "/account/privacy"
+      "/account/privacy",
+      # Outside forums' listing: their client credentials, not a sign-in (tested in
+      # outside_forums_test.exs).
+      "/account/api/listing"
     ]
 
     for path <- members do

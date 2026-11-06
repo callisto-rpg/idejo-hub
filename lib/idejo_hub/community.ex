@@ -18,7 +18,7 @@ defmodule IdejoHub.Community do
 
   alias IdejoHub.{Forums, Repo}
   alias IdejoHub.Forums.Forum
-  alias IdejoHub.Identity.Join
+  alias IdejoHub.Identity.{Join, OutsideForums}
 
   @doc "The directory's host: `forums.<forum domain>`."
   @spec directory_host() :: String.t()
@@ -38,15 +38,73 @@ defmodule IdejoHub.Community do
       Application.get_env(:idejo_hub, __MODULE__, [])[:url] ||
         "http://hub:4000/internal/community"
 
+  @per_page 10
+
   @doc "Running forums the operator has not hidden, by name."
   @spec directory() :: [Forum.t()]
-  def directory do
-    Repo.all(
-      from f in Forum,
-        where: f.status == "running" and f.listed,
-        order_by: [asc: fragment("lower(?)", f.display_name), asc: f.subdomain]
-    )
+  def directory, do: Repo.all(listed() |> order_by_name())
+
+  @doc """
+  One page of the directory (steward requests 2026-11-06): the hosted forums listed and the
+  outside forums an operator approved (`OutsideForums`), by name, those whose name or host
+  holds `search` (any case), #{@per_page} a page. `%{forums: [%{name:, host:}], page:,
+  pages:, total:, listed:}`, where `listed` counts every listed forum (search and pages show
+  past #{@per_page}).
+  """
+  @spec directory_page(String.t() | nil, pos_integer()) :: map()
+  def directory_page(search, page) do
+    search = (search || "") |> String.trim() |> String.slice(0, 100)
+
+    all = from(e in subquery(entries()))
+
+    matching =
+      if search == "",
+        do: all,
+        else:
+          (
+            like = "%" <> String.replace(search, ~r/[\\%_]/, "\\\\\\0") <> "%"
+            from e in all, where: ilike(e.name, ^like) or ilike(e.host, ^like)
+          )
+
+    total = Repo.aggregate(matching, :count)
+    pages = max(div(total + @per_page - 1, @per_page), 1)
+    page = page |> max(1) |> min(pages)
+
+    %{
+      forums:
+        Repo.all(
+          matching
+          |> order_by([e], asc: fragment("lower(?)", e.name), asc: e.host)
+          |> limit(@per_page)
+          |> offset(^((page - 1) * @per_page))
+        ),
+      page: page,
+      pages: pages,
+      total: total,
+      listed: Repo.aggregate(all, :count),
+      search: search
+    }
   end
+
+  @doc "How many forums a directory page holds."
+  def per_page, do: @per_page
+
+  defp listed, do: from(f in Forum, where: f.status == "running" and f.listed)
+
+  # Hosted and outside forums alike: `%{name:, host:}`.
+  defp entries do
+    suffix = "." <> Application.fetch_env!(:idejo_hub, Forums)[:domain]
+
+    outside =
+      from o in OutsideForums.listed_query(), select: %{name: o.display_name, host: o.host}
+
+    from f in listed(),
+      select: %{name: f.display_name, host: fragment("? || ?", f.subdomain, ^suffix)},
+      union_all: ^outside
+  end
+
+  defp order_by_name(query),
+    do: order_by(query, [f], asc: fragment("lower(?)", f.display_name), asc: f.subdomain)
 
   @doc """
   The other running forums `subject` joined, for the forum whose client is `client_id` with

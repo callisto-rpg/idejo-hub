@@ -9,12 +9,28 @@ defmodule IdejoHubWeb.DirectoryController do
   """
   use IdejoHubWeb, :controller
 
-  alias IdejoHub.{Community, Forums}
+  alias IdejoHub.Community
 
-  def index(conn, _params) do
-    render(conn, :index,
+  def index(conn, params) do
+    page =
+      case Integer.parse(to_string(params["page"] || "1")) do
+        {n, ""} when n > 0 -> n
+        _ -> 1
+      end
+
+    result = Community.directory_page(params["q"], page)
+
+    conn
+    # Outside forums' logos come from their own hosts: the page's policy allows those shown.
+    |> assign(:csp_img_hosts, Enum.map(result.forums, & &1.host))
+    |> render(:index,
       forums:
-        Enum.map(Community.directory(), &{&1.display_name, "https://" <> Forums.host(&1) <> "/"}),
+        Enum.map(result.forums, fn %{name: name, host: host} ->
+          # The forum's logo at Idejo's fixed address (0.2.9; steward request 2026-11-06).
+          %{name: name, url: "https://#{host}/", host: host, logo: "https://#{host}/logo"}
+        end),
+      result: result,
+      browse?: result.listed > Community.per_page(),
       page_title: "Forums"
     )
   end
