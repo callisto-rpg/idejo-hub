@@ -8,6 +8,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 Idejo Hub runs several Idejo forums on one server, each on its own subdomain. This page
 installs it (HN-08) and lists the commands an operator needs.
 
+## Supported Idejo versions
+
+This Hub release supports **Idejo 0.2.2**, the version new forums start on
+(`IDEJO_DEFAULT_VERSION`, below); see the [README](../README.md#supported-idejo-versions) for
+older versions (Hub NF-06). Before upgrading forums to a newer Idejo, check that your Hub
+release supports it.
+
 ## What you need
 
 - A server running **Debian 13 (trixie)** (the same as Idejo). Count about **400 MB of memory

@@ -519,6 +519,13 @@ Design points (Implementation Prompt, Part B, milestone 2):
 
 - One requirement per pull request (DV-05), ID in the PR title; tests named and tagged after
   the ID (DV-02).
+- **Every Must has a test named after its ID** (milestone 4's exit check):
+  `test/idejo_hub/requirements_test.exs` reads the spec's Musts and fails on one without a
+  test tagged `req: "XX-NN"` (here or in `guard/test/`) or a script `deploy/test/xx_nn_*.sh`
+  / `guard/test/xx_nn_*.sh`. Its exceptions: `@elsewhere` (the BI rows, tested in Idejo
+  under Idejo's IDs), `@by_review` (LB-02, the licence after legal review), `@pending`
+  (remove an ID when its test lands, or the test fails). Musts built before it got their
+  tests in `test/idejo_hub/earlier_musts_test.exs`.
 - Commits made with Claude Code end with the trailer `Assisted-by: Claude Code` (LI-08).
 - CLA (LI-05): `.github/workflows/cla.yml` asks every contributor to sign Idejo's CLA (same
   steward); signatures go to the `cla-signatures` branch.

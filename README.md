@@ -4,7 +4,11 @@ Idejo Hub runs several independent [Idejo](https://idejo.org) forums on one serv
 
 Every forum is an ordinary, unmodified Idejo instance with its own database. The Hub creates, backs up, upgrades and suspends them from the outside, through Idejo's documented interfaces only, so any forum can leave the Hub as a normal standalone install with all its data.
 
-**Status:** Foundations only: an empty Phoenix app, CI and the Compose bundle for the Hub itself. Forum management starts with milestone 2, once an Idejo release with milestone M6 ("Ready for Idejo Hub") exists.
+**Status:** milestone 4, Hub 1.0, under way: forums created, suspended, backed up (also off the server), restored, upgraded, imported and deleted from the Hub's pages or its command line; one shared sign-in (Idejo ID) through Zitadel; health, alerts and an audit log. Install it with [docs/deploying.md](docs/deploying.md).
+
+## Supported Idejo versions
+
+Each Hub release states the Idejo versions it supports (Hub NF-06). This one: **Idejo 0.2.2**, the version new forums start on (`IDEJO_DEFAULT_VERSION`). 0.2.0 was the first with the shared sign-in, 0.2.2 the first whose stylesheet is checked. Forums on 0.2.0 and 0.2.1 run as before but accept any custom CSS; forums on 0.1.0 still run, back up and upgrade, but have no member counts and no shared sign-in. Upgrade them to 0.2.2.
 
 ## Read first
 
