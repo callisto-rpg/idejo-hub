@@ -207,19 +207,22 @@ if [ -z "$("${COMPOSE[@]}" exec -T db psql -U postgres -tAc "SELECT 1 FROM pg_ro
     sh /docker-entrypoint-initdb.d/04-zitadel.sh
 fi
 "${COMPOSE[@]}" up -d --build
-# The Caddyfile is a mounted file: `up` does not restart Caddy when only its content changed
-# (a Hub update adding a site or a route), so Caddy reloads it here. A reload keeps serving
-# throughout: forums do not pause. Before waiting for health checks: a slow service (Zitadel
-# after an update) must not leave Caddy on the old routes.
-reloaded=false
+# Caddy mounts deploy/Caddyfile as a single file, and `git pull` replaces that file: Caddy
+# goes on seeing the old one, and `up` does not notice (its definition did not change), nor
+# can a reload (it rereads the same stale view). So when what Caddy sees differs from
+# deploy/Caddyfile, Caddy restarts (forums are unreachable for a few seconds; only after an
+# update that changed the Caddyfile). Before waiting for health checks: a slow service
+# (Zitadel after an update) must not leave Caddy on the old routes.
+fresh=false
 for _ in 1 2 3 4 5 6; do
-  if "${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
-    reloaded=true
+  if "${COMPOSE[@]}" exec -T caddy cat /etc/caddy/Caddyfile 2>/dev/null | cmp -s - deploy/Caddyfile; then
+    fresh=true
     break
   fi
+  "${COMPOSE[@]}" restart caddy >/dev/null 2>&1 || true
   sleep 5
 done
-$reloaded || echo "Warning: Caddy did not reload deploy/Caddyfile; run: ${COMPOSE[*]} exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile" >&2
+$fresh || echo "Warning: Caddy does not see deploy/Caddyfile; run: ${COMPOSE[*]} restart caddy" >&2
 "${COMPOSE[@]}" up -d --wait
 
 if [ -z "$operator" ] && ! $yes; then

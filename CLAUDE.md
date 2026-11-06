@@ -656,7 +656,10 @@ sudo deploy/install.sh    # asks for the domains (sign-in: --id-domain, default 
                           # fixed once written); writes deploy/.env once; starts it all
 ```
 
-`deploy/install.sh` never replaces a value already in `deploy/.env` (secrets above all). A new
+`deploy/install.sh` never replaces a value already in `deploy/.env` (secrets above all). Caddy
+mounts `deploy/Caddyfile` as a single file, which `git pull` replaces: a running Caddy keeps
+the old one, even reloaded, so the installer restarts Caddy when what it sees differs from
+the file on disk (before the health checks' wait). A new
 setting the installer should fill goes into its `env_fill` list and `docs/deploying.md`.
 
 ## Steward decisions
