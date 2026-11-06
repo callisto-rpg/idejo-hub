@@ -31,9 +31,16 @@ config :idejo_hub, Oban,
        # OP-07: every forum's health and memory, every minute.
        {"* * * * *", IdejoHub.Operations.HealthWorker},
        # ID-05: sign-ins to forums, read from the identity provider.
-       {"*/5 * * * *", IdejoHub.Identity.SyncWorker}
+       {"*/5 * * * *", IdejoHub.Identity.SyncWorker},
+       # OP-09: new Idejo releases, once a day.
+       {"17 6 * * *", IdejoHub.Operations.ReleaseCheckWorker}
      ]}
   ]
+
+# OP-09: where the Hub reads Idejo's releases (empty: off), and its changelog link.
+config :idejo_hub, IdejoHub.Operations.Releases,
+  url: "https://api.github.com/repos/callisto-rpg/Idejo/tags",
+  changelog: "https://github.com/callisto-rpg/Idejo/compare/v{from}...v{to}"
 
 # OP-08: the Hub's own email (alerts), over the shared SMTP server (IdejoHub.Mailer).
 config :idejo_hub, IdejoHub.Mailer, adapter: Swoosh.Adapters.SMTP

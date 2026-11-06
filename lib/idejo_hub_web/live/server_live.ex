@@ -11,14 +11,22 @@ defmodule IdejoHubWeb.ServerLive do
   use IdejoHubWeb, :live_view
 
   alias IdejoHub.Operations
-  alias IdejoHub.Operations.{HubBackup, Server}
+  alias IdejoHub.Operations.{HubBackup, Releases, Server}
 
   @refresh 10_000
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: :timer.send_interval(@refresh, :refresh)
-    {:ok, socket |> assign(page_title: "Server", server: Server.snapshot()) |> load_backups()}
+
+    {:ok,
+     socket
+     |> assign(
+       page_title: "Server",
+       server: Server.snapshot(),
+       release: Releases.notice()
+     )
+     |> load_backups()}
   end
 
   @impl true
@@ -54,6 +62,7 @@ defmodule IdejoHubWeb.ServerLive do
     ~H"""
     <Layouts.app flash={@flash} current_operator={@current_operator} wide>
       <h1 class="text-2xl font-semibold">Server</h1>
+      <.release_notice release={@release} />
 
       <section id="cpu">
         <h2 class="text-xl font-semibold">CPU</h2>

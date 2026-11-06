@@ -65,6 +65,9 @@ services:
       IDEJO_HUB_UPGRADE_HEALTH_SECONDS: ${IDEJO_HUB_UPGRADE_HEALTH_SECONDS:-300}
       # FL-07: the largest standalone backup the import form takes, in MB.
       IDEJO_HUB_IMPORT_MAX_MB: ${IDEJO_HUB_IMPORT_MAX_MB:-4096}
+      # OP-09: Idejo's releases (`-`, not `:-`: set but empty turns the check off).
+      IDEJO_HUB_RELEASES_URL: ${IDEJO_HUB_RELEASES_URL-https://api.github.com/repos/callisto-rpg/Idejo/tags}
+      IDEJO_HUB_CHANGELOG_URL: ${IDEJO_HUB_CHANGELOG_URL:-}
       # HN-07: optional SMTP shared by every forum.
       HUB_SMTP_HOST: ${HUB_SMTP_HOST:-}
       HUB_SMTP_PORT: ${HUB_SMTP_PORT:-}

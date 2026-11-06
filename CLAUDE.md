@@ -309,6 +309,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   by `BulkUpgradeWorker` when pinned after the run was asked for; a single upgrade still
   works. "Pin to X.Y.Z" / "Unpin" on the forum's page (`#pin`), a "pinned" badge by the
   version in the list. Audited `forum.pin` / `forum.unpin` with the version.
+- **New releases** (OP-09, `Operations.Releases`, `ReleaseCheckWorker`, cron daily 06:17
+  UTC): reads Idejo's tags from `IDEJO_HUB_RELEASES_URL` (default GitHub's tag list for the
+  Idejo repository: no credentials, nothing about the Hub sent; set empty to turn it off),
+  keeps the newest stable `vX.Y.Z` in the `settings` table (key `idejo_latest_release`, not
+  one of Settings' keys); when newer than `IDEJO_DEFAULT_VERSION`, the forum list and
+  `/server` show `CoreComponents.release_notice/1` (`#release-notice`) linking to
+  `IDEJO_HUB_CHANGELOG_URL` (`{from}`, `{to}`; default GitHub's compare view: Idejo publishes
+  no release notes yet). A failed check keeps what was known. Tests stub it
+  (`:releases_req_options`).
 - **Operator sign-in** (SC-08, `IdejoHub.Operators`, `IdejoHubWeb.OperatorAuth`,
   `SessionController`; extra review: DV-06): operators are made only by `bin/hub-admin
   create-operator EMAIL` (`IdejoHub.Release`; random password shown once; no sign-up page) and

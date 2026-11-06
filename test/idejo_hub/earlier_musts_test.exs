@@ -62,9 +62,18 @@ defmodule IdejoHub.EarlierMustsTest do
 
   @tag req: "ID-04"
   test "ID-04 roles, profiles, bans and moderation stay in each forum: the Hub has no way to them" do
-    # The only idejo-admin commands the Hub runs (SC-06); none touches roles, profiles or bans.
+    # The idejo-admin commands the Hub runs (read as SC-06 reads them): none touches roles,
+    # profiles or bans.
     source = Path.wildcard(Path.join(@root, "lib/**/*.ex")) |> Enum.map_join("\n", &File.read!/1)
-    refute source =~ ~r/"(ban|unban|assign-role|set-role|role)"/
+
+    commands =
+      Regex.scan(~r/@admin,\s*"([a-z-]+)"|"\/app\/bin\/idejo-admin",\s*"([a-z-]+)"/, source)
+      |> Enum.flat_map(&tl/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.uniq()
+
+    assert "backup" in commands
+    refute Enum.any?(commands, &(&1 =~ ~r/ban|role|profile|moderat/))
     # The Hub never opens a forum's database: its PostgreSQL code only creates and drops them
     # (HN-05), and pg_hba lets a role open only its own database.
     postgres = read("lib/idejo_hub/hosting/postgres.ex")

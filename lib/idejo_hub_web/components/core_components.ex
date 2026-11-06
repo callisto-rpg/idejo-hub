@@ -339,6 +339,28 @@ defmodule IdejoHubWeb.CoreComponents do
   end
 
   @doc """
+  OP-09: a newer Idejo release than the version new forums start on, with what changed.
+  `release` is `IdejoHub.Operations.Releases.notice/0`; nothing shows when it is nil.
+  """
+  attr :release, :map, default: nil
+
+  def release_notice(assigns) do
+    ~H"""
+    <div :if={@release} id="release-notice" role="status" class="alert alert-info text-sm">
+      <.icon name="hero-sparkles" class="size-5 shrink-0" />
+      <span>
+        Idejo {@release.version} is out; new forums start on {@release.current}. <a
+          href={@release.changelog}
+          class="link"
+          rel="noopener noreferrer"
+        >What changed</a>.
+        Before upgrading, check that this Hub release supports it (Hub NF-06).
+      </span>
+    </div>
+    """
+  end
+
+  @doc """
   Renders a header with title.
   """
   slot :inner_block, required: true

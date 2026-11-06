@@ -32,8 +32,8 @@ defmodule IdejoHub.RequirementsTest do
   @by_review ~w(LB-02)
 
   # NF-02: a steward decision on Idejo's release mode. LB-04: Idejo's trademark policy
-  # (LI-07) is not written yet. NF-04, NF-05, NF-07: in open pull requests.
-  @pending ~w(NF-02 NF-04 NF-05 NF-07 LB-04)
+  # (LI-07) is not written yet. NF-07: in an open pull request.
+  @pending ~w(NF-02 NF-07 LB-04)
 
   defp musts do
     spec = File.read!(Path.join(@root, "Idejo Hub — Spec Sheet.md"))

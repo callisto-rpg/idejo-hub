@@ -19,13 +19,20 @@ defmodule IdejoHubWeb.ForumListLive do
   use IdejoHubWeb, :live_view
 
   alias IdejoHub.Forums
+  alias IdejoHub.Operations.Releases
 
   @sorts ~w(subdomain name status health version members memory backup size)
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: Forums.subscribe()
-    {:ok, assign(socket, page_title: "Forums", statuses: Forums.Forum.statuses() -- ["deleted"])}
+
+    {:ok,
+     assign(socket,
+       page_title: "Forums",
+       statuses: Forums.Forum.statuses() -- ["deleted"],
+       release: Releases.notice()
+     )}
   end
 
   @impl true
@@ -180,6 +187,7 @@ defmodule IdejoHubWeb.ForumListLive do
           </.link>
         </div>
       </div>
+      <.release_notice release={@release} />
 
       <nav aria-label="Filter by status" id="status-filter" class="flex flex-wrap gap-2">
         <.link
