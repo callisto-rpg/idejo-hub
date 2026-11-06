@@ -18,7 +18,8 @@ config :idejo_hub,
 # so each action has clear states and survives a restart. The crontab comes with OP-01.
 config :idejo_hub, Oban,
   repo: IdejoHub.Repo,
-  queues: [lifecycle: 2, operations: 2],
+  # OP-07: health checks have a queue of their own, so a long backup never holds them up.
+  queues: [lifecycle: 2, operations: 2, health: 1],
   plugins: [
     Oban.Plugins.Pruner,
     # OP-01: daily backups of every running forum (IDEJO_HUB_BACKUP_CRON in production).
@@ -27,6 +28,8 @@ config :idejo_hub, Oban,
        {"0 2 * * *", IdejoHub.Operations.BackupScheduler},
        # HA-01: forum figures (idejo-admin stats).
        {"*/15 * * * *", IdejoHub.Operations.StatsWorker},
+       # OP-07: every forum's health and memory, every minute.
+       {"* * * * *", IdejoHub.Operations.HealthWorker},
        # ID-05: sign-ins to forums, read from the identity provider.
        {"*/5 * * * *", IdejoHub.Identity.SyncWorker}
      ]}

@@ -38,6 +38,12 @@ defmodule IdejoHub.Forums.Forum do
     field :database_bytes, :integer
     field :uploads_bytes, :integer
     field :stats_at, :utc_datetime
+    # OP-07: polled every minute (Operations.HealthWorker).
+    field :health, :string
+    field :health_at, :utc_datetime
+    field :down_since, :utc_datetime
+    field :memory_bytes, :integer
+    field :memory_limit_bytes, :integer
     field :oidc_app_id, :string
     field :oidc_client_id, :string
     field :oidc_client_secret_enc, :binary, redact: true
@@ -116,11 +122,17 @@ defmodule IdejoHub.Forums.Forum do
       :database_bytes,
       :uploads_bytes,
       :stats_at,
+      :health,
+      :health_at,
+      :down_since,
+      :memory_bytes,
+      :memory_limit_bytes,
       :oidc_app_id,
       :oidc_client_id,
       :oidc_client_secret_enc,
       :local_accounts
     ])
     |> validate_inclusion(:status, @statuses)
+    |> validate_inclusion(:health, ~w(ok down))
   end
 end

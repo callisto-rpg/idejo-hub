@@ -32,6 +32,10 @@ defmodule IdejoHub.Hosting.Docker do
               {:ok, %{exit_code: integer(), output: binary()}} | {:error, error()}
   @callback wait_container(id()) :: {:ok, exit_code :: integer()} | {:error, error()}
   @callback logs(id()) :: {:ok, binary()} | {:error, error()}
+  # OP-07: memory in use (without the page cache, as `docker stats` counts it) and the limit.
+  @callback stats(id()) ::
+              {:ok, %{memory_bytes: non_neg_integer(), memory_limit_bytes: non_neg_integer()}}
+              | {:error, error()}
   @callback copy_from(id(), path :: String.t(), dest_dir :: String.t()) ::
               {:ok, String.t()} | {:error, error() | {:archive, term()}}
   @callback copy_to(id(), file :: String.t(), dest_dir :: String.t()) ::
@@ -50,6 +54,7 @@ defmodule IdejoHub.Hosting.Docker do
   def exec(id, cmd), do: adapter().exec(id, cmd)
   def wait_container(id), do: adapter().wait_container(id)
   def logs(id), do: adapter().logs(id)
+  def stats(id), do: adapter().stats(id)
 
   @doc "Copies one file out of a container (running or not) into `dest_dir`; returns its path."
   def copy_from(id, path, dest_dir), do: adapter().copy_from(id, path, dest_dir)

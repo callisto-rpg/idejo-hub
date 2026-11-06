@@ -94,6 +94,8 @@ defmodule DockerGuard.Policy do
        when {method, action} in [
               {"GET", "json"},
               {"GET", "logs"},
+              # OP-07: one reading of a forum's memory use.
+              {"GET", "stats"},
               {"GET", "archive"},
               {"HEAD", "archive"},
               {"PUT", "archive"},

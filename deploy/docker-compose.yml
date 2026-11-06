@@ -248,7 +248,7 @@ services:
       - -stoponwatchdog
       # No host directory may be bind-mounted (forums use named volumes only).
       - -allowbindmountfrom=/nonexistent/idejo-hub
-      - -allowGET=/v1\.[0-9]+/(_ping|version|containers/json|containers/[a-zA-Z0-9_.-]+/(json|logs|archive)|exec/[a-f0-9]+/json|volumes/[a-zA-Z0-9_.-]+|images/.+/json)
+      - -allowGET=/v1\.[0-9]+/(_ping|version|containers/json|containers/[a-zA-Z0-9_.-]+/(json|logs|stats|archive)|exec/[a-f0-9]+/json|volumes/[a-zA-Z0-9_.-]+|images/.+/json)
       - -allowHEAD=/v1\.[0-9]+/(_ping|containers/[a-zA-Z0-9_.-]+/archive)
       - -allowPOST=/v1\.[0-9]+/(containers/create|containers/[a-zA-Z0-9_.-]+/(start|stop|restart|wait|exec)|exec/[a-f0-9]+/start|volumes/create|images/create)
       - -allowPUT=/v1\.[0-9]+/containers/[a-zA-Z0-9_.-]+/archive

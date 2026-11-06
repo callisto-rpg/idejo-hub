@@ -266,7 +266,16 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `create_forum/3`). HA-01 forum list at `/` (`ForumListLive`): filter `?status=`, sort
   `?sort=`; members and disk use (database + uploads) come from each forum's `idejo-admin stats`
   (Idejo AD-09), kept on the forum by `Operations.StatsWorker` every 15 minutes (cron);
-  without them (Idejo before `stats`) members show "—" and the size is the latest backup's. HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
+  without them (Idejo before `stats`) members show "—" and the size is the latest backup's.
+  OP-07 health overview in the same list: `Operations.HealthWorker` (cron every minute,
+  Oban queue `health` of its own) checks each running forum not busy with an action:
+  `Hosting.Health.check/1` and `Docker.stats/1` (memory without the page cache, and the
+  container's limit; docker-guard allows `GET /containers/<forum>/stats`), kept on the forum
+  (`health` `ok`/`down`, `health_at`, `down_since`: the first check that found it down,
+  cleared when it answers, for OP-08; `memory_bytes`, `memory_limit_bytes`). Forums not
+  running keep no health. Columns Health ("up", "down since HH:MM UTC") and Memory ("used of
+  limit", amber past 90%), sortable (`?sort=health`: down first). Disk use stays with the
+  15-minute `stats` (an `idejo-admin` run per forum each minute would cost a release boot). HA-02 create form at `/forums/new` (`ForumNewLive`): the subdomain
   checked while typing (FL-03 rules and free), created as the signed-in operator's email.
   HA-03 forum page at `/forums/:id` (`ForumShowLive`): health (`start_async`), actions
   through `Forums` as the operator (suspend, resume, back up, export, upgrade, restore here
@@ -485,6 +494,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-08 to FL-10, HN-03 (FL-07 built ahead: steward decision 2026-11-05).
 
-Current milestone: **4 — Hub 1.0**, started 2026-11-04 with OP-10 and OP-02 (steward's go-ahead).
+Current milestone: **4 — Hub 1.0**, started 2026-11-04 with OP-10 and OP-02 (steward's go-ahead);
+then, one PR each, the Musts in order from OP-07 (steward decision 2026-11-06).
 Exit checks for each milestone are
 in the Implementation Prompt, Part B.
