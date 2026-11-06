@@ -38,6 +38,9 @@ defmodule IdejoHub.Operations.NF04TimingsTest do
       )
 
     :ok = perform_job(CreateWorker, %{"forum_id" => forum.id, "actor" => "operator"})
+    # Maintenance marks are files that outlive a test: start from an unmarked host (a test
+    # that leaves its forum suspended leaves the mark).
+    Maintenance.unmark(Forums.host(forum))
 
     Fake.exec_result(
       [@admin, "backup"],
