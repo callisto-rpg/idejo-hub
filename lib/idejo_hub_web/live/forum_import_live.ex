@@ -24,7 +24,8 @@ defmodule IdejoHubWeb.ForumImportLive do
      |> assign(
        page_title: "Import a standalone backup",
        domain: Application.fetch_env!(:idejo_hub, Forums)[:domain],
-       max_bytes: max_bytes
+       max_bytes: max_bytes,
+       hosted: Forums.hosted_count()
      )
      |> assign_form(Forums.change_import())
      |> allow_upload(:backup, accept: ~w(.tar), max_entries: 1, max_file_size: max_bytes)}
@@ -123,6 +124,7 @@ defmodule IdejoHubWeb.ForumImportLive do
     <Layouts.app flash={@flash} current_operator={@current_operator}>
       <.link navigate={~p"/"} class="text-sm">← Forums</.link>
       <h1 class="text-2xl font-semibold">Import a standalone backup</h1>
+      <.forum_limit_notice id="forum-limit" hosted={@hosted} />
       <p>
         Makes a new forum from a standalone Idejo install's backup: on that server, run <code>bin/idejo-admin backup</code>, then choose the
         <code>idejo-….tar</code>

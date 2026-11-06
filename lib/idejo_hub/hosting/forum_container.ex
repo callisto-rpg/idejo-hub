@@ -10,7 +10,8 @@ defmodule IdejoHub.Hosting.ForumContainer do
   volumes `idejo-forum-<slug>-uploads` and `idejo-forum-<slug>-backups`, and all of them carry
   the `org.idejo.hub.forum=<slug>` label. The environment is Idejo's contract (Idejo AD-13);
   the caller supplies the per-forum values (`PHX_HOST`, `DATABASE_URL`, `SECRET_KEY_BASE`,
-  `IDEJO_SOURCE_URL`, SMTP) and they are never logged.
+  `IDEJO_SOURCE_URL`, SMTP) and they are never logged. `POOL_SIZE` is the Hub's: 5 connections
+  (NF-01).
 
   `provision/1` creates the volumes and the container without starting it, and removes
   whatever it created if a step fails. Migrations and headless setup belong to FL-01.
@@ -20,6 +21,7 @@ defmodule IdejoHub.Hosting.ForumContainer do
 
   @label "org.idejo.hub.forum"
   @uploads_dir "/data/uploads"
+  @pool_size "5"
   @backups_dir "/data/backups"
 
   @type params :: %{
@@ -54,6 +56,9 @@ defmodule IdejoHub.Hosting.ForumContainer do
     fixed = %{
       "PHX_SERVER" => "true",
       "PORT" => "4000",
+      # NF-01 (steward decision 2026-11-06): 6 database connections a forum (its pool and
+      # Oban's listener) instead of Idejo's 11, so 30 forums fit the shared PostgreSQL.
+      "POOL_SIZE" => @pool_size,
       "IDEJO_UPLOADS_DIR" => @uploads_dir,
       "IDEJO_BACKUP_DIR" => @backups_dir
     }

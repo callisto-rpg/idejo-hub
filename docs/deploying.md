@@ -12,6 +12,11 @@ installs it (HN-08) and lists the commands an operator needs.
 
 - A server running **Debian 13 (trixie)** (the same as Idejo). Count about **400 MB of memory
   per forum** plus 1 GB for the Hub, its database and Caddy: 4 GB holds four forums.
+- **1 to 30 forums** per server (NF-01). The database is sized for 30 and some more; past 30
+  the Hub warns when you add a forum, and lets you. A server set up before Idejo Hub made
+  room for 30 gets it when you run `sudo deploy/install.sh` again (the database restarts, so
+  every forum pauses for a few seconds); forums made before then use fewer connections once
+  recreated (**Apply to all forums now** in **Settings**).
 - Two domain names you control, for example `hub.example.org` for the Hub and
   `forums.example.org` for the forums.
 

@@ -172,6 +172,7 @@ defmodule IdejoHubWeb.ForumShowLive do
     assign(socket,
       forum: forum,
       archives: Forums.list_exports(forum),
+      hosted: Forums.hosted_count(),
       entries: forum.id |> Audit.for_forum() |> Enum.reverse()
     )
   end
@@ -372,6 +373,7 @@ defmodule IdejoHubWeb.ForumShowLive do
             </tr>
           </tbody>
         </table>
+        <.forum_limit_notice :if={@archives != []} id="forum-limit" hosted={@hosted} />
         <form
           :if={@archives != []}
           id="restore-new"

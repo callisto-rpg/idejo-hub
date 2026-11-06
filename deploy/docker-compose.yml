@@ -99,6 +99,10 @@ services:
   db:
     image: postgres:18-alpine
     restart: unless-stopped
+    # NF-01 (steward decision 2026-11-06): room for 30 forums at 6 connections each (the Hub
+    # sets their POOL_SIZE to 5), the Hub (11), Zitadel (14), backups and one-off jobs, and
+    # some forums past 30, which the Hub warns about but allows. PostgreSQL's default is 100.
+    command: ["postgres", "-c", "max_connections=320"]
     environment:
       # The superuser is used only by the init script below, never by the Hub.
       POSTGRES_USER: postgres

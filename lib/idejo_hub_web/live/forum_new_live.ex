@@ -17,7 +17,8 @@ defmodule IdejoHubWeb.ForumNewLive do
      socket
      |> assign(
        page_title: "New forum",
-       domain: Application.fetch_env!(:idejo_hub, Forums)[:domain]
+       domain: Application.fetch_env!(:idejo_hub, Forums)[:domain],
+       hosted: Forums.hosted_count()
      )
      |> assign_form(Forums.change_new_forum())}
   end
@@ -65,6 +66,7 @@ defmodule IdejoHubWeb.ForumNewLive do
     ~H"""
     <Layouts.app flash={@flash} current_operator={@current_operator}>
       <h1 class="text-2xl font-semibold">New forum</h1>
+      <.forum_limit_notice id="forum-limit" hosted={@hosted} />
 
       <.form for={@form} id="new-forum" phx-change="validate" phx-submit="create">
         <.input

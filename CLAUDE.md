@@ -67,6 +67,19 @@ before saving (no `@import`, no `url()` but local paths and `data:`, nothing tha
 and loads from other hosts (Idejo SP-04, SP-05). The Hub's part: new forums start on 0.2.2 or
 later (`test/idejo_hub/sc_03_custom_css_test.exs`).
 
+**NF-01** (1 to 30 forums per server; steward decisions 2026-11-06): the shared PostgreSQL's
+connections are the limit (measured: an idle forum holds its pool and Oban's listener, 11 at
+Idejo's default; Zitadel 14; the Hub 11). `ForumContainer.spec/1` gives every forum
+`POOL_SIZE=5` (6 connections; a fixed variable, so the caller cannot raise it; Idejo documents
+`POOL_SIZE` in its AD-13 table), and the bundle's `db` runs with `max_connections=320`: 30
+forums, the Hub, Zitadel, 10 for backups and one-off jobs, and room for about 10 more forums.
+Past `Forums.supported_forums/0` (30) forums not deleted (`Forums.hosted_count/0`), the
+create, import and restore-to-new forms show `CoreComponents.forum_limit_notice/1`
+(`#forum-limit`, `role="status"`) and still allow it. A change to a pool, to Zitadel or to the
+Hub's connections updates the figures in `docker-compose.yml`,
+`test/idejo_hub_web/live/nf_01_supported_size_test.exs` and `deploy/test/nf_01_connections.sh`
+(which holds them all on the bundle's PostgreSQL, in CI's Compose job).
+
 **HN-06** (the Hub and the identity provider in their own containers, with their own
 database): the `hub` and `zitadel` services are containers of their own (the Hub built here,
 Zitadel its pinned image; no shared namespaces; Zitadel only on the default network, no
@@ -499,6 +512,7 @@ deploy/test/m3/run.sh        # milestone 3 exit check: sign up, two forums, role
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 deploy/test/hn_08_install_settings.sh  # install.sh's settings step with a stand-in docker (CI)
 deploy/test/hn_06_databases.sh         # the bundle's PostgreSQL: each role opens only its own database (CI; ~10 s)
+deploy/test/nf_01_connections.sh       # the bundle's PostgreSQL holds 40 forums' connections and the Hub's (CI; ~20 s)
 ```
 
 Production bundle (HN-08), on Debian 13 (trixie), step by step in `docs/deploying.md`:
