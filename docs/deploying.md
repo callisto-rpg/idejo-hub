@@ -157,7 +157,9 @@ forum's owner sees the part about their forum from their Idejo ID page.
   `$H logs hub` and start it again with `$H up -d`.
 - **Updating the Hub**: in the repository's directory, `git pull`, then
   `sudo deploy/install.sh` again: it keeps `deploy/.env`, rebuilds and restarts what
-  changed. Forums keep running while the Hub restarts; when Caddy itself is updated, they
+  changed, and has Caddy load a changed `deploy/Caddyfile` (without a pause). Forums get new
+  settings the Hub gives them when their containers are made again: **Upgrade all** to a new
+  Idejo version, or **Apply to all forums now** in **Settings**. Forums keep running while the Hub restarts; when Caddy itself is updated, they
   are unreachable for a few seconds.
 - **The disk fills up**: an alert comes above 85%. Old backups beyond the newest 14 per forum
   are removed by themselves; exports, final exports and pre-upgrade backups stay in the

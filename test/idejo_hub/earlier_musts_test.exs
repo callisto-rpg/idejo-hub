@@ -118,6 +118,8 @@ defmodule IdejoHub.EarlierMustsTest do
 
     install = read("deploy/install.sh")
     assert install =~ ~s([ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ])
+    # An update's new Caddyfile (a mounted file `up` does not notice) is loaded.
+    assert install =~ "exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
     assert read("docs/deploying.md") =~ "Debian 13 (trixie)"
     # deploy/test/hn_08_install_settings.sh runs the installer's settings step in CI.
     assert File.exists?(Path.join(@root, "deploy/test/hn_08_install_settings.sh"))

@@ -207,6 +207,10 @@ if [ -z "$("${COMPOSE[@]}" exec -T db psql -U postgres -tAc "SELECT 1 FROM pg_ro
     sh /docker-entrypoint-initdb.d/04-zitadel.sh
 fi
 "${COMPOSE[@]}" up -d --build --wait
+# The Caddyfile is a mounted file: `up` does not restart Caddy when only its content changed
+# (a Hub update adding a site, such as the forums directory), so Caddy reloads it here. A
+# reload keeps serving throughout: forums do not pause.
+"${COMPOSE[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 
 if [ -z "$operator" ] && ! $yes; then
   read -r -p "First operator's email (empty to skip; add one later with bin/hub-admin): " operator
