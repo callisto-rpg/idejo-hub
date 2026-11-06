@@ -5,7 +5,7 @@ defmodule IdejoHub.Identity.SetupWorker do
   @moduledoc """
   ID-02, ID-08: makes the identity provider's settings match the Hub's (`Identity.configure/2`):
   its own sign-up form off (people sign up on the Hub's page), passkeys and two factor on,
-  and the Hub's SMTP for its invites (sender `noreply@<identity host>`).
+  and the Hub's SMTP for its invites (the Hub's sender, `Settings.sender/0`).
 
   Queued at boot and after the email settings change; retried with back-off while the
   provider is starting (it may come up after the Hub). One at a time.
@@ -22,7 +22,7 @@ defmodule IdejoHub.Identity.SetupWorker do
   def perform(_job) do
     if Identity.enabled?() do
       with :ok <-
-             Identity.configure(Settings.shared_smtp(), "noreply@" <> Identity.config(:domain)),
+             Identity.configure(Settings.shared_smtp(), Settings.sender()),
            do: Members.ensure_account_client()
     else
       :ok

@@ -100,7 +100,9 @@ defmodule IdejoHubWeb.ID02SignupTest do
   test "ID-08 the provider is configured with the Hub's SMTP, after a change too" do
     assert_enqueued(worker: SetupWorker)
     assert :ok = perform_job(SetupWorker, %{})
-    assert [{smtp, "noreply@id.idejo.test"}] = Fake.configured()
+    # The Hub's one sender (steward request 2026-11-06).
+    sender = IdejoHub.Settings.sender()
+    assert [{smtp, ^sender}] = Fake.configured()
     assert smtp[:host] == "smtp.hub.test"
   end
 end

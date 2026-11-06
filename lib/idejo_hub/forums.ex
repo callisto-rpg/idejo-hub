@@ -79,7 +79,6 @@ defmodule IdejoHub.Forums do
             :secret_key_base_enc,
             Secrets.encrypt(secret_key_base, context(subdomain, :secret_key_base))
           )
-          |> put_default_mail_from(subdomain)
 
         _missing ->
           changeset
@@ -105,18 +104,6 @@ defmodule IdejoHub.Forums do
       {:ok, forum} -> broadcast(forum)
       _error -> :ok
     end)
-  end
-
-  # HN-07: the forum's own sender address, unless the operator gave one.
-  defp put_default_mail_from(changeset, subdomain) do
-    if Ecto.Changeset.get_field(changeset, :mail_from),
-      do: changeset,
-      else:
-        Ecto.Changeset.put_change(
-          changeset,
-          :mail_from,
-          Mail.default_from(host(%Forum{subdomain: subdomain}))
-        )
   end
 
   defp audit_request(forum, actor) do

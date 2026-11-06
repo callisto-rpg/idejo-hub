@@ -225,7 +225,9 @@ if config_env() == :prod do
           port: port,
           security: security,
           username: System.get_env("HUB_SMTP_USERNAME", ""),
-          password: System.get_env("HUB_SMTP_PASSWORD", "")
+          password: System.get_env("HUB_SMTP_PASSWORD", ""),
+          # The Hub's sender, the forums' too (empty: noreply@<the Hub's host>).
+          from: System.get_env("HUB_SMTP_FROM", "") |> String.trim()
         ]
     end
 

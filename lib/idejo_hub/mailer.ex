@@ -5,7 +5,7 @@ defmodule IdejoHub.Mailer do
   @moduledoc """
   The Hub's own email (OP-08's alerts), sent through the shared SMTP server the Hub gives
   forums (`Settings.shared_smtp/0`: Settings, else `HUB_SMTP_*`), read at each send, from
-  `noreply@<the Hub's host>` as "Idejo Hub". Tests use Swoosh's test adapter.
+  the Hub's sender (`Settings.sender/0`) as "Idejo Hub". Tests use Swoosh's test adapter.
   """
   use Swoosh.Mailer, otp_app: :idejo_hub
 
@@ -24,9 +24,9 @@ defmodule IdejoHub.Mailer do
     end
   end
 
-  @doc "The sender: `noreply@` the Hub's host."
+  @doc "The sender: the Hub's own (`Settings.sender/0`)."
   @spec from_address() :: String.t()
-  def from_address, do: "noreply@" <> IdejoHubWeb.Endpoint.host()
+  def from_address, do: IdejoHub.Settings.sender()
 
   defp smtp_config do
     if Application.get_env(:idejo_hub, __MODULE__)[:adapter] == Swoosh.Adapters.SMTP do

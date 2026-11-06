@@ -573,9 +573,14 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `reason` or `retry`), by provider id (`subject`), never the email; each ID's page lists its
   entries (`Admin.log/1`). Checked against Zitadel v4.20.1 (search, lock, unlock and their
   repeats; replies in `test/idejo_hub/identity/ha_06_zitadel_test.exs`).
-- **Forum email** (HN-07, `Forums.Mail`): each forum sends as its display name at
-  `forums.mail_from` (default `noreply@<host>`, `IDEJO_SMTP_FROM`); `HUB_SMTP_*`, when set,
-  is passed to every forum as `IDEJO_SMTP_*`; a forum's own SMTP is its Admin → Email (wins).
+- **Forum email** (HN-07, `Forums.Mail`; steward request 2026-11-06): a new forum's email
+  settings are the Hub's, unchanged: the shared SMTP (Settings, else `HUB_SMTP_*`) as
+  `IDEJO_SMTP_*`, and the Hub's one sender, `Settings.sender/0` (Settings' **Sender
+  address**, `smtp_from`, else `HUB_SMTP_FROM`, else `noreply@<Hub host>`), as
+  `IDEJO_SMTP_FROM`; the forum sends under its display name. The Hub's alerts (`Mailer`) and
+  Zitadel's invites (`SetupWorker`) use the same sender. `forums.mail_from` is set only when
+  the operator gives a forum another address at creation (forums made before keep the
+  `noreply@<host>` they were given). A forum's own SMTP is its Admin → Email (wins).
 - **Owner invite** (FL-02): setup emails the owner their link; when it cannot, the link is
   in setup's output, matched only as `https://<forum host>/users/reset-password/<token>`,
   kept encrypted (`forum:<subdomain>:owner_link`) with `owner_invite: "operator"`, and
