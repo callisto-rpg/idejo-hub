@@ -9,7 +9,7 @@ defmodule IdejoHubWeb.DirectoryController do
   """
   use IdejoHubWeb, :controller
 
-  alias IdejoHub.{Community, Forums}
+  alias IdejoHub.Community
 
   def index(conn, params) do
     page =
@@ -20,17 +20,14 @@ defmodule IdejoHubWeb.DirectoryController do
 
     result = Community.directory_page(params["q"], page)
 
-    render(conn, :index,
+    conn
+    # Outside forums' logos come from their own hosts: the page's policy allows those shown.
+    |> assign(:csp_img_hosts, Enum.map(result.forums, & &1.host))
+    |> render(:index,
       forums:
-        Enum.map(result.forums, fn forum ->
-          host = Forums.host(forum)
+        Enum.map(result.forums, fn %{name: name, host: host} ->
           # The forum's logo at Idejo's fixed address (0.2.9; steward request 2026-11-06).
-          %{
-            name: forum.display_name,
-            url: "https://#{host}/",
-            host: host,
-            logo: "https://#{host}/logo"
-          }
+          %{name: name, url: "https://#{host}/", host: host, logo: "https://#{host}/logo"}
         end),
       result: result,
       browse?: result.listed > Community.per_page(),

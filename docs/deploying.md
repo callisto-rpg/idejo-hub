@@ -176,6 +176,14 @@ forum's owner sees the part about their forum from their Idejo ID page.
   copy with **Import a standalone backup** (below), under its old subdomain. This path has
   not been rehearsed end to end yet: try it on a spare server before you need it.
 
+## Outside forums
+
+Idejo servers hosted elsewhere can sign in with this Hub's Idejo ID: their administrator
+connects them from Idejo's admin panel, which proves the server controls its address. When
+one asks to be listed in the forums directory, it waits under **Outside forums** in the
+Hub's header: **Approve** lists it, **Refuse** keeps it out, **Remove** ends its sign-in
+with Idejo ID. Nothing to set up: the sign-in host already sends `/account*` to the Hub.
+
 ## Commands
 
 All from the repository's directory. `deploy/.env` holds the secrets and is readable by

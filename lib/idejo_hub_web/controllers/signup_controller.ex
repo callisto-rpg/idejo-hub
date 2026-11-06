@@ -13,6 +13,7 @@ defmodule IdejoHubWeb.SignupController do
   use IdejoHubWeb, :controller
 
   alias IdejoHub.{Identity, RateLimit, Settings}
+  alias IdejoHub.Identity.OutsideForums
 
   @fields ~w(email display_name given_name family_name)
   @limit 5
@@ -79,9 +80,9 @@ defmodule IdejoHubWeb.SignupController do
     with %URI{scheme: "https", host: host, path: path, query: nil, userinfo: nil, port: 443} <-
            URI.parse(url),
          true <- path in [nil, "", "/"],
-         %{status: "running"} = forum <- IdejoHub.Forums.for_host(host) do
+         %{display_name: name} <- forum_at(host) do
       assign(conn, :back, %{
-        name: forum.display_name,
+        name: name,
         return_to: "https://#{host}/",
         sign_in: "https://#{host}/users/sign-in"
       })
@@ -91,6 +92,14 @@ defmodule IdejoHubWeb.SignupController do
   end
 
   defp back(conn, _params), do: assign(conn, :back, nil)
+
+  # A running hosted forum, or a registered outside one (steward decisions 2026-11-06).
+  defp forum_at(host) do
+    case IdejoHub.Forums.for_host(host) do
+      %{status: "running"} = forum -> forum
+      _ -> OutsideForums.registered(host)
+    end
+  end
 
   defp validate(params) do
     errors =

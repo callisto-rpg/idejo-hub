@@ -42,6 +42,17 @@ defmodule IdejoHubWeb.Router do
     plug IdejoHubWeb.Plugs.IdentityHost
   end
 
+  # Idejo servers not hosted here (steward decisions 2026-11-06): JSON, no session, so no
+  # CSRF token; a registration key or client credentials are the authority.
+  scope "/account/api", IdejoHubWeb do
+    pipe_through [:identity_host, :api]
+
+    post "/registrations", RegistryController, :create
+    post "/registrations/verify", RegistryController, :verify
+    get "/listing", RegistryController, :show_listing
+    put "/listing", RegistryController, :update_listing
+  end
+
   scope "/account", IdejoHubWeb do
     pipe_through [:identity_host, :browser]
 
@@ -95,6 +106,8 @@ defmodule IdejoHubWeb.Router do
       # HA-06
       live "/identities", IdentitiesLive, :index
       live "/identities/:id", IdentityShowLive, :show
+      # Outside forums (steward decisions 2026-11-06)
+      live "/outside-forums", OutsideForumsLive, :index
     end
 
     # HA-07: operator accounts, for owners.

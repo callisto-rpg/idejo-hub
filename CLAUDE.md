@@ -81,9 +81,27 @@ forum's own client id and secret, only about a person who joined that forum, wit
 running forums they joined (`identity_joins`). With the Hub down the menu lists nothing and
 the forum runs (Hub NF-05). The directory shows one card per forum with its logo (Idejo
 0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
-`https://*.<forum domain>`), and past ten listed forums a search (name or subdomain, any
-case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`). Tests:
-`community_directory_test.exs`.
+`https://*.<forum domain>`), and past ten listed forums a search (name or host, any
+case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`, hosted and
+outside forums together). Tests: `community_directory_test.exs`.
+
+**Outside forums** (steward decisions 2026-11-06; `Identity.OutsideForums`,
+`RegistryController`, `OutsideForumsLive`; extra review: DV-06): an Idejo server hosted
+elsewhere signs in with this Hub's Idejo ID. JSON under `/account/api` on the sign-in host
+(the `:api` pipeline: no session, so no CSRF token; `sc_02_csrf_test.exs` checks it):
+`POST registrations` (host, name; ten an hour per address) answers a `registration` key and
+a `proof`; the forum serves the proof at `https://<host>/.well-known/idejo-id-registration`
+(`Identity.Proof`: public addresses only, the checked one asked, https, no redirects) and
+`POST registrations/verify` makes its client (`Identity.create_client/1`), or renews a known
+host's secret, and answers issuer, client id and secret once (only hashes stored). Asking
+again changes nothing until proven. Hosts under the forum domain and the Hub's own are
+refused. With its client credentials (Basic) the forum reads and sets its directory listing
+(`GET`/`PUT listing`: `none`, `requested`, `approved`, `refused`): an operator approves or
+refuses at `/outside-forums` (a new name asks again; a refused one asks again only after
+leaving), and Remove deletes its client. Approved ones join the directory; the page's
+`img-src` names their hosts (`:csp_img_hosts`, the CSP header written at send). Sign-up
+leads back to a registered one. Audited `identity.outside_forum.register`, `.listing`,
+`.approve`, `.refuse`, `.remove`. Tests: `outside_forums_test.exs`.
 
 **Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
 `RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own

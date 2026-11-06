@@ -26,17 +26,35 @@ defmodule IdejoHubWeb.Plugs.ContentSecurityPolicy do
     conn
     |> assign(:script_csp_nonce, script_nonce)
     |> assign(:style_csp_nonce, style_nonce)
-    |> put_resp_header("content-security-policy", policy(script_nonce, style_nonce))
+    # Written when the response is sent, so a page can name the image hosts it shows
+    # (`:csp_img_hosts`, the forums directory's outside forums).
+    |> register_before_send(fn conn ->
+      put_resp_header(
+        conn,
+        "content-security-policy",
+        policy(script_nonce, style_nonce, conn.assigns[:csp_img_hosts] || [])
+      )
+    end)
   end
 
-  defp policy(script_nonce, style_nonce) do
+  defp policy(script_nonce, style_nonce, img_hosts) do
+    domain = Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain]
+
+    img =
+      ["'self'", "data:", "blob:", "https://*.#{domain}"] ++
+        for host <- img_hosts,
+            host =~ ~r/\A[a-z0-9.-]+\z/,
+            not String.ends_with?(host, "." <> domain),
+            uniq: true,
+            do: "https://" <> host
+
     Enum.join(
       [
         "default-src 'self'",
         "script-src 'self' 'nonce-#{script_nonce}'",
         "style-src 'self' 'nonce-#{style_nonce}'",
         # The forums directory shows each forum's logo, from its own host (`/logo`).
-        "img-src 'self' data: blob: https://*.#{Application.fetch_env!(:idejo_hub, IdejoHub.Forums)[:domain]}",
+        "img-src " <> Enum.join(img, " "),
         "font-src 'self' data:",
         "connect-src 'self'",
         "object-src 'none'",
