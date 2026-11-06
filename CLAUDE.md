@@ -80,6 +80,16 @@ Hub's connections updates the figures in `docker-compose.yml`,
 `test/idejo_hub_web/live/nf_01_supported_size_test.exs` and `deploy/test/nf_01_connections.sh`
 (which holds them all on the bundle's PostgreSQL, in CI's Compose job).
 
+**Hub NF-05** (the Hub being down does not take forums down): nothing on a forum's way
+depends on the Hub. Caddy sends forum hosts straight to their containers and reads suspensions
+from files; it has no `depends_on` the Hub (it starts and runs whatever the Hub's state;
+until the Hub answers, only new certificates wait for `ask`); the Hub appears in a forum's
+site only once the forum itself fails (its 502–504 page). Forums sign in through Zitadel
+(`IDEJO_OIDC_ISSUER`, never the Hub) and keep their own sessions; only the member page
+(`/account`) and sign-up are the Hub's. Checked from the bundle
+(`test/idejo_hub/hosting/nf_05_hub_down_test.exs`) and live in `deploy/test/m3/run.sh`
+step 6b: the Hub stopped, a member's session, the forum and Zitadel still answer.
+
 **HN-06** (the Hub and the identity provider in their own containers, with their own
 database): the `hub` and `zitadel` services are containers of their own (the Hub built here,
 Zitadel its pinned image; no shared namespaces; Zitadel only on the default network, no

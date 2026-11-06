@@ -23,6 +23,9 @@ their identity and is removed from both following each forum's rules.**
    password; sign in to alpha and bravo with "Idejo ID", each asking first what it will
    receive (email and display name), then joined.
 6. Each forum's owner acts there (`bin/idejo rpc`): moderator on alpha, banned on bravo.
+   Then (Hub NF-05) the Hub is stopped: its own page answers 502, yet alpha serves its
+   pages, the member's session from step 5 still works there, and Zitadel still answers;
+   the Hub is started again.
 7. In the browser: alpha shows the moderator role; bravo refuses the same identity, banned;
    alpha still works. The member's page (`https://id.idejo.test/account`) lists both
    forums; the member deletes their Idejo ID (signed in within five minutes, email typed).
