@@ -74,7 +74,10 @@ defmodule IdejoHub.SCIsolationTest do
       "/sign-in",
       "/sign-in/two-factor",
       "/internal/caddy/ask",
-      "/internal/forum-unavailable"
+      "/internal/forum-unavailable",
+      # Idejo's community menu: a forum's client credentials, not a sign-in (tested in
+      # community_directory_test.exs).
+      "/internal/community"
     ]
 
     # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's

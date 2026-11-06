@@ -78,6 +78,24 @@
 	}
 }
 
+# The forums directory (steward decision 2026-11-06): forums.<forum domain> is the Hub's own
+# page listing every running forum; "forums" is a reserved subdomain, so no forum takes it.
+# A named host wins over the wildcard below.
+forums.{$IDEJO_FORUM_DOMAIN} {
+	encode zstd gzip
+	tls {
+		on_demand
+		protocols tls1.2 tls1.3
+	}
+	import security_headers
+	handle /internal/* {
+		respond 404
+	}
+	handle {
+		reverse_proxy hub:4000
+	}
+}
+
 *.{$IDEJO_FORUM_DOMAIN} {
 	encode zstd gzip
 

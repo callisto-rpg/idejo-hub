@@ -27,6 +27,16 @@ defmodule IdejoHubWeb.Router do
     plug IdejoHubWeb.OperatorAuth, :require_operator
   end
 
+  # The forums directory (steward decision 2026-11-06), only on forums.<forum domain>.
+  pipeline :directory_host do
+    plug IdejoHubWeb.Plugs.DirectoryHost
+  end
+
+  scope "/", IdejoHubWeb, host: "forums." do
+    pipe_through [:directory_host, :browser]
+    get "/", DirectoryController, :index
+  end
+
   # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).
   pipeline :identity_host do
     plug IdejoHubWeb.Plugs.IdentityHost
@@ -105,6 +115,8 @@ defmodule IdejoHubWeb.Router do
   scope "/internal", IdejoHubWeb do
     get "/caddy/ask", CaddyController, :ask
     get "/forum-unavailable", CaddyController, :forum_unavailable
+    # Idejo's community menu, asked by forums on the forum network (steward decision 2026-11-06).
+    get "/community", CommunityController, :index
   end
 
   # Other scopes may use custom stacks.

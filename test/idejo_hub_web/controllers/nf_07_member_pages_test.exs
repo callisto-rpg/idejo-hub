@@ -124,7 +124,7 @@ defmodule IdejoHubWeb.NF07MemberPagesTest do
         ] do
       html = conn |> get(path) |> html_response(200)
       assert html =~ ~s(id="member-footer"), path
-      assert html =~ ~s(href="/account/privacy"), path
+      assert html =~ ~s(href="https://id.idejo.test/account/privacy"), path
     end
 
     assert conn |> get(~p"/account/sign-up") |> html_response(200) =~ ~s(id="signup-privacy")

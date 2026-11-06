@@ -364,6 +364,22 @@ defmodule IdejoHub.Forums do
     do: recreate_forum(forum, actor, rotate_secret: true, action: "forum.identity.rotate")
 
   @doc """
+  Shows or hides a forum in the forums directory (steward decision 2026-11-06). Audited
+  `forum.listed` / `forum.unlisted`.
+  """
+  @spec set_listed(Forum.t(), boolean(), String.t()) ::
+          {:ok, Forum.t()} | {:error, :invalid_state | Ecto.Changeset.t()}
+  def set_listed(%Forum{status: "deleted"}, _listed?, _actor), do: {:error, :invalid_state}
+
+  def set_listed(%Forum{} = forum, listed?, actor) when is_boolean(listed?) do
+    with {:ok, forum} <- update_state(forum, %{listed: listed?}) do
+      action = if listed?, do: "forum.listed", else: "forum.unlisted"
+      {:ok, _} = Audit.record(actor, action, "ok", forum)
+      {:ok, forum}
+    end
+  end
+
+  @doc """
   OP-06: pins a forum to its version, so bulk upgrades (OP-05) leave it out, or unpins it. A
   single upgrade of a pinned forum stays possible. Audited `forum.pin` / `forum.unpin`.
   """
@@ -671,7 +687,11 @@ defmodule IdejoHub.Forums do
       "IDEJO_OIDC_CLIENT_ID" => forum.oidc_client_id,
       "IDEJO_OIDC_CLIENT_SECRET" => secret,
       "IDEJO_OIDC_LABEL" => IdejoHub.Identity.label(),
-      "IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum)
+      "IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum),
+      # Idejo's community menu (Idejo 0.2.5; steward decision 2026-11-06): the member's other
+      # forums, asked of the Hub with this client's credentials, and the directory.
+      "IDEJO_COMMUNITY_URL" => IdejoHub.Community.community_url(),
+      "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url()
     }
   end
 
@@ -755,6 +775,8 @@ defmodule IdejoHub.Forums do
 
     cond do
       host in hub_hosts() -> true
+      # The forums directory (steward decision 2026-11-06).
+      host == IdejoHub.Community.directory_host() -> true
       forum = for_host(host) -> forum.status != "deleted"
       true -> false
     end

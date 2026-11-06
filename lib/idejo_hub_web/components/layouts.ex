@@ -97,7 +97,8 @@ defmodule IdejoHubWeb.Layouts do
     <%!-- Hub NF-07: members' pages link the privacy notice, as Idejo's footer does (AD-02). --%>
     <footer :if={@title != "Idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
       <div class="mx-auto max-w-2xl">
-        <a href={~p"/account/privacy"}>Privacy</a>
+        <%!-- Absolute: the directory (forums.<forum domain>) shows this footer too. --%>
+        <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>Privacy</a>
       </div>
     </footer>
 

@@ -71,6 +71,12 @@ defmodule IdejoHubWeb.ForumShowLive do
   defp run("pin", _p, forum, actor, socket),
     do: done(socket, Forums.set_pinned(forum, true, actor), "Pinned to #{forum.idejo_version}.")
 
+  defp run("list", _p, forum, actor, socket),
+    do: done(socket, Forums.set_listed(forum, true, actor), "Shown in the forums directory.")
+
+  defp run("unlist", _p, forum, actor, socket),
+    do: done(socket, Forums.set_listed(forum, false, actor), "Hidden from the forums directory.")
+
   defp run("unpin", _p, forum, actor, socket),
     do:
       done(
@@ -285,6 +291,21 @@ defmodule IdejoHubWeb.ForumShowLive do
             data-confirm="Upgrade? It is backed up first and rolled back if unhealthy."
           >Upgrade</button>
         </form>
+
+        <%!-- The forums directory (steward decision 2026-11-06): listed while running. --%>
+        <div :if={@forum.status != "deleted"} id="listing" class="flex gap-2 items-center">
+          <p class="text-sm">
+            {if @forum.listed,
+              do: "Shown in the forums directory while it runs.",
+              else: "Hidden from the forums directory."}
+          </p>
+          <button :if={@forum.listed} id="unlist" phx-click="unlist" class="btn btn-sm">
+            Hide from the directory
+          </button>
+          <button :if={!@forum.listed} id="list" phx-click="list" class="btn btn-sm">
+            Show in the directory
+          </button>
+        </div>
 
         <%!-- OP-06: pinned, "Upgrade all forums" leaves it out; the form above still works. --%>
         <div :if={@forum.status != "deleted"} id="pin" class="flex gap-2 items-center">

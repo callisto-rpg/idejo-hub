@@ -40,7 +40,9 @@ Idejo Hub; never read or write a forum's database.** That contract is:
 
 - environment variables (Idejo AD-13): `PHX_HOST`, `DATABASE_URL`, `SECRET_KEY_BASE`,
   `IDEJO_UPLOADS_DIR`, `IDEJO_BACKUP_DIR`, `IDEJO_SOURCE_URL`, `IDEJO_SMTP_*`,
-  `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`;
+  `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`, `POOL_SIZE` (NF-01),
+  and since Idejo 0.2.5 `IDEJO_COMMUNITY_URL`, `IDEJO_COMMUNITY_DIRECTORY_URL` (its community
+  menu, below);
 - `bin/idejo-admin` (Idejo AD-09, AD-14): `setup`, `backup`, `restore FILE --yes`, `health`,
   `stats` (JSON counts and sizes; Idejo after 0.1.0), `rotate-push-keys --yes`, with exit codes;
 - `GET /health` (Idejo AD-15): 200 or 503 with `{status, version, checks}`;
@@ -53,14 +55,28 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.4**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.5**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
-the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below).
+the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
+the first with the community menu (below). Forums on 0.2.4 run without that menu.
 Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
 custom CSS (their content security policy still refuses outside loads); forums on 0.1.0
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
-0.2.4.
+0.2.5.
+
+**Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
+`https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
+named Caddy site before the forum wildcard; `ask` allows it) lists every running forum the
+operator has not hidden (`forums.listed`, "Hide from the directory" / "Show in the
+directory" on its page, audited `forum.unlisted` / `forum.listed`); `forums` is a reserved
+subdomain (FL-03), so no forum can take it. Every forum with a client gets Idejo's
+`IDEJO_COMMUNITY_DIRECTORY_URL` (that page) and `IDEJO_COMMUNITY_URL`
+(`http://hub:4000/internal/community`, on the forum network; Caddy refuses `/internal/*`
+from outside): `CommunityController` answers `GET ?subject=` with HTTP Basic, the asking
+forum's own client id and secret, only about a person who joined that forum, with the other
+running forums they joined (`identity_joins`). With the Hub down the menu lists nothing and
+the forum runs (Hub NF-05). Tests: `community_directory_test.exs`.
 
 **Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
 `RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own
@@ -652,7 +668,8 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
   2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
   the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
-  since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06.
+  since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06; Idejo
+  `v0.2.5` (the community menu) since.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).

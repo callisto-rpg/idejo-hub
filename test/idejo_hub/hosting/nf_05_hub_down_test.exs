@@ -69,7 +69,8 @@ defmodule IdejoHub.Hosting.NF05HubDownTest do
         version: "0.2.3",
         env: %{
           "PHX_HOST" => "nf05.idejo.test",
-          "IDEJO_OIDC_ISSUER" => IdejoHub.Identity.issuer()
+          "IDEJO_OIDC_ISSUER" => IdejoHub.Identity.issuer(),
+          "IDEJO_COMMUNITY_URL" => IdejoHub.Community.community_url()
         },
         memory_mb: 384,
         cpus: 0.5
@@ -77,7 +78,14 @@ defmodule IdejoHub.Hosting.NF05HubDownTest do
 
     # Docker restarts it by itself; it reaches no Hub address.
     assert spec["HostConfig"]["RestartPolicy"] == %{"Name" => "unless-stopped"}
-    refute Enum.any?(spec["Env"], &(&1 =~ ~r{hub:4000|//hub[:/]}))
+    # The one Hub address a forum holds is Idejo's community menu (steward decision
+    # 2026-11-06), which the browser fills only when it is opened, gives up after two seconds
+    # and keeps an empty answer: with the Hub down, the menu lists nothing, the forum runs.
+    hub_addresses =
+      Enum.filter(spec["Env"], &(&1 =~ ~r{hub:4000|//hub[:/]}))
+      |> Enum.map(&(&1 |> String.split("=", parts: 2) |> hd()))
+
+    assert hub_addresses -- ["IDEJO_COMMUNITY_URL"] == []
     # It signs in through the identity provider's host, Zitadel's, not the Hub's.
     assert ("IDEJO_OIDC_ISSUER=https://" <>
               Application.fetch_env!(:idejo_hub, IdejoHub.Identity)[:domain]) in spec["Env"]
