@@ -115,7 +115,90 @@ defmodule IdejoHub.Identity.Zitadel do
 
   @impl true
   def configure(smtp, sender) do
-    with :ok <- login_policy(), do: smtp(smtp, sender)
+    with :ok <- login_policy(), :ok <- branding(), do: smtp(smtp, sender)
+  end
+
+  # Zitadel's sign-in screens in Idejo's look (steward request 2026-11-06), like the Hub's
+  # members' pages: Idejo's default colours (gold on cream, or on #1d1a00 in the dark theme;
+  # its warning red kept) and the Idejo logo, as the instance's branding (label policy).
+  # Applied when the colours differ or a logo is missing, then activated; else nothing.
+  @branding %{
+    "primaryColor" => "#daa304",
+    "backgroundColor" => "#fdfcf6",
+    "fontColor" => "#1d1a00",
+    "primaryColorDark" => "#daa304",
+    "backgroundColorDark" => "#1d1a00",
+    "fontColorDark" => "#ebeae2",
+    "themeMode" => "THEME_MODE_AUTO"
+  }
+
+  @branding_assets [
+    {"logo", "logo.png"},
+    {"logo/dark", "logo.png"},
+    {"icon", "logo-small.png"},
+    {"icon/dark", "logo-small.png"}
+  ]
+
+  defp branding do
+    with {:ok, %{"policy" => current}} <- request(:get, "/admin/v1/policies/label", nil) do
+      colours? = Enum.all?(@branding, fn {key, value} -> current[key] == value end)
+
+      logos? =
+        Enum.all?(~w(logoUrl logoUrlDark iconUrl iconUrlDark), &(current[&1] not in [nil, ""]))
+
+      if colours? and logos?, do: :ok, else: put_branding(current)
+    end
+  end
+
+  @branding_fields ~w(warnColor warnColorDark hideLoginNameSuffix disableWatermark)
+
+  defp put_branding(current) do
+    body = current |> Map.take(@branding_fields) |> Map.merge(@branding)
+
+    with {:ok, _} <- request(:put, "/admin/v1/policies/label", body),
+         :ok <- upload_logos(),
+         {:ok, _} <- request(:post, "/admin/v1/policies/label/_activate", %{}),
+         do: :ok
+  end
+
+  defp upload_logos do
+    Enum.reduce_while(@branding_assets, :ok, fn {kind, file}, :ok ->
+      path = Application.app_dir(:idejo_hub, ["priv", "static", "images", file])
+
+      case upload("/assets/v1/instance/policy/label/" <> kind, path) do
+        :ok -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  # sobelow_skip ["Traversal.FileModule"]
+  defp upload(path, file) do
+    with {:ok, token} <- token(),
+         {:ok, content} <- File.read(file) do
+      opts =
+        [
+          method: :post,
+          url: Identity.config(:api_url) <> path,
+          headers: [{"host", Identity.config(:domain)}, {"authorization", "Bearer " <> token}],
+          form_multipart: [
+            file: {content, filename: Path.basename(file), content_type: "image/png"}
+          ],
+          retry: false,
+          receive_timeout: 15_000
+        ] ++ Application.get_env(:idejo_hub, :zitadel_req_options, [])
+
+      case Req.request(opts) do
+        {:ok, %Req.Response{status: status}} when status in 200..299 ->
+          :ok
+
+        {:ok, %Req.Response{status: status, body: body}} ->
+          {:error, {:status, status, message(body)}}
+
+        {:error, exception} ->
+          {:error, {:unreachable, Exception.message(exception)}}
+      end
+    end
   end
 
   # ID-02: only the Hub's sign-up page makes people (Zitadel's own form off); ID-08: passkeys

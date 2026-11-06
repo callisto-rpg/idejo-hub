@@ -541,7 +541,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   on cream, `#1d1a00` in the dark theme; `assets/css/app.css`, Idejo's own formulas), the
   small Idejo logo by the title and the full one above the sign-up form
   (`priv/static/images/logo*.svg`, CC-BY-4.0; NOTICE, REUSE.toml). Operators' pages keep
-  the Hub's theme. A change to Idejo's default colours or fonts is copied here.
+  the Hub's theme. A change to Idejo's default colours or fonts is copied here. Zitadel's
+  sign-in screens too: `Identity.configure/2` (`SetupWorker`, at boot) sets the instance's
+  branding (label policy: Idejo's colours, light and dark, `THEME_MODE_AUTO`; the warning
+  colours, login-name suffix and watermark left as they are), uploads `logo.png` /
+  `logo-small.png` as its logo and icon in both themes, and activates it, only when a colour
+  differs or a logo is missing (checked against Zitadel v4.20.1, 2026-11-06).
 - **Member pages' standards** (Hub NF-07): every page under `/account` passes Idejo's own
   AX-01 audit (`IdejoHubWeb.Accessibility`, ported from Idejo's `test/support`;
   `test/idejo_hub_web/controllers/nf_07_member_pages_test.exs` lists the pages: a new member
