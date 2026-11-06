@@ -48,6 +48,8 @@ defmodule IdejoHubWeb.Router do
     get "/forums/:subdomain/log", AccountController, :log
     # SC-10: what the Hub operator can access, and when they would (public).
     get "/operator-access", AccountController, :operator_access
+    # Hub NF-07: the privacy notice for members (public).
+    get "/privacy", AccountController, :privacy
     post "/delete", AccountController, :delete
   end
 

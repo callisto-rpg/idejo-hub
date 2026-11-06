@@ -48,6 +48,14 @@ defmodule IdejoHubWeb.Layouts do
 
   def app(assigns) do
     ~H"""
+    <%!-- Hub NF-07 (as Idejo's AX-01): the keyboard's first stop leads past the header. --%>
+    <a
+      href="#main"
+      id="skip-link"
+      class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:p-2 focus:bg-base-100"
+    >
+      Skip to content
+    </a>
     <header class="navbar px-4 sm:px-6 lg:px-8">
       <div class="flex-1 flex items-center gap-4">
         <a :if={@title == "Idejo Hub"} href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
@@ -85,6 +93,13 @@ defmodule IdejoHubWeb.Layouts do
         {render_slot(@inner_block)}
       </div>
     </main>
+
+    <%!-- Hub NF-07: members' pages link the privacy notice, as Idejo's footer does (AD-02). --%>
+    <footer :if={@title != "Idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
+      <div class="mx-auto max-w-2xl">
+        <a href={~p"/account/privacy"}>Privacy</a>
+      </div>
+    </footer>
 
     <.flash_group flash={@flash} />
     """
@@ -146,29 +161,42 @@ defmodule IdejoHubWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
+    <div
+      role="group"
+      aria-label="Theme"
+      class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full"
+    >
       <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0 transition-[left]" />
 
       <button
+        type="button"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
+        aria-label="Theme: follow the system"
+        title="Theme: follow the system"
       >
         <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
 
       <button
+        type="button"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
+        aria-label="Theme: light"
+        title="Theme: light"
       >
         <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
 
       <button
+        type="button"
         class="flex p-2 cursor-pointer w-1/3"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
+        aria-label="Theme: dark"
+        title="Theme: dark"
       >
         <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>

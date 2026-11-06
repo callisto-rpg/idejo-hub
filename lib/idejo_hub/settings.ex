@@ -11,6 +11,7 @@ defmodule IdejoHub.Settings do
   | `alert_email` | Where alerts go (OP-08, milestone 4) | none |
   | `reserved_subdomains` | Names refused for new forums, on top of FL-03's | none |
   | `access_policy` | When the operator would access a forum, in their words, on the forum owners' disclosure page (SC-10; plain text, at most 4000 characters) | none |
+  | `privacy_notice` | The privacy notice members read on the sign-in host (Hub NF-07, as Idejo's AD-02; plain text, at most 50 000 characters) | none |
 
   The forum domain stays in the environment (`IDEJO_FORUM_DOMAIN`): every forum's address,
   certificate and links depend on it. Backups are kept in the exports volume; off-server
@@ -25,7 +26,7 @@ defmodule IdejoHub.Settings do
   alias IdejoHub.Identity.SetupWorker
   alias IdejoHub.Settings.Setting
 
-  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains access_policy)
+  @keys ~w(smtp_host smtp_port smtp_security smtp_username smtp_password alert_email reserved_subdomains access_policy privacy_notice)
   @secret ~w(smtp_password)
 
   @doc "Every setting's stored value (secrets decrypted), missing ones as nil."
@@ -127,6 +128,9 @@ defmodule IdejoHub.Settings do
 
   defp check("access_policy", text),
     do: if(String.length(text) <= 4000, do: nil, else: "at most 4000 characters")
+
+  defp check("privacy_notice", text),
+    do: if(String.length(text) <= 50_000, do: nil, else: "at most 50 000 characters")
 
   defp check(_key, _value), do: nil
 

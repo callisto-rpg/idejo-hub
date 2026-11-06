@@ -1,0 +1,14 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<%!-- Hub NF-07: the members' privacy notice, as a standalone Idejo's /privacy (AD-02). --%>
+<Layouts.app flash={@flash} title="Idejo ID">
+  <h1 class="text-2xl font-semibold">Privacy</h1>
+  <div id="privacy-notice" class="space-y-3">
+    <p :if={@notice == []} id="privacy-notice-none">
+      This Hub has not published a privacy notice yet.
+    </p>
+    <p :for={paragraph <- @notice} class="whitespace-pre-line">{paragraph}</p>
+  </div>
+</Layouts.app>

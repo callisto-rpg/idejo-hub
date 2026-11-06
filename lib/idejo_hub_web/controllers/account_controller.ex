@@ -68,6 +68,16 @@ defmodule IdejoHubWeb.AccountController do
     render(conn, :operator_access, policy: paragraphs, page_title: "What the operator can access")
   end
 
+  @doc """
+  Hub NF-07: the privacy notice for members (`privacy_notice`, written by the operator in
+  Settings), as a standalone Idejo's `/privacy` (AD-02). Public; empty, it says so.
+  """
+  def privacy(conn, _params) do
+    notice = IdejoHub.Settings.get("privacy_notice")
+    paragraphs = if notice, do: String.split(notice, ~r/\R\s*\R/, trim: true), else: []
+    render(conn, :privacy, notice: paragraphs, page_title: "Privacy")
+  end
+
   defp log_page(conn, subdomain) do
     with %{} = member <- member(conn),
          %{} = forum <- Enum.find(owned(person(member["sub"])), &(&1.subdomain == subdomain)) do

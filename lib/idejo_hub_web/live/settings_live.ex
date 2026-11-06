@@ -210,6 +210,29 @@ defmodule IdejoHubWeb.SettingsLive do
           </label>
         </section>
 
+        <%!-- Hub NF-07: members' privacy notice, as a standalone Idejo's (AD-02). --%>
+        <section id="privacy" class="space-y-2">
+          <h2 class="text-xl font-semibold">Privacy notice for members</h2>
+          <p class="text-sm">
+            Shown to members at <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>the sign-in address's privacy page</a>,
+            linked from every member page: who runs this Hub, what Idejo IDs keep (email,
+            names, the forums signed in to) and why, how long, and how to reach you. Plain
+            text; a blank line starts a new paragraph.
+          </p>
+          <label class="block">
+            <span class="block text-sm font-medium">Privacy notice (at most 50 000 characters)</span>
+            <textarea
+              name="settings[privacy_notice]"
+              id="setting-privacy_notice"
+              class="textarea w-full"
+              rows="10"
+            >{@values["privacy_notice"]}</textarea>
+            <span :if={@errors["privacy_notice"]} class="text-sm text-error">{@errors[
+              "privacy_notice"
+            ]}</span>
+          </label>
+        </section>
+
         <button class="btn btn-primary">Save</button>
       </form>
 
