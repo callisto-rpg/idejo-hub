@@ -85,6 +85,15 @@ defmodule IdejoHubWeb.Router do
       live "/identities/:id", IdentityShowLive, :show
     end
 
+    # HA-07: operator accounts, for owners.
+    live_session :owner,
+      on_mount: [
+        {IdejoHubWeb.OperatorAuth, :require_operator},
+        {IdejoHubWeb.OperatorAuth, :require_owner}
+      ] do
+      live "/operators", OperatorsLive, :index
+    end
+
     # HA-03: archive download (audited).
     get "/forums/:forum_id/archives/:id", ArchiveController, :show
   end

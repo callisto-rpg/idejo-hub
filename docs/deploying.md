@@ -89,6 +89,11 @@ Open `https://hub.example.org`, sign in with the operator's email and password, 
 two-factor sign-in with an authenticator app (SC-08). Then create forums from the Forums
 page.
 
+The first operator account is an **owner**. Owners also manage operator accounts on the
+**Operators** page: add one (its one-time password is shown there once), make it an owner or
+an operator, remove it (HA-07). Operators do everything else. The last owner always stays an
+owner, and the command line below can make another at any time.
+
 ## Commands
 
 All from the repository's directory:
@@ -96,6 +101,7 @@ All from the repository's directory:
 ```sh
 H="docker compose -f deploy/docker-compose.yml --env-file deploy/.env"
 $H exec hub bin/hub-admin create-operator EMAIL    # another operator (one-time password)
+$H exec hub bin/hub-admin create-operator EMAIL --role owner   # another owner
 $H exec hub bin/hub-admin reset-two-factor EMAIL   # an operator lost their authenticator
 $H ps                                              # what is running
 $H logs -f hub                                     # the Hub's log

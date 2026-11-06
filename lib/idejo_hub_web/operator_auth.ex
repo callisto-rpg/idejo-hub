@@ -57,6 +57,17 @@ defmodule IdejoHubWeb.OperatorAuth do
     end
   end
 
+  # HA-07: pages for owners only (operator accounts).
+  def on_mount(:require_owner, _params, _session, socket) do
+    if Operators.owner?(socket.assigns[:current_operator]),
+      do: {:cont, socket},
+      else:
+        {:halt,
+         socket
+         |> Phoenix.LiveView.put_flash(:error, "Only owners manage operator accounts.")
+         |> Phoenix.LiveView.redirect(to: "/")}
+  end
+
   @doc "After the password: remembers who is half signed in."
   def put_pending(conn, operator) do
     conn

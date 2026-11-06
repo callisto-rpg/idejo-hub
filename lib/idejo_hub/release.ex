@@ -23,14 +23,18 @@ defmodule IdejoHub.Release do
 
   @doc """
   SC-08: creates an operator and prints their one-time password
-  (`bin/hub-admin create-operator EMAIL`). They set up two-factor at their first sign-in.
+  (`bin/hub-admin create-operator EMAIL [--role owner|operator]`). They set up two-factor at
+  their first sign-in. HA-07: without a role, the first account is an owner, later ones
+  operators.
   """
-  def create_operator(email) do
+  def create_operator(email, role \\ nil) do
+    role = if role in [nil, ""], do: nil, else: role
+
     with_repo(fn ->
-      case IdejoHub.Operators.create_operator(email) do
+      case IdejoHub.Operators.create_operator(email, role) do
         {:ok, operator, password} ->
           IO.puts("""
-          Operator #{operator.email} created. Their password, shown only now:
+          Operator #{operator.email} created, role #{operator.role}. Their password, shown only now:
 
               #{password}
 

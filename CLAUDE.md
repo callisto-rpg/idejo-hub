@@ -325,6 +325,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
   `operator.create`, `operator.sign_in` (ok/failed with the factor, never a password or
   code), `operator.two_factor_reset`.
+- **Operator roles** (HA-07, `operators.role`, `Operators.owner?/1`, `set_role/3`,
+  `remove_operator/2`; extra review: DV-06): `owner` or `operator`. Owners also manage
+  operator accounts at `/operators` (`OperatorsLive`, `live_session :owner`,
+  `on_mount: {OperatorAuth, :require_owner}`; linked in the header for owners only): add one
+  (one-time password shown once), change a role, remove one (its sessions end with it). The
+  last owner stays an owner, nobody removes their own account. Everything else is open to
+  both roles (a further split needs a steward decision). `create_operator/3` without a role
+  makes the first account an owner and later ones operators; `bin/hub-admin create-operator
+  EMAIL --role owner|operator` sets it. Operators made before roles became owners
+  (migration). Audited `operator.create` (with `role`, by the command line or the owner),
+  `operator.role`, `operator.remove`.
 - **Operator screens** (HA): LiveViews in `lib/idejo_hub_web/live/`, in the router's
   `live_session :operator` (`on_mount: {OperatorAuth, :require_operator}`), rendered in
   `<Layouts.app current_operator={@current_operator}>` (`wide` for tables). They follow
@@ -531,7 +542,7 @@ mix test                     # all tests
 mix test --only req:FL-01    # one requirement's tests
 mix precommit                # compile warnings, format, credo, sobelow, audits, tests, dialyzer
 reuse lint                   # SPDX headers (LI-01)
-# in the Hub's container: bin/hub-admin create-operator EMAIL | reset-two-factor EMAIL (SC-08)
+# in the Hub's container: bin/hub-admin create-operator EMAIL [--role owner|operator] | reset-two-factor EMAIL (SC-08, HA-07)
 (cd guard && mix precommit)  # docker-guard's own checks and tests (HN-04)
 deploy/test/m2/run.sh        # milestone 2 exit check from the web interface (Docker; ~15 min)
 deploy/test/m3/run.sh        # milestone 3 exit check: sign up, two forums, roles, ban, delete (~6 min)

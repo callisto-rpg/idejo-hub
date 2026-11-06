@@ -11,13 +11,24 @@ usage() {
   cat <<USAGE
 Usage: bin/hub-admin COMMAND
 
-  create-operator EMAIL    make a Hub operator; prints their one-time password (SC-08)
+  create-operator EMAIL [--role owner|operator]
+                           make a Hub operator; prints their one-time password (SC-08).
+                           Without --role: the first account is an owner, later ones
+                           operators (HA-07); owners also manage accounts in the Hub
   reset-two-factor EMAIL   remove an operator's two-factor setup and end their sessions
 USAGE
 }
 
 case "${1:-}" in
-  create-operator | reset-two-factor)
+  create-operator)
+    if [ $# -eq 2 ]; then role=""
+    elif [ $# -eq 4 ] && [ "$3" = "--role" ] && { [ "$4" = owner ] || [ "$4" = operator ]; }; then role=$4
+    else usage >&2; exit 64; fi
+    # The email and role go through environment variables, never into the Elixir code.
+    HUB_ADMIN_EMAIL="$2" HUB_ADMIN_ROLE="$role" exec ./idejo_hub eval \
+      'IdejoHub.Release.create_operator(System.fetch_env!("HUB_ADMIN_EMAIL"), System.fetch_env!("HUB_ADMIN_ROLE"))'
+    ;;
+  reset-two-factor)
     if [ $# -ne 2 ]; then usage >&2; exit 64; fi
     fun=$(printf '%s' "$1" | tr '-' '_')
     # The email goes through an environment variable, never into the Elixir code.

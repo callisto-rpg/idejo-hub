@@ -30,20 +30,102 @@ defmodule IdejoHub.Operators do
 
   ## Accounts
 
-  @doc "Creates an operator with a random password, returned once."
-  @spec create_operator(String.t()) ::
+  @doc """
+  Creates an operator with a random password, returned once. HA-07: `role` is `"owner"` or
+  `"operator"`; nil makes an owner while there is none (the first account), else an
+  operator. `actor` is who made it: the command line, or an owner's email.
+  """
+  @spec create_operator(String.t(), String.t() | nil, String.t()) ::
           {:ok, Operator.t(), String.t()} | {:error, Ecto.Changeset.t()}
-  def create_operator(email) do
+  def create_operator(email, role \\ nil, actor \\ "command line") do
     password = Secrets.random(18)
+    role = role || if(owner_count() == 0, do: "owner", else: "operator")
 
     with {:ok, operator} <-
-           email |> Operator.create_changeset(Argon2.hash_pwd_salt(password)) |> Repo.insert() do
+           email
+           |> Operator.create_changeset(Argon2.hash_pwd_salt(password), role)
+           |> Repo.insert() do
       {:ok, _} =
-        Audit.record("command line", "operator.create", "ok", nil, %{"email" => operator.email})
+        Audit.record(actor, "operator.create", "ok", nil, %{
+          "email" => operator.email,
+          "role" => operator.role
+        })
 
       {:ok, operator, password}
     end
   end
+
+  @doc "HA-07: every operator account, owners first, then by email."
+  @spec list_operators() :: [Operator.t()]
+  def list_operators do
+    Repo.all(from o in Operator, order_by: [desc: o.role == "owner", asc: o.email])
+  end
+
+  @doc "HA-07: whether the operator may manage operator accounts."
+  @spec owner?(Operator.t() | nil) :: boolean()
+  def owner?(%Operator{role: "owner"}), do: true
+  def owner?(_operator), do: false
+
+  @doc """
+  HA-07: an owner changes an account's role. The last owner stays an owner, so someone can
+  always manage accounts. Audited `operator.role`.
+  """
+  @spec set_role(Operator.t(), String.t(), Operator.t()) ::
+          {:ok, Operator.t()}
+          | {:error, :forbidden | :invalid_role | :last_owner | Ecto.Changeset.t()}
+  def set_role(%Operator{} = operator, role, %Operator{} = by) do
+    cond do
+      not owner?(by) ->
+        {:error, :forbidden}
+
+      role not in Operator.roles() ->
+        {:error, :invalid_role}
+
+      operator.role == "owner" and role != "owner" and owner_count() == 1 ->
+        {:error, :last_owner}
+
+      true ->
+        with {:ok, changed} <- operator |> Ecto.Changeset.change(role: role) |> Repo.update() do
+          {:ok, _} =
+            Audit.record(by.email, "operator.role", "ok", nil, %{
+              "email" => changed.email,
+              "role" => role
+            })
+
+          {:ok, changed}
+        end
+    end
+  end
+
+  @doc """
+  HA-07: an owner removes an operator account, ending its sessions. Never the last owner,
+  nor their own account. Audited `operator.remove`.
+  """
+  @spec remove_operator(Operator.t(), Operator.t()) ::
+          :ok | {:error, :forbidden | :last_owner | :self}
+  def remove_operator(%Operator{} = operator, %Operator{} = by) do
+    cond do
+      not owner?(by) ->
+        {:error, :forbidden}
+
+      operator.id == by.id ->
+        {:error, :self}
+
+      operator.role == "owner" and owner_count() == 1 ->
+        {:error, :last_owner}
+
+      true ->
+        # Its session tokens go with it (on delete cascade).
+        Repo.delete!(operator)
+
+        {:ok, _} =
+          Audit.record(by.email, "operator.remove", "ok", nil, %{"email" => operator.email})
+
+        :ok
+    end
+  end
+
+  defp owner_count, do: Repo.aggregate(from(o in Operator, where: o.role == "owner"), :count)
 
   @doc "An operator by email, or nil."
   @spec get_by_email(String.t()) :: Operator.t() | nil
