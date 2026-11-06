@@ -533,6 +533,22 @@ defmodule IdejoHub.Forums do
     Repo.one(from f in Forum, where: f.subdomain == ^subdomain and f.status != "deleted")
   end
 
+  # NF-01: the forums a server is sized for (steward decision 2026-11-06: past it, a warning,
+  # never a refusal). The bundle's PostgreSQL leaves room for some more
+  # (deploy/docker-compose.yml, `max_connections`).
+  @supported_forums 30
+
+  @doc "How many forums one server is sized for (NF-01): #{@supported_forums}."
+  @spec supported_forums() :: pos_integer()
+  def supported_forums, do: @supported_forums
+
+  @doc """
+  The forums this server hosts, for NF-01: every forum not deleted, as one being created,
+  failed, suspended or still being deleted keeps its database and container.
+  """
+  @spec hosted_count() :: non_neg_integer()
+  def hosted_count, do: Repo.aggregate(from(f in Forum, where: f.status != "deleted"), :count)
+
   @doc "All forums but deleted ones, by subdomain."
   @spec list_forums() :: [Forum.t()]
   def list_forums do

@@ -317,6 +317,28 @@ defmodule IdejoHubWeb.CoreComponents do
   end
 
   @doc """
+  NF-01: a warning where a forum would be added (create, import, restore to a new subdomain)
+  once the server hosts the forums it is sized for. Adding stays allowed (steward decision
+  2026-11-06).
+  """
+  attr :id, :string, required: true
+  attr :hosted, :integer, required: true, doc: "`IdejoHub.Forums.hosted_count/0`"
+
+  def forum_limit_notice(assigns) do
+    assigns = assign(assigns, :supported, IdejoHub.Forums.supported_forums())
+
+    ~H"""
+    <div :if={@hosted >= @supported} id={@id} role="status" class="alert alert-warning text-sm">
+      <.icon name="hero-exclamation-triangle" class="size-5 shrink-0" />
+      <span>
+        This server hosts {@hosted} forums. Idejo Hub supports up to {@supported} per server:
+        another forum may leave it short of memory or database connections. You can still add one.
+      </span>
+    </div>
+    """
+  end
+
+  @doc """
   Renders a header with title.
   """
   slot :inner_block, required: true
