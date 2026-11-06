@@ -17,9 +17,16 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
   force_ssl: [
     rewrite_on: [:x_forwarded_proto],
     exclude: [
-      # HN-02: Caddy calls these over plain http on the internal network (the Caddyfile
-      # refuses /internal/* from outside).
-      paths: ["/internal/caddy/ask", "/internal/forum-unavailable"],
+      # Called over plain http on the internal networks (the Caddyfile refuses /internal/*
+      # from outside): HN-02's by Caddy; Idejo's community menu by forums, on the forum
+      # network (steward decisions 2026-11-06). Every /internal route is listed here
+      # (test/idejo_hub/internal_http_test.exs).
+      paths: [
+        "/internal/caddy/ask",
+        "/internal/forum-unavailable",
+        "/internal/community",
+        "/internal/community/profile"
+      ],
       hosts: ["localhost", "127.0.0.1"]
     ]
   ]

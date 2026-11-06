@@ -78,7 +78,9 @@ subdomain (FL-03), so no forum can take it. Every forum with a client gets Idejo
 (`http://hub:4000/internal/community`, on the forum network; Caddy refuses `/internal/*`
 from outside): `CommunityController` answers `GET ?subject=` with HTTP Basic, the asking
 forum's own client id and secret, only about a person who joined that forum, with the other
-running forums they joined (`identity_joins`). With the Hub down the menu lists nothing and
+running forums they joined (`identity_joins`). Forums ask it over plain http: like every `/internal`
+route it is left out of production's `force_ssl` (`config/prod.exs`; a redirect there made
+every menu silently empty; `internal_http_test.exs` checks the list). With the Hub down the menu lists nothing and
 the forum runs (Hub NF-05). The directory shows one card per forum with its logo (Idejo
 0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
 `https://*.<forum domain>`), and past ten listed forums a search (name or host, any
