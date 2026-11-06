@@ -67,10 +67,22 @@ before saving (no `@import`, no `url()` but local paths and `data:`, nothing tha
 and loads from other hosts (Idejo SP-04, SP-05). The Hub's part: new forums start on 0.2.2 or
 later (`test/idejo_hub/sc_03_custom_css_test.exs`).
 
+**HN-06** (the Hub and the identity provider in their own containers, with their own
+database): the `hub` and `zitadel` services are containers of their own (the Hub built here,
+Zitadel its pinned image; no shared namespaces; Zitadel only on the default network, no
+Docker access), each with its own role and database on the shared PostgreSQL server
+(`idejo_hub`, `zitadel`: `postgres-init/01-hub-role.sh`, `04-zitadel.sh`), neither
+superuser, each closed to `PUBLIC` and, over the network, opening only the database named
+after it (`sameuser`). The one crossing is sanctioned: the Hub holds Zitadel's database
+password to back it up (OP-10, steward decision 2026-11-04). Checked from the bundle's files
+(`test/idejo_hub/hosting/hn_06_own_containers_test.exs`) and live against the bundle's own
+PostgreSQL (`deploy/test/hn_06_databases.sh`, in CI's Compose job).
+
 ## Stack
 
 Same as Idejo, so skills, tooling and visual language are shared (HA): Elixir + Phoenix
-LiveView, PostgreSQL (the Hub's own database, on the PostgreSQL server shared with the forums),
+LiveView, PostgreSQL (the Hub's own database, on the PostgreSQL server shared with the forums;
+HN-06, below),
 Oban for scheduled and lifecycle jobs, Caddy in front of everything (on-demand TLS, HN-02),
 shipped as Docker Compose with an install script (HN-08). Elixir and Erlang versions are the
 same as Idejo's, pinned in `.tool-versions` (DV-04).
@@ -486,6 +498,7 @@ deploy/test/m2/run.sh        # milestone 2 exit check from the web interface (Do
 deploy/test/m3/run.sh        # milestone 3 exit check: sign up, two forums, roles, ban, delete (~6 min)
 guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls pass, dangerous refused
 deploy/test/hn_08_install_settings.sh  # install.sh's settings step with a stand-in docker (CI)
+deploy/test/hn_06_databases.sh         # the bundle's PostgreSQL: each role opens only its own database (CI; ~10 s)
 ```
 
 Production bundle (HN-08), on Debian 13 (trixie), step by step in `docs/deploying.md`:
