@@ -285,7 +285,7 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
                ["https://dj-chess.idejo.test/"]
 
       assert Enum.count(LazyHTML.query(doc, "#directory-mine .directory-card.is-compact")) == 1
-      assert Enum.count(LazyHTML.query(mine, ".directory-host")) == 0
+      assert Enum.empty?(LazyHTML.query(mine, ".directory-host"))
       assert LazyHTML.text(LazyHTML.query(doc, "#directory-mine-heading")) == "My Forums"
       assert LazyHTML.text(LazyHTML.query(doc, "#directory-all")) == "All Forums"
 
