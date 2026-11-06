@@ -4,6 +4,8 @@
 // Hub milestone 3 exit check, the person's side (run by ../run.sh in Playwright's image).
 // PHASE=join: sign up on the Hub's page, take Zitadel's invite from the email, choose a
 // password, then join alpha and bravo through "Idejo ID" (each forum asks first).
+// PHASE=hubdown (NF-05), with the Hub stopped: the session kept from join still works on alpha,
+// the forum serves, Zitadel answers, and the Hub's own page does not.
 // PHASE=delete: alpha shows the moderator role and bravo refuses the banned member; then the
 // member's page lists both forums, and the member deletes their Idejo ID.
 
@@ -20,7 +22,10 @@ function check(ok, message) {
 }
 
 const browser = await chromium.launch()
-const context = await browser.newContext({ ignoreHTTPSErrors: true })
+const context = await browser.newContext({
+  ignoreHTTPSErrors: true,
+  ...(PHASE === "hubdown" ? { storageState: "/out/state.json" } : {}),
+})
 const page = await context.newPage()
 
 async function snap(label) {
@@ -132,6 +137,19 @@ try {
       await page.goto(`https://${host}/users/settings`)
       check(new URL(page.url()).pathname === "/users/settings", `${host}: joined and signed in through Idejo ID`)
     }
+    await context.storageState({ path: "/out/state.json" })
+  }
+
+  if (PHASE === "hubdown") {
+    const hub = await page.goto(`${ID}/account`)
+    check(hub.status() === 502, `the Hub is down (its member page answers ${hub.status()})`)
+    const home = await page.goto("https://alpha.idejo.test/")
+    check(home.status() === 200, "alpha serves its pages")
+    await page.goto("https://alpha.idejo.test/users/settings")
+    await snap("alpha-settings")
+    check(new URL(page.url()).pathname === "/users/settings", "alpha: the member's existing session keeps working")
+    const discovery = await page.goto(`${ID}/.well-known/openid-configuration`)
+    check(discovery.status() === 200, "Zitadel still answers (sign-in does not go through the Hub)")
   }
 
   if (PHASE === "delete") {

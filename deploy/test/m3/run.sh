@@ -17,6 +17,7 @@
 # does everything the person does, on the real pages: the Hub's sign-up, Zitadel's invite
 # and sign-in screens, each forum's consent, the Hub's member page. The roles and the ban
 # are given on each forum by its own owner (`bin/idejo rpc`), as a forum's staff would.
+# Step 6b also checks Hub NF-05: with the Hub stopped, forums and sessions keep working.
 
 set -euo pipefail
 
@@ -175,6 +176,17 @@ subject=$(forum_rpc alpha "IO.write(Idejo.Repo.get_by!(Idejo.Accounts.UserIdenti
 [ -n "$subject" ] || { echo "no identity link on alpha"; exit 1; }
 printf '{"alpha": "%s", "bravo": "%s"}' "$id_alpha" "$id_bravo" >"$work/out/ids.json"
 ok "moderator on alpha ($id_alpha), banned on bravo ($id_bravo)"
+
+step "6b. NF-05: with the Hub stopped, forums stay up and existing sessions keep working"
+compose stop hub >/dev/null 2>&1
+browse hubdown
+compose start hub >/dev/null 2>&1
+for _ in $(seq 1 60); do
+  [ "$(hub_rpc 'IO.write(:up)' || true)" = "up" ] && break
+  sleep 2
+done
+[ "$(hub_rpc 'IO.write(:up)' || true)" = "up" ] || { echo "the Hub did not come back"; exit 1; }
+ok "the Hub is back"
 
 step "7. In a browser: roles differ, the ban holds on bravo only; then the member deletes their Idejo ID"
 browse delete

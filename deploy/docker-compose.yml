@@ -139,9 +139,9 @@ services:
       - ./maintenance:/srv/maintenance:ro
       - caddy_data:/data       # certificates — keep this volume
       - caddy_config:/config
-    depends_on:
-      hub:
-        condition: service_healthy
+    # NF-05: no depends_on the Hub. Caddy, and with it every forum, starts and keeps running
+    # whatever state the Hub is in; until the Hub answers, only new certificates (on-demand
+    # TLS's `ask`) wait, and Caddy asks again at the next handshake.
     networks:
       default:
       forums:
