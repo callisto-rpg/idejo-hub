@@ -89,6 +89,9 @@ defmodule IdejoHub.MixProject do
       {:oban, "~> 2.24"},
       # HN-04: HTTP to docker-guard. Apache-2.0 (LI-06). The guard itself is a dependency only in tests, which
       # check that what the Hub sends is what the guard allows.
+      # OP-08: alert emails over the shared SMTP (Swoosh MIT, gen_smtp BSD-2-Clause).
+      {:swoosh, "~> 1.19"},
+      {:gen_smtp, "~> 1.3"},
       {:req, "~> 0.5"},
       # SC-08: operator passwords (Argon2id, as Idejo) and two-factor codes (TOTP).
       # Apache-2.0 both (LI-06).

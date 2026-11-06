@@ -15,7 +15,7 @@ defmodule IdejoHub.Operations.OffsiteWorker do
 
   alias IdejoHub.{Audit, Repo}
   alias IdejoHub.Forums.{Errors, Export}
-  alias IdejoHub.Operations.{HubBackup, Offsite}
+  alias IdejoHub.Operations.{Alerts, HubBackup, Offsite}
   alias IdejoHub.Operations.HubBackup.Backup
 
   @doc "Queues the copy of a forum backup or a Hub dump, if off-server storage is on."
@@ -56,6 +56,13 @@ defmodule IdejoHub.Operations.OffsiteWorker do
         "file" => backup.file_name,
         "error" => Errors.describe(reason)
       })
+
+      # OP-08: an off-server copy that failed its last attempt.
+      Alerts.backup_failed(
+        "the off-server copy of #{backup.file_name}",
+        target.forum,
+        Errors.describe(reason)
+      )
     end
 
     {:error, reason}

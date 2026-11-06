@@ -47,6 +47,11 @@ config :idejo_hub, IdejoHub.Hosting.Maintenance,
 # Only in tests, a low Argon2id cost so the suite stays fast.
 config :argon2_elixir, t_cost: 1, m_cost: 8
 
+# OP-08: alert emails are captured (Swoosh.TestAssertions).
+config :idejo_hub, IdejoHub.Mailer, adapter: Swoosh.Adapters.Test
+# ... and the disk check reads no real disk.
+config :idejo_hub, IdejoHub.Operations.Alerts, disk: :unavailable
+
 # Jobs run only when a test runs them (Oban.Testing).
 config :idejo_hub, Oban, testing: :manual
 

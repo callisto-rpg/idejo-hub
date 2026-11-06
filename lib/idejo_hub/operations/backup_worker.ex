@@ -17,7 +17,7 @@ defmodule IdejoHub.Operations.BackupWorker do
   alias IdejoHub.Forums
   alias IdejoHub.Forums.Archives
   alias IdejoHub.Hosting.{Docker, ForumContainer}
-  alias IdejoHub.Operations.OffsiteWorker
+  alias IdejoHub.Operations.{Alerts, OffsiteWorker}
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"forum_id" => id, "actor" => actor}}) do
@@ -36,7 +36,11 @@ defmodule IdejoHub.Operations.BackupWorker do
         "pruned" => pruned
       })
     else
-      error -> Forums.fail_action(forum, actor, "forum.backup", error)
+      error ->
+        {:error, message} = Forums.fail_action(forum, actor, "forum.backup", error)
+        # OP-08: the operator hears of it by email.
+        Alerts.backup_failed(Forums.host(forum), forum, message)
+        {:error, message}
     end
   end
 

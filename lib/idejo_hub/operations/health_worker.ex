@@ -18,6 +18,7 @@ defmodule IdejoHub.Operations.HealthWorker do
 
   alias IdejoHub.Forums
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health}
+  alias IdejoHub.Operations.Alerts
 
   @impl Oban.Worker
   def perform(_job) do
@@ -36,6 +37,9 @@ defmodule IdejoHub.Operations.HealthWorker do
       Forums.update_state(forum, %{health: nil, health_at: nil, down_since: nil})
     end
 
+    # OP-08: forums down for 5 minutes, and the disk, by email.
+    Alerts.check_forums(now)
+    Alerts.check_disk()
     :ok
   end
 

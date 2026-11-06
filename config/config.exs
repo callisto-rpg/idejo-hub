@@ -35,6 +35,10 @@ config :idejo_hub, Oban,
      ]}
   ]
 
+# OP-08: the Hub's own email (alerts), over the shared SMTP server (IdejoHub.Mailer).
+config :idejo_hub, IdejoHub.Mailer, adapter: Swoosh.Adapters.SMTP
+config :swoosh, :api_client, false
+
 # Docker access (HN-04, steward decision 2026-11-03): the Hub reaches Docker only through
 # docker-guard and the socket proxy, never the socket itself. Forums run the official image on
 # their own network. Production values come from config/runtime.exs.
