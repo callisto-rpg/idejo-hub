@@ -102,8 +102,16 @@ defmodule IdejoHub.Identity.Fake do
   def person(user_id) do
     call(:person, fn s ->
       case s.people[user_id] do
-        nil -> {{:error, :not_found}, s}
-        p -> {{:ok, %{email: p.email, display_name: p.display_name}}, s}
+        nil ->
+          {{:error, :not_found}, s}
+
+        p ->
+          {{:ok,
+            %{
+              email: p.email,
+              email_verified: Map.get(p, :email_verified, false),
+              display_name: p.display_name
+            }}, s}
       end
     end)
   end

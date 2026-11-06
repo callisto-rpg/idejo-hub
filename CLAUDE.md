@@ -148,9 +148,18 @@ Design points (Implementation Prompt, Part B, milestone 2):
   unavailable, or 404). `/internal/*` is refused from outside by Caddy and excluded from the
   Hub's `force_ssl` (Caddy calls it over plain http).
 - **Every lifecycle step cleans up fully on failure**, and every action writes an audit entry
-  from the start (SC-07 shows them in milestone 4): `IdejoHub.Audit.record/5` (actor, action
-  such as `forum.create`, outcome `requested`/`ok`/`failed`, forum, details without secrets
-  or command output); `audit_entries` is append-only (trigger).
+  from the start: `IdejoHub.Audit.record/5` (actor, action such as `forum.create`, outcome
+  `requested`/`ok`/`failed`, forum, details without secrets or command output);
+  `audit_entries` is append-only (trigger). SC-07 shows them: the operator at `/audit`
+  (`AuditLive`, `Audit.list/1`: newest first, 50 a page by id, filters `forum`, `action`
+  prefix, `outcome`, `actor`, in the address; linked in the header and from each forum's
+  page), and a forum's owner on their Idejo ID page (`/account/forums/<slug>/log`,
+  `AccountController.log/2`, `Audit.recent_for_forum/2`: newest 200). The Hub knows an owner
+  only by `forums.owner_email`: the log shows to a member whose Idejo ID email, **verified**
+  by the provider (`Identity.person/1`'s `email_verified`, Zitadel's `isVerified`), is that
+  address, any case (`Forums.owned_by/1`); anyone else gets 404. For owners actions read in
+  words (`AccountHTML.what/1`), a member is "A member" (never `member:<subject>`; identity
+  entries' `subject` detail dropped), and storage keys are left out.
 - **Forums** (FL-01): `Forums.create_forum/2` stores the forum as `creating` with its
   encrypted `SECRET_KEY_BASE` and queues `Forums.CreateWorker` (queue `lifecycle`, one
   attempt), whose steps (`database`, `container`, `starting`, `health`, `setup`) show in

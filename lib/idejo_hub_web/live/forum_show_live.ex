@@ -411,6 +411,9 @@ defmodule IdejoHubWeb.ForumShowLive do
 
       <section id="audit" aria-labelledby="audit-title">
         <h2 id="audit-title" class="text-xl font-semibold">Audit log</h2>
+        <.link navigate={~p"/audit?forum=#{@forum.subdomain}"} id="audit-filtered" class="text-sm">
+          Search it in the Hub's audit log
+        </.link>
         <table class="table table-sm">
           <thead>
             <tr>

@@ -17,6 +17,25 @@ SPDX-License-Identifier: AGPL-3.0-only
     <p>Your accounts on the forums below were deleted as each forum's rules say.</p>
   </section>
 
+  <%!-- SC-07: what the Hub did to the forums this person owns. --%>
+  <section
+    :if={@owned != []}
+    id="account-owned"
+    class="mt-6"
+    aria-labelledby="account-owned-heading"
+  >
+    <h2 id="account-owned-heading" class="text-xl font-semibold">Forums you own</h2>
+    <p class="text-sm">
+      What the Hub and its operator did to them, and when: backups, upgrades, restores and more.
+    </p>
+    <ul class="list-disc pl-6">
+      <li :for={forum <- @owned} id={"account-owned-#{forum.subdomain}"}>
+        <a href={forum_url(forum)} class="font-medium">{forum.display_name}</a>
+        · <a href={~p"/account/forums/#{forum.subdomain}/log"}>Audit log</a>
+      </li>
+    </ul>
+  </section>
+
   <section id="account-forums" class="mt-6" aria-labelledby="account-forums-heading">
     <h2 id="account-forums-heading" class="text-xl font-semibold">Forums you have joined</h2>
     <p :if={@joins == []}>None yet. Sign in to a forum with "Idejo ID" to join it.</p>

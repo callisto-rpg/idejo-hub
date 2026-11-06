@@ -130,6 +130,17 @@ whether it is healthy (its database is reachable and up to date) and how much me
 
 The page updates by itself.
 
+## The audit log (SC-07)
+
+**Audit log**, in the header, lists everything done to the Hub and its forums: who did it
+(an operator, a scheduled job, a member through Idejo ID), what, to which forum, when and how
+it ended. Filter by forum, action (for example `forum.backup`), outcome or who; each forum's
+page links to its own entries. Entries hold no secrets and are never changed or deleted.
+
+A forum's owner sees what was done to their forum on their Idejo ID page (`/account`, under
+**Forums you own**), once they sign in there with an Idejo ID whose email, verified, is the
+owner email the forum was created with. Members who acted are shown only as "a member".
+
 ## Alerts by email (OP-08)
 
 Set an **Alert email** in **Settings** (and an SMTP server there, or `HUB_SMTP_HOST` in

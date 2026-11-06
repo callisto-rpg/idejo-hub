@@ -506,6 +506,22 @@ defmodule IdejoHub.Forums do
     {:error, message}
   end
 
+  @doc """
+  SC-07: the forums (not deleted) whose owner's email is `email`, any case. The Hub knows a
+  forum's owner only by the address it was created for (`owner_email`); callers pass a
+  verified address only.
+  """
+  @spec owned_by(String.t()) :: [Forum.t()]
+  def owned_by(email) when is_binary(email) do
+    email = String.downcase(String.trim(email))
+
+    Repo.all(
+      from f in Forum,
+        where: fragment("lower(?)", f.owner_email) == ^email and f.status != "deleted",
+        order_by: f.subdomain
+    )
+  end
+
   @doc "A forum by id."
   @spec get_forum!(integer()) :: Forum.t()
   def get_forum!(id), do: Repo.get!(Forum, id)

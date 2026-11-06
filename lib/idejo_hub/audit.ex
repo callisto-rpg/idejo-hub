@@ -33,6 +33,52 @@ defmodule IdejoHub.Audit do
     })
   end
 
+  @page 50
+
+  @doc """
+  SC-07: the operator's audit log, newest first, `@page` entries a page. Filters (strings,
+  blank is none): `"forum"` (subdomain), `"action"` (starts with), `"outcome"`, `"actor"`
+  (contains, any case); `"before"` an entry id, for the page after. Returns the entries and
+  whether older ones remain.
+  """
+  @spec list(map()) :: {[Entry.t()], boolean()}
+  def list(filters \\ %{}) do
+    import Ecto.Query
+
+    query =
+      Enum.reduce(filters, from(e in Entry), fn
+        {_key, value}, q when value in [nil, ""] -> q
+        {"forum", subdomain}, q -> where(q, [e], e.subdomain == ^subdomain)
+        {"action", action}, q -> where(q, [e], like(e.action, ^(escape_like(action) <> "%")))
+        {"outcome", outcome}, q -> where(q, [e], e.outcome == ^outcome)
+        {"actor", actor}, q -> where(q, [e], ilike(e.actor, ^("%" <> escape_like(actor) <> "%")))
+        {"before", id}, q -> before(q, Integer.parse(id))
+        _other, q -> q
+      end)
+
+    entries = Repo.all(from e in query, order_by: [desc: e.id], limit: @page + 1)
+    {Enum.take(entries, @page), length(entries) > @page}
+  end
+
+  defp before(query, {id, ""}) do
+    import Ecto.Query
+    where(query, [e], e.id < ^id)
+  end
+
+  defp before(query, _not_an_id), do: query
+
+  defp escape_like(text), do: String.replace(text, ~r/[\\%_]/, "\\\\\\0")
+
+  @doc "SC-07: a forum's newest `limit` entries, newest first (its owner's view)."
+  @spec recent_for_forum(integer(), pos_integer()) :: [Entry.t()]
+  def recent_for_forum(forum_id, limit \\ 200) do
+    import Ecto.Query
+
+    Repo.all(
+      from e in Entry, where: e.forum_id == ^forum_id, order_by: [desc: e.id], limit: ^limit
+    )
+  end
+
   @doc "A forum's entries, oldest first."
   @spec for_forum(integer()) :: [Entry.t()]
   def for_forum(forum_id) do

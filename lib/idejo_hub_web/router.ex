@@ -44,6 +44,8 @@ defmodule IdejoHubWeb.Router do
     get "/callback", AccountController, :callback
     post "/sign-out", AccountController, :sign_out
     post "/forums/:forum_id", AccountController, :leave
+    # SC-07: the audit log of a forum the member owns.
+    get "/forums/:subdomain/log", AccountController, :log
     post "/delete", AccountController, :delete
   end
 
@@ -74,6 +76,8 @@ defmodule IdejoHubWeb.Router do
       live "/server", ServerLive, :show
       # HA-05
       live "/settings", SettingsLive, :edit
+      # SC-07
+      live "/audit", AuditLive, :index
     end
 
     # HA-03: archive download (audited).
