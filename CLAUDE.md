@@ -53,12 +53,23 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.2**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.2.4**, the default for new forums
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
-client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03). Forums on
-0.2.0 and 0.2.1 run as before but accept any custom CSS (their content security policy still
-refuses outside loads); forums on 0.1.0 still run, back up and upgrade, but have no `stats`
-and no shared sign-in. Upgrade them to 0.2.2.
+client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
+the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below).
+Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
+custom CSS (their content security policy still refuses outside loads); forums on 0.1.0
+still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
+0.2.4.
+
+**Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
+`RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own
+interface untouched (the one rule). `deploy/test/nf_02_idle_memory.sh` runs one forum as the
+Hub does (default version, `POOL_SIZE` 5, the default memory and CPU limits, read from the
+config), sets it up, loads 12 pages (2xx, through `X-Forwarded-Proto: https` as Caddy sends
+it), idles 5 minutes and fails if a reading reaches 200 MB; nightly
+(`.github/workflows/nf-02-idle-memory.yml`). Measured on 2026-11-06, warmed and idle: 80 MiB
+(84 MB) with interactive mode; 0.2.3, in embedded mode, 208 MiB (218 MB): over.
 
 **SC-03** (custom CSS sanitised, third-party scripts forbidden) is Idejo's: a forum's
 stylesheet is its own setting, which the Hub never reads or writes. Idejo 0.2.2 checks it
@@ -590,6 +601,7 @@ guard/test/hn_04_chain.sh    # real chain against local Docker: harmless calls p
 deploy/test/hn_08_install_settings.sh  # install.sh's settings step with a stand-in docker (CI)
 deploy/test/hn_06_databases.sh         # the bundle's PostgreSQL: each role opens only its own database (CI; ~10 s)
 deploy/test/nf_01_connections.sh       # the bundle's PostgreSQL holds 40 forums' connections and the Hub's (CI; ~20 s)
+deploy/test/nf_02_idle_memory.sh       # an idle forum, as the Hub runs it, under 200 MB (nightly; ~12 min)
 ```
 
 Production bundle (HN-08), on Debian 13 (trixie), step by step in `docs/deploying.md`:
@@ -640,7 +652,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
   2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
   the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
-  since.
+  since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
   reuse lint), `docker-compose.yml` with Hub app, PostgreSQL and Caddy (HN-08).

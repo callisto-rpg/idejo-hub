@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Hub NF-02: an idle forum, as the Hub runs it, under 200 MB (deploy/test/nf_02_idle_memory.sh):
+# nightly and on demand.
+
+name: Hub NF-02 idle memory
+
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+    inputs:
+      idejo_image:
+        description: Idejo image (default the version new forums start on)
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  idle-memory:
+    name: Idle forum under 200 MB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: deploy/test/nf_02_idle_memory.sh
+        env:
+          IDEJO_IMAGE: ${{ inputs.idejo_image }}
