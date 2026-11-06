@@ -480,6 +480,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   the audit log updates that page. When they would look is the operator's own text
   (`access_policy` in Settings, plain text, at most 4000 characters, blank lines part
   paragraphs); empty, the page says the operator has not said yet.
+- **Member pages' standards** (Hub NF-07): every page under `/account` passes Idejo's own
+  AX-01 audit (`IdejoHubWeb.Accessibility`, ported from Idejo's `test/support`;
+  `test/idejo_hub_web/controllers/nf_07_member_pages_test.exs` lists the pages: a new member
+  page joins it). `Layouts.app` starts with a skip link to `#main`; members' pages (any
+  `title` but "Idejo Hub") end with `#member-footer` linking `/account/privacy`
+  (`AccountController.privacy/2`): the operator's `privacy_notice` (Settings, plain text, at
+  most 50 000 characters), or "This Hub has not published a privacy notice yet", as Idejo's
+  AD-02; sign-up links it too (`#signup-privacy`). Zitadel's own sign-in screens are not
+  audited here; the forum's consent screen is Idejo's (AC-09).
 - **Identity administration** (HA-06, `Identity.Admin`, `IdentitiesLive` at `/identities`,
   `IdentityShowLive` at `/identities/:id`; extra review: DV-06): search Idejo IDs at the
   provider (`Identity.search_people/1`: Zitadel `POST /v2/users`, humans only, email,

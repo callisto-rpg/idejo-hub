@@ -5,6 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 <Layouts.app flash={@flash} title="Idejo ID">
   <h1 class="text-2xl font-semibold">Create your Idejo ID</h1>
   <p>One sign-in for every forum on this server. Each forum keeps its own profile and roles.</p>
+  <p id="signup-privacy" class="text-sm">
+    What your Idejo ID keeps, and why: <a href={~p"/account/privacy"}>Privacy</a>.
+  </p>
 
   <p :if={!@open?} id="signup-closed">
     Sign-up is not open yet: this server cannot send email. Please try again later.
