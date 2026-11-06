@@ -134,6 +134,7 @@ $H logs -f hub                                     # the Hub's log
 | `IDEJO_HUB_BACKUP_CRON`, `IDEJO_HUB_BACKUPS_KEPT` | Backups of forums, the Hub's database and Zitadel's: when (default daily 02:00 UTC) and how many of each (14) |
 | `IDEJO_HUB_S3_*`, `IDEJO_HUB_BACKUP_AGE_RECIPIENT` | Off-server copies of every backup (OP-02), below |
 | `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` | How long an upgraded forum has to become healthy before it is rolled back (300) |
+| `IDEJO_HUB_RELEASES_URL`, `IDEJO_HUB_CHANGELOG_URL` | New Idejo releases (OP-09): read once a day from GitHub's list of Idejo's tags; the forum list and Server page then show a newer version than `IDEJO_DEFAULT_VERSION`, linked to what changed. Set the first, empty, to turn it off |
 
 `deploy/.env.example` explains each one.
 

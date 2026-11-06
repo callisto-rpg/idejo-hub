@@ -125,9 +125,24 @@ if config_env() == :prod do
          {env_or.("IDEJO_HUB_BACKUP_CRON", "0 2 * * *"), IdejoHub.Operations.BackupScheduler},
          {"*/15 * * * *", IdejoHub.Operations.StatsWorker},
          {"* * * * *", IdejoHub.Operations.HealthWorker},
-         {"*/5 * * * *", IdejoHub.Identity.SyncWorker}
+         {"*/5 * * * *", IdejoHub.Identity.SyncWorker},
+         {"17 6 * * *", IdejoHub.Operations.ReleaseCheckWorker}
        ]}
     ]
+
+  # OP-09: empty IDEJO_HUB_RELEASES_URL turns the release check off.
+  config :idejo_hub, IdejoHub.Operations.Releases,
+    url:
+      System.get_env(
+        "IDEJO_HUB_RELEASES_URL",
+        "https://api.github.com/repos/callisto-rpg/Idejo/tags"
+      )
+      |> String.trim(),
+    changelog:
+      env_or.(
+        "IDEJO_HUB_CHANGELOG_URL",
+        "https://github.com/callisto-rpg/Idejo/compare/v{from}...v{to}"
+      )
 
   config :idejo_hub, IdejoHub.Operations,
     backups_kept: String.to_integer(env_or.("IDEJO_HUB_BACKUPS_KEPT", "14")),

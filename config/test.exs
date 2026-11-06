@@ -36,6 +36,9 @@ config :idejo_hub, :docker_req_options, plug: {Req.Test, IdejoHub.Hosting.Docker
 
 # Forum health checks go to a Req.Test stub, and the wait does not sleep long.
 config :idejo_hub, :health_req_options, plug: {Req.Test, IdejoHub.Hosting.Health}
+
+# OP-09: the release check reads a stub, never the network.
+config :idejo_hub, :releases_req_options, plug: {Req.Test, IdejoHub.Operations.Releases}
 config :idejo_hub, :health_wait, timeout: 200, interval: 10
 
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/test-exports", __DIR__)
