@@ -62,7 +62,11 @@ defmodule IdejoHub.Forums.CreateWorker do
         {:ok, forum} = Forums.update_state(forum, %{status: "running", step: nil, error: nil})
 
         {:ok, _} =
-          Audit.record(actor, "forum.create", "ok", forum, %{"owner_invite" => forum.owner_invite})
+          Audit.record(actor, "forum.create", "ok", forum, %{
+            "owner_invite" => forum.owner_invite,
+            # Hub NF-04: from the request to a running forum.
+            "seconds" => DateTime.diff(DateTime.utc_now(), forum.inserted_at)
+          })
 
         then_restore(forum, actor, restore)
 
