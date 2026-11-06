@@ -301,8 +301,29 @@
   text-decoration: none;
 }
 .directory-join, .directory-open { min-width: 6rem; }
-/* "Open": a forum the visitor joined. */
-.directory-open { --btn-color: #2e9e5b; --btn-fg: #ffffff; }
+/* "Open": a forum the visitor joined; in All Forums, green. */
+.directory-open.btn-success { --btn-color: #2e9e5b; --btn-fg: #ffffff; }
+/* My Forums (steward request 2026-11-07): half height, the logo left of the name, no address. */
+.directory-card.is-compact {
+  flex-direction: row;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.directory-card.is-compact .directory-link {
+  flex-direction: row;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.directory-card.is-compact .directory-logo { width: 2.25rem; height: 2.25rem; flex: none; }
+.directory-card.is-compact .directory-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.directory-card.is-compact .directory-open { flex: none; min-width: 4.5rem; }
+/* Signing in shows the visitor's own forums first: in Idejo's gold, full size. */
+.directory-sign-in { gap: 0.5rem; }
 /* "All forums": a title on a line across the page, under the visitor's own forums. */
 .directory-divider {
   display: flex;

@@ -280,15 +280,21 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
       assert Enum.count(mine) == 1
       assert LazyHTML.text(mine) =~ "Chess"
 
-      assert LazyHTML.attribute(LazyHTML.query(mine, "a.directory-open.btn-success"), "href") ==
+      # My Forums (steward request 2026-11-07): compact, no address, Open in Idejo's gold.
+      assert LazyHTML.attribute(LazyHTML.query(mine, "a.directory-open.btn-primary"), "href") ==
                ["https://dj-chess.idejo.test/"]
 
-      assert LazyHTML.text(LazyHTML.query(doc, "#directory-all")) == "All forums"
+      assert Enum.count(LazyHTML.query(doc, "#directory-mine .directory-card.is-compact")) == 1
+      assert Enum.count(LazyHTML.query(mine, ".directory-host")) == 0
+      assert LazyHTML.text(LazyHTML.query(doc, "#directory-mine-heading")) == "My Forums"
+      assert LazyHTML.text(LazyHTML.query(doc, "#directory-all")) == "All Forums"
 
       # All forums, the joined ones too.
       all = LazyHTML.query(doc, "#directory .directory-card")
       assert Enum.count(all) == 2
-      assert Enum.count(LazyHTML.query(all, "a.directory-open")) == 1
+      # All Forums keeps its cards: the address, and Open in green.
+      assert Enum.count(LazyHTML.query(all, "a.directory-open.btn-success")) == 1
+      assert Enum.count(LazyHTML.query(all, ".directory-host")) == 2
       assert LazyHTML.text(LazyHTML.query(all, "a.directory-join.btn-primary")) =~ "Join"
       refute html =~ "directory-sign-in"
     end
@@ -297,7 +303,7 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
       forum!("dj-solo", %{display_name: "Solo"})
       html = signed_in_directory("bea") |> get(~p"/") |> html_response(200)
       refute html =~ "directory-mine"
-      refute html =~ "All forums"
+      refute html =~ "All Forums"
 
       # A hand-off made for someone else's session does not sign this one in.
       token =

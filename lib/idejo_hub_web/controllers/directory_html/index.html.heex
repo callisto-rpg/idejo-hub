@@ -7,8 +7,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 <Layouts.app flash={@flash} title="Forums" wide>
   <div class="flex flex-wrap items-center justify-between gap-2">
     <h1 class="text-2xl font-semibold">Forums</h1>
-    <a :if={!@signed_in?} id="directory-sign-in" href={~p"/sign-in"} class="btn btn-sm">
-      Sign in to see your forums
+    <a
+      :if={!@signed_in?}
+      id="directory-sign-in"
+      href={~p"/sign-in"}
+      class="btn btn-primary directory-sign-in"
+    >
+      <.icon name="hero-arrow-right-end-on-rectangle" class="size-5" /> Sign in to see your forums
     </a>
     <form :if={@signed_in?} action={~p"/sign-out"} method="post">
       <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
@@ -46,12 +51,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 
   <%!-- The visitor's own forums first (steward request 2026-11-06), then all of them. --%>
   <section :if={@mine != []} id="directory-mine" aria-labelledby="directory-mine-heading">
-    <h2 id="directory-mine-heading" class="sr-only">Your forums</h2>
-    <ul class="directory-grid">
-      <li :for={forum <- @mine}><.forum_card forum={forum} id_prefix="mine" /></li>
+    <h2 id="directory-mine-heading" class="directory-divider">My Forums</h2>
+    <ul class="directory-grid is-compact">
+      <li :for={forum <- @mine}><.forum_card forum={forum} id_prefix="mine" compact /></li>
     </ul>
   </section>
-  <h2 :if={@mine != []} id="directory-all" class="directory-divider">All forums</h2>
+  <h2 :if={@mine != []} id="directory-all" class="directory-divider">All Forums</h2>
 
   <ul :if={@forums != []} id="directory" class="directory-grid">
     <li :for={forum <- @forums}><.forum_card forum={forum} id_prefix="all" /></li>
