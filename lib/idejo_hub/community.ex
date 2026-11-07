@@ -47,7 +47,7 @@ defmodule IdejoHub.Community do
   @doc """
   One page of the directory (steward requests 2026-11-06): the hosted forums listed and the
   outside forums an operator approved (`OutsideForums`), by name, those whose name or host
-  holds `search` (any case), #{@per_page} a page. `%{forums: [%{name:, host:}], page:,
+  holds `search` (any case), #{@per_page} a page. `%{forums: [%{name:, host:, members:}], page:,
   pages:, total:, listed:}`, where `listed` counts every listed forum (search and pages show
   past #{@per_page}).
   """
@@ -133,11 +133,18 @@ defmodule IdejoHub.Community do
   defp entries do
     suffix = "." <> Application.fetch_env!(:idejo_hub, Forums)[:domain]
 
+    # Members (steward request 2026-11-07): the hosted forum's count from its last `stats`;
+    # unknown for outside forums.
     outside =
-      from o in OutsideForums.listed_query(), select: %{name: o.display_name, host: o.host}
+      from o in OutsideForums.listed_query(),
+        select: %{name: o.display_name, host: o.host, members: type(^nil, :integer)}
 
     from f in listed(),
-      select: %{name: f.display_name, host: fragment("? || ?", f.subdomain, ^suffix)},
+      select: %{
+        name: f.display_name,
+        host: fragment("? || ?", f.subdomain, ^suffix),
+        members: f.members
+      },
       union_all: ^outside
   end
 

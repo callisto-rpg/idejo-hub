@@ -94,7 +94,9 @@ the first page shows them first under "My Forums", above an "All Forums" line (s
 requests 2026-11-06, 2026-11-07): My Forums cards are compact (`forum_card` `compact`: half
 height, logo left of the name, no address, Open in gold), each as wide as two All Forums
 cards on the same columns (`grid-column: span 2` under a container query on
-`#directory-mine`; one column where only one fits); All Forums keeps its cards.
+`#directory-mine`; one column where only one fits); All Forums keeps its cards, which
+also say "N Members" ("1 Member"; `forums.members` from the last `stats`, through
+`Community`'s directory entries; nothing for outside forums or before the first stats).
 "Sign in to see your forums" is a full-size gold button.
 The directory learns who is looking from the sign-in host: "Sign in to see your forums"
 (`/sign-in`, a random `state` in its session) → `/account/directory?state=` (signed in there,

@@ -54,9 +54,10 @@ defmodule IdejoHubWeb.DirectoryController do
   end
 
   # The forum's logo at Idejo's fixed address (0.2.9); Join is its sign-in with Idejo ID.
-  defp card(%{name: name, host: host}, joined) do
+  defp card(%{name: name, host: host} = entry, joined) do
     %{
       name: name,
+      members: entry[:members],
       url: "https://#{host}/",
       host: host,
       logo: "https://#{host}/logo",
