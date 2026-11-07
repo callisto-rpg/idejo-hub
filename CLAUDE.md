@@ -92,7 +92,9 @@ outside forums together). Each card has **Join** (`btn-primary`, Idejo's gold: t
 still `joined`, outside forums signed in to), **Open** (green); signed in with joined forums,
 the first page shows them first under "My Forums", above an "All Forums" line (steward
 requests 2026-11-06, 2026-11-07): My Forums cards are compact (`forum_card` `compact`: half
-height, logo left of the name, no address, Open in gold); All Forums keeps its cards.
+height, logo left of the name, no address, Open in gold), each as wide as two All Forums
+cards on the same columns (`grid-column: span 2` under a container query on
+`#directory-mine`; one column where only one fits); All Forums keeps its cards.
 "Sign in to see your forums" is a full-size gold button.
 The directory learns who is looking from the sign-in host: "Sign in to see your forums"
 (`/sign-in`, a random `state` in its session) → `/account/directory?state=` (signed in there,

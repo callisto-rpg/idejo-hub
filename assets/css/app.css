@@ -322,6 +322,12 @@
   white-space: nowrap;
 }
 .directory-card.is-compact .directory-open { flex: none; min-width: 4.5rem; }
+/* "My Forums" (steward request 2026-11-07): each card as wide as two of "All Forums",
+   on the same columns; where only one column fits, one. */
+#directory-mine { container-type: inline-size; }
+@container (min-width: 27rem) {
+  .directory-grid.is-compact > li { grid-column: span 2; }
+}
 /* Signing in shows the visitor's own forums first: in Idejo's gold, full size. */
 .directory-sign-in { gap: 0.5rem; }
 /* "All forums": a title on a line across the page, under the visitor's own forums. */
