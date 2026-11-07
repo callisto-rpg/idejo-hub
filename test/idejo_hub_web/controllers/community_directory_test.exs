@@ -65,6 +65,39 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     |> get(~p"/internal/community?#{%{subject: subject}}")
   end
 
+  test "All Forums cards say how many members a hosted forum has" do
+    forum!("dir-many", %{display_name: "Many", members: 42})
+    forum!("dir-one", %{display_name: "One", members: 1})
+    forum!("dir-new", %{display_name: "New"})
+
+    Repo.insert!(%IdejoHub.Identity.OutsideForum{
+      host: "elsewhere.example.org",
+      display_name: "Elsewhere",
+      status: "registered",
+      listing: "approved",
+      client_id: "client-elsewhere",
+      secret_hash: :crypto.hash(:sha256, "s")
+    })
+
+    doc =
+      %{build_conn() | host: @directory}
+      |> get(~p"/")
+      |> html_response(200)
+      |> LazyHTML.from_document()
+
+    members = fn host ->
+      doc
+      |> LazyHTML.query("[id='all-#{host}'] .directory-members")
+      |> Enum.map(&(&1 |> LazyHTML.text() |> String.trim()))
+    end
+
+    assert members.("dir-many.idejo.test") == ["42 Members"]
+    assert members.("dir-one.idejo.test") == ["1 Member"]
+    # No stats yet, and outside forums: nothing is said.
+    assert members.("dir-new.idejo.test") == []
+    assert members.("elsewhere.example.org") == []
+  end
+
   test "the directory lists running forums not hidden, by name, on its own host only" do
     forum!("dir-b", %{display_name: "Bridge"})
     forum!("dir-a", %{display_name: "Archery"})

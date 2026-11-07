@@ -25,6 +25,10 @@ defmodule IdejoHubWeb.DirectoryHTML do
         <img src={@forum.logo} alt="" class="directory-logo" width="56" height="56" loading="lazy" />
         <span class="directory-name">{@forum.name}</span>
         <span :if={!@compact} class="directory-host">{@forum.host}</span>
+        <%!-- Steward request 2026-11-07: hosted forums' members, from their last stats. --%>
+        <span :if={!@compact && @forum.members} class="directory-members">
+          {members_label(@forum.members)}
+        </span>
       </a>
       <a
         :if={!@forum.joined?}
@@ -45,6 +49,10 @@ defmodule IdejoHubWeb.DirectoryHTML do
     </div>
     """
   end
+
+  @doc ~S("N Members", or "1 Member".)
+  def members_label(1), do: "1 Member"
+  def members_label(count), do: "#{count} Members"
 
   @doc "The address parameters of another page of the same search."
   def page_params(%{search: ""}, page), do: [page: page]

@@ -348,3 +348,4 @@
 .directory-logo { width: 3.5rem; height: 3.5rem; object-fit: contain; border-radius: 0.75rem; }
 .directory-name { font-family: var(--font-title, inherit); font-size: 1.125rem; font-weight: 600; }
 .directory-host { font-size: 0.8125rem; opacity: 0.7; overflow-wrap: anywhere; }
+.directory-members { font-size: 0.8125rem; font-weight: 500; opacity: 0.85; }
