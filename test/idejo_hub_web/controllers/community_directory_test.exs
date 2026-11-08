@@ -215,9 +215,33 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
 
     assert csp =~ "img-src 'self' data: blob: https://*.idejo.test"
     refute html =~ "The forums on this server"
-    # Ten or fewer forums: no search, no pages.
-    refute html =~ "directory-search"
+    # The search always shows (steward request 2026-11-09); ten or fewer forums: no pages.
+    assert html =~ "directory-search"
     refute html =~ "directory-pages"
+  end
+
+  test "the directory's search answers as JSON, five forums at most, on its own host only" do
+    for n <- 1..7, do: forum!("api-#{n}", %{display_name: "Garden #{n}"})
+    forum!("api-chess", %{display_name: "Chess club"})
+    forum!("api-hidden", %{display_name: "Garden hidden", listed: false})
+    conn = %{build_conn() | host: @directory}
+
+    assert %{"forums" => forums} = conn |> get(~p"/api/forums?q=garden") |> json_response(200)
+    assert length(forums) == 5
+    assert Enum.map(forums, & &1["name"]) == Enum.map(1..5, &"Garden #{&1}")
+
+    assert hd(forums) == %{
+             "name" => "Garden 1",
+             "url" => "https://api-1.idejo.test/",
+             "logo" => "https://api-1.idejo.test/logo",
+             "join" => "https://api-1.idejo.test/users/oidc"
+           }
+
+    assert %{"forums" => [%{"name" => "Chess club"}]} =
+             conn |> get(~p"/api/forums?q=CHESS") |> json_response(200)
+
+    assert %{"forums" => []} = conn |> get(~p"/api/forums?q=nothing") |> json_response(200)
+    assert build_conn() |> get(~p"/api/forums") |> response(404)
   end
 
   test "past ten forums, a search and pages" do
@@ -321,6 +345,10 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
       assert Enum.empty?(LazyHTML.query(mine, ".directory-host"))
       assert LazyHTML.text(LazyHTML.query(doc, "#directory-mine-heading")) == "My Forums"
       assert LazyHTML.text(LazyHTML.query(doc, "#directory-all")) == "All Forums"
+      # The search at the top of All Forums, under My Forums (steward request 2026-11-09).
+      [before_all, after_all] = String.split(html, ~s(id="directory-all"), parts: 2)
+      assert after_all =~ ~s(id="directory-search")
+      refute before_all =~ ~s(id="directory-search")
 
       # All forums, the joined ones too.
       all = LazyHTML.query(doc, "#directory .directory-card")

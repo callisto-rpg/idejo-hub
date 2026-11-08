@@ -41,6 +41,12 @@ defmodule IdejoHubWeb.Router do
     post "/sign-out", DirectoryController, :sign_out
   end
 
+  # The directory's search for Idejo's !forum plugin (steward request 2026-11-09): JSON, public.
+  scope "/api", IdejoHubWeb, host: "forums." do
+    pipe_through [:directory_host, :api]
+    get "/forums", DirectoryController, :search
+  end
+
   # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).
   pipeline :identity_host do
     plug IdejoHubWeb.Plugs.IdentityHost

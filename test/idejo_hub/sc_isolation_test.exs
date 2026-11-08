@@ -84,8 +84,8 @@ defmodule IdejoHub.SCIsolationTest do
       "/internal/community/profile"
     ]
 
-    # Members' pages (ID-02) are for everyone, but only on the identity host: on the Hub's
-    # own host they do not exist.
+    # Members' pages (ID-02) are for everyone, but only on the identity host (the directory's
+    # search on the directory's): on the Hub's own host they do not exist.
     # SC-07's owner log is for its signed-in owner (tested in sc_07_owner_log_test.exs).
     members = [
       "/account/sign-up",
@@ -105,7 +105,10 @@ defmodule IdejoHub.SCIsolationTest do
       "/account/api/profile",
       # The forums directory's hand-off: who is signed in here (community_directory_test.exs).
       "/account/directory",
-      "/account/pictures/:key"
+      "/account/pictures/:key",
+      # The forums directory's search as JSON, public like the page, only on the directory's
+      # host (tested in community_directory_test.exs).
+      "/api/forums"
     ]
 
     for path <- members do
