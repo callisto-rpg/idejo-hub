@@ -5,7 +5,8 @@ defmodule IdejoHubWeb.DirectoryController do
   @moduledoc """
   The forums directory at `https://forums.<forum domain>/` (steward decisions 2026-11-06):
   running hosted forums the operator has not hidden and approved outside forums, as cards
-  with each forum's logo; past ten, a search and pages.
+  with each forum's logo; a search at the top of All Forums (steward request 2026-11-09);
+  past ten, pages. `search/2` answers the same search as JSON.
 
   Each card has **Join** (the forum's sign-in with Idejo ID, `/users/oidc`) or, for a forum
   the visitor joined, **Open** (steward request 2026-11-06). The directory learns who is
@@ -51,6 +52,27 @@ defmodule IdejoHubWeb.DirectoryController do
       browse?: result.listed > Community.per_page(),
       page_title: "Forums"
     )
+  end
+
+  @search_limit 5
+
+  @doc """
+  `GET /api/forums?q=` (steward request 2026-11-09): the first #{@search_limit} listed
+  forums matching `q` (as the page's search; all of them without one), by name, as JSON
+  `{"forums": [{"name", "url", "logo", "join"}]}`, for Idejo's `!forum` plugin. Public, like
+  the page; nobody's own forums, no counts.
+  """
+  def search(conn, params) do
+    q = if is_binary(params["q"]), do: params["q"], else: ""
+
+    forums =
+      Community.directory_page(q, 1).forums
+      |> Enum.take(@search_limit)
+      |> Enum.map(&(&1 |> card(MapSet.new()) |> Map.take([:name, :url, :logo, :join])))
+
+    conn
+    |> put_resp_header("cache-control", "public, max-age=60")
+    |> json(%{forums: forums})
   end
 
   # The forum's logo at Idejo's fixed address (0.2.9); Join is its sign-in with Idejo ID.

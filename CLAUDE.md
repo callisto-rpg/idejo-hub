@@ -85,9 +85,13 @@ route it is left out of production's `force_ssl` (`config/prod.exs`; a redirect 
 every menu silently empty; `internal_http_test.exs` checks the list). With the Hub down the menu lists nothing and
 the forum runs (Hub NF-05). The directory shows one card per forum with its logo (Idejo
 0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
-`https://*.<forum domain>`), and past ten listed forums a search (name or host, any
-case, `%` and `_` literal) and pages of ten (`Community.directory_page/2`, hosted and
-outside forums together). Each card has **Join** (`btn-primary`, Idejo's gold: the forum's
+`https://*.<forum domain>`), a search (name or host, any case, `%` and `_` literal) at the
+top of All Forums whatever their number (steward request 2026-11-09; before, only past ten),
+and past ten listed forums pages of ten (`Community.directory_page/2`, hosted and outside
+forums together). The same search answers as JSON at `GET /api/forums?q=` on the directory's
+host (`DirectoryController.search/2`, the `:api` pipeline; steward request 2026-11-09, for
+Idejo's `!forum` plugin): `{"forums": [{"name", "url", "logo", "join"}]}`, the first five by
+name, public like the page, no counts and nobody's own forums, cached a minute. Each card has **Join** (`btn-primary`, Idejo's gold: the forum's
 `/users/oidc`) or, for a forum the visitor joined (`Community.joined_hosts/1`: hosted joins
 still `joined`, outside forums signed in to), **Open** (green); signed in with joined forums,
 the first page shows them first under "My Forums", above an "All Forums" line (steward

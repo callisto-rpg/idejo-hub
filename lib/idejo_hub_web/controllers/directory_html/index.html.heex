@@ -2,8 +2,8 @@
 SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 --%>
-<%!-- The forums directory (steward decisions 2026-11-06): cards with each forum's logo; past
-     ten forums, a search and pages. Plain HTML, no JavaScript needed. --%>
+<%!-- The forums directory (steward decisions 2026-11-06): cards with each forum's logo, a
+     search at the top of All Forums (steward request 2026-11-09) and, past ten, pages. Plain HTML, no JavaScript needed. --%>
 <Layouts.app flash={@flash} title="Forums" wide>
   <div class="flex flex-wrap items-center justify-between gap-2">
     <h1 class="text-2xl font-semibold">Forums</h1>
@@ -21,8 +21,17 @@ SPDX-License-Identifier: AGPL-3.0-only
     </form>
   </div>
 
+  <%!-- The visitor's own forums first (steward request 2026-11-06), then all of them. --%>
+  <section :if={@mine != []} id="directory-mine" aria-labelledby="directory-mine-heading">
+    <h2 id="directory-mine-heading" class="directory-divider">My Forums</h2>
+    <ul class="directory-grid is-compact">
+      <li :for={forum <- @mine}><.forum_card forum={forum} id_prefix="mine" compact /></li>
+    </ul>
+  </section>
+  <h2 :if={@mine != []} id="directory-all" class="directory-divider">All Forums</h2>
+  <%!-- At the top of All Forums (steward request 2026-11-09), whatever their number. --%>
   <form
-    :if={@browse?}
+    :if={@result.listed > 0}
     id="directory-search"
     action={~p"/"}
     method="get"
@@ -48,15 +57,6 @@ SPDX-License-Identifier: AGPL-3.0-only
   <p :if={@forums == [] and @result.search != ""} id="directory-none">
     No forum matches “{@result.search}”.
   </p>
-
-  <%!-- The visitor's own forums first (steward request 2026-11-06), then all of them. --%>
-  <section :if={@mine != []} id="directory-mine" aria-labelledby="directory-mine-heading">
-    <h2 id="directory-mine-heading" class="directory-divider">My Forums</h2>
-    <ul class="directory-grid is-compact">
-      <li :for={forum <- @mine}><.forum_card forum={forum} id_prefix="mine" compact /></li>
-    </ul>
-  </section>
-  <h2 :if={@mine != []} id="directory-all" class="directory-divider">All Forums</h2>
 
   <ul :if={@forums != []} id="directory" class="directory-grid">
     <li :for={forum <- @forums}><.forum_card forum={forum} id_prefix="all" /></li>
