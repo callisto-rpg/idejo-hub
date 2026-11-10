@@ -100,23 +100,6 @@ forums.{$IDEJO_FORUM_DOMAIN} {
 	}
 }
 
-# The members' page (steward request 2026-11-10): my.<forum domain>, their forums, followed
-# topics and chats; "my" is reserved, so no forum takes it.
-my.{$IDEJO_FORUM_DOMAIN} {
-	encode zstd gzip
-	tls {
-		on_demand
-		protocols tls1.2 tls1.3
-	}
-	import security_headers
-	handle /internal/* {
-		respond 404
-	}
-	handle {
-		reverse_proxy hub:4000
-	}
-}
-
 *.{$IDEJO_FORUM_DOMAIN} {
 	encode zstd gzip
 
@@ -142,6 +125,13 @@ my.{$IDEJO_FORUM_DOMAIN} {
 		file_server {
 			status 503
 		}
+	}
+
+	# The members' inbox (steward request 2026-11-10): my.<forum domain>, whose container is
+	# idejo-forum-inbox ("my" is shorter than any forum name).
+	@inbox host my.{$IDEJO_FORUM_DOMAIN}
+	handle @inbox {
+		reverse_proxy idejo-forum-inbox:4000
 	}
 
 	# The subdomain names the container (one label: the site address matches one only).

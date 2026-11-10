@@ -11,14 +11,15 @@ defmodule IdejoHubWeb.ChatServiceController do
     * `POST …/tickets` `{"ticket"}` → `{"subject", "scope"}`: what a ticket the Hub handed
       that forum names (`IdejoHub.Chats.Tickets`); 404 for any other;
     * `GET …/unread?subject=` → `{"unread"}`: how many of that member's chats have
-      something new, only about someone who joined that forum.
+      something new in the members' inbox (asked of it), only about someone who joined that
+      forum.
 
   401 without a forum's credentials.
   """
   use IdejoHubWeb, :controller
 
-  alias IdejoHub.{Chats, Community}
-  alias IdejoHub.Chats.Tickets
+  alias IdejoHub.Chats.{ForumLink, Tickets}
+  alias IdejoHub.Community
 
   def ticket(conn, params) do
     with {:ok, client} <- client(conn) do
@@ -34,7 +35,7 @@ defmodule IdejoHubWeb.ChatServiceController do
          true <- Community.member_of_client?(client_id, secret, subject) do
       conn
       |> put_resp_header("cache-control", "no-store")
-      |> json(%{unread: Chats.unread_count(subject)})
+      |> json(%{unread: ForumLink.inbox_unread(subject)})
     else
       _ -> unauthorized(conn)
     end

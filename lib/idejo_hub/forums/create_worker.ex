@@ -126,14 +126,15 @@ defmodule IdejoHub.Forums.CreateWorker do
 
   # The output may hold the owner's set-password link: never logged or stored.
   defp setup(forum) do
-    cmd = [
-      "/app/bin/idejo-admin",
-      "setup",
-      "--name",
-      forum.display_name,
-      "--owner-email",
-      forum.owner_email
-    ]
+    cmd =
+      [
+        "/app/bin/idejo-admin",
+        "setup",
+        "--name",
+        forum.display_name,
+        "--owner-email",
+        forum.owner_email
+      ] ++ registration(forum)
 
     case Docker.exec(ForumContainer.name(forum.subdomain), cmd) do
       {:ok, %{exit_code: 0, output: output}} -> owner_invite(forum, output)
@@ -141,6 +142,10 @@ defmodule IdejoHub.Forums.CreateWorker do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  # The members' inbox (steward request 2026-11-10): anyone with an Idejo ID may come in.
+  defp registration(%{kind: "inbox"}), do: ["--registration", "open"]
+  defp registration(_forum), do: []
 
   # FL-02. Setup prints the owner's link only when the forum could not email it; then the
   # Hub keeps it, encrypted, for the operator (Forums.take_owner_link/2). The link is matched

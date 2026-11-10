@@ -32,7 +32,7 @@ defmodule IdejoHubWeb.CommunityController do
   at `/account/api/profile`, both with their client credentials.
   """
   def profile(conn, %{"subject" => subject}) do
-    if member?(conn, subject),
+    if member?(conn, subject) or inbox_reads?(conn, subject),
       do: json(conn, Profiles.public(Profiles.get(subject))),
       else: unauthorized(conn)
   end
@@ -56,6 +56,21 @@ defmodule IdejoHubWeb.CommunityController do
       :error -> false
     end
   end
+
+  # The members' inbox (steward request 2026-11-10) reads anyone's Idejo ID profile (never
+  # fills it), to make the account a forum's "Private Message" names before they came.
+  defp inbox_reads?(conn, subject) when is_binary(subject) and subject != "" do
+    case Plug.BasicAuth.parse_basic_auth(conn) do
+      {client_id, secret} ->
+        IdejoHub.Community.inbox_client?(client_id, secret) and
+          Profiles.get(subject).username != nil
+
+      :error ->
+        false
+    end
+  end
+
+  defp inbox_reads?(_conn, _subject), do: false
 
   defp unauthorized(conn), do: conn |> put_status(401) |> json(%{error: "unauthorized"})
 end
