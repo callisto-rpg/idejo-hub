@@ -21,8 +21,6 @@ defmodule IdejoHub.Application do
       IdejoHub.Repo,
       {DNSCluster, query: Application.get_env(:idejo_hub, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: IdejoHub.PubSub},
-      # Who has a chat on screen (steward request 2026-11-10).
-      IdejoHub.Chats.Presence,
       IdejoHub.RateLimit,
       # FL-04: make Caddy's maintenance marks match the suspended forums.
       maintenance_sync(),

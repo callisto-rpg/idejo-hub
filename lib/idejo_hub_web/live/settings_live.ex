@@ -16,7 +16,10 @@ defmodule IdejoHubWeb.SettingsLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket |> assign(page_title: "Settings", errors: %{}) |> load()}
+    {:ok,
+     socket
+     |> assign(page_title: "Settings", errors: %{}, inbox: IdejoHub.Forums.inbox())
+     |> load()}
   end
 
   @impl true
@@ -39,6 +42,26 @@ defmodule IdejoHubWeb.SettingsLive do
       end
 
     {:noreply, put_flash(socket, :info, message)}
+  end
+
+  # The members' inbox (steward request 2026-11-10): Idejo in inbox mode at my.<forum
+  # domain>, owned by the operator who sets it up.
+  def handle_event("create_inbox", _params, socket) do
+    email = socket.assigns.current_operator.email
+
+    case IdejoHub.Forums.create_inbox(email, email) do
+      {:ok, inbox} ->
+        {:noreply,
+         socket
+         |> assign(inbox: inbox)
+         |> put_flash(
+           :info,
+           "Setting up the members' inbox. Once it runs, apply to all forums so they lead there."
+         )}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "The members' inbox could not be set up.")}
+    end
   end
 
   def handle_event("save", %{"settings" => params}, socket) do
@@ -246,6 +269,27 @@ defmodule IdejoHubWeb.SettingsLive do
 
         <button class="btn btn-primary">Save</button>
       </form>
+
+      <section id="inbox" class="space-y-2">
+        <h2 class="text-xl font-semibold">Members' inbox</h2>
+        <p class="text-sm">
+          Idejo in inbox mode at <code>{IdejoHub.Community.my_host()}</code>: each member's forums,
+          the topics they follow and their private conversations (Idejo 0.3.5 or later).
+          Forums lead there once their containers are made again.
+        </p>
+        <p :if={@inbox} id="inbox-status">
+          <.link navigate={~p"/forums/#{@inbox.id}"}>The inbox</.link>: {@inbox.status}
+        </p>
+        <button
+          :if={!@inbox}
+          id="create-inbox"
+          phx-click="create_inbox"
+          class="btn btn-sm btn-primary"
+          data-confirm="Set up the members' inbox, owned by you?"
+        >
+          Set up the members' inbox
+        </button>
+      </section>
 
       <section id="apply-all" class="space-y-2">
         <p class="text-sm">

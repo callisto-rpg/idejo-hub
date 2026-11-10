@@ -52,6 +52,9 @@ defmodule IdejoHub.Forums.Forum do
     field :pinned, :boolean, default: false
     # The forums directory (steward decision 2026-11-06): listed while running, unless hidden.
     field :listed, :boolean, default: true
+    # "forum", or "inbox": the members' inbox (steward request 2026-11-10), Idejo in inbox
+    # mode at my.<forum domain>.
+    field :kind, :string, default: "forum"
 
     timestamps(type: :utc_datetime)
   end
@@ -83,10 +86,7 @@ defmodule IdejoHub.Forums.Forum do
       :memory_mb,
       :cpus
     ])
-    |> Subdomain.validate_subdomain(:subdomain)
-    |> validate_exclusion(:subdomain, IdejoHub.Settings.reserved_subdomains(),
-      message: "is reserved"
-    )
+    |> validate_name(forum.kind)
     |> validate_length(:display_name, max: 100)
     |> validate_format(:owner_email, ~r/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/,
       message: "must be an email address"
@@ -140,5 +140,18 @@ defmodule IdejoHub.Forums.Forum do
     ])
     |> validate_inclusion(:status, @statuses)
     |> validate_inclusion(:health, ~w(ok down))
+  end
+
+  # The inbox's name is fixed by the Hub (`IdejoHub.Forums.create_inbox/1`): "my", reserved
+  # for it (FL-03); every other forum's is checked.
+  defp validate_name(changeset, "inbox"),
+    do: validate_inclusion(changeset, :subdomain, [IdejoHub.Forums.inbox_subdomain()])
+
+  defp validate_name(changeset, _kind) do
+    changeset
+    |> Subdomain.validate_subdomain(:subdomain)
+    |> validate_exclusion(:subdomain, IdejoHub.Settings.reserved_subdomains(),
+      message: "is reserved"
+    )
   end
 end

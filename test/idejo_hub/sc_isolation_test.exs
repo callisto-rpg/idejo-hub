@@ -82,8 +82,11 @@ defmodule IdejoHub.SCIsolationTest do
       # page (tested in community_directory_test.exs).
       "/signed-in",
       "/internal/community/profile",
-      # Idejo's chat service: a forum's client credentials (tested in my_page_test.exs).
-      "/internal/community/chats/unread"
+      # Idejo's chat service and the members' inbox: a forum's (or the inbox's) client
+      # credentials, not a sign-in (tested in inbox_host_test.exs).
+      "/internal/community/chats/unread",
+      "/internal/community/inbox/topics",
+      "/internal/community/inbox/conversations"
     ]
 
     # Members' pages (ID-02) are for everyone, but only on the identity host (the directory's
@@ -111,15 +114,8 @@ defmodule IdejoHub.SCIsolationTest do
       # The forums directory's search as JSON, public like the page, only on the directory's
       # host (tested in community_directory_test.exs).
       "/api/forums",
-      # The members' page (steward request 2026-11-10): only on my.<forum domain>, for a
-      # signed-in Idejo ID, and its hand-off on the identity host (tested in my_page_test.exs).
-      "/account/my",
-      "/account/api/chats/unread",
-      "/sign-in-again",
-      "/topics",
-      "/chat",
-      "/chat/new",
-      "/chat/:id"
+      # Idejo's chat service, for outside forums (tested in inbox_host_test.exs).
+      "/account/api/chats/unread"
     ]
 
     for path <- members do

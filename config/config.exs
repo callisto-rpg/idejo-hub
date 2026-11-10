@@ -61,7 +61,7 @@ config :idejo_hub, IdejoHub.Hosting,
 config :idejo_hub, IdejoHub.Forums,
   domain: "idejo.test",
   db_host: "db",
-  default_version: "0.2.11",
+  default_version: "0.3.5",
   default_memory_mb: 384,
   default_cpus: 0.5,
   # FL-05: days between a deletion and the purge.
@@ -111,10 +111,7 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
     layout: false
   ],
   pubsub_server: IdejoHub.PubSub,
-  live_view: [signing_salt: "d84fVpXu"],
-  # SC-02: LiveView's socket only from the Hub's own host and, since the members' page
-  # (steward request 2026-11-10), my.<forum domain>; never a forum's page.
-  check_origin: {IdejoHubWeb.Origin, :allowed?, []}
+  live_view: [signing_salt: "d84fVpXu"]
 
 # Configure LiveView
 config :phoenix_live_view,

@@ -117,7 +117,9 @@ defmodule IdejoHub.Community do
       Repo.all(
         from j in Join,
           join: f in assoc(j, :forum),
-          where: j.subject == ^subject and j.state == "joined" and f.status == "running",
+          where:
+            j.subject == ^subject and j.state == "joined" and f.status == "running" and
+              f.kind == "forum",
           select: fragment("? || ?", f.subdomain, ^suffix)
       )
 
@@ -181,14 +183,16 @@ defmodule IdejoHub.Community do
     with %Forum{} = forum <- forum_of_client(client_id),
          {:ok, stored} <- Forums.secret(forum, :oidc_client_secret),
          true <- Plug.Crypto.secure_compare(stored, secret),
-         true <- joined?(subject, forum.id) do
+         # A first sign-in moments ago is read once more (the inbox asks at once).
+         true <-
+           joined?(subject, forum.id) or (Members.sync() == :ok and joined?(subject, forum.id)) do
       forums =
         Repo.all(
           from j in Join,
             join: f in assoc(j, :forum),
             where:
               j.subject == ^subject and j.state == "joined" and f.id != ^forum.id and
-                f.status == "running",
+                f.status == "running" and f.kind == "forum",
             order_by: [asc: fragment("lower(?)", f.display_name)],
             select: f
         )
@@ -233,6 +237,17 @@ defmodule IdejoHub.Community do
   end
 
   def client_key(_client_id, _secret), do: nil
+
+  @doc """
+  Whether a client id and secret are the members' inbox's (steward request 2026-11-10;
+  `IdejoHub.Forums.inbox/0`): only it may ask about any member and their forums.
+  """
+  @spec inbox_client?(term(), term()) :: boolean()
+  def inbox_client?(client_id, secret) when is_binary(client_id) and is_binary(secret) do
+    match?(%Forum{kind: "inbox"}, client(client_id, secret))
+  end
+
+  def inbox_client?(_client_id, _secret), do: false
 
   defp client(client_id, secret) do
     with %Forum{} = forum <- forum_of_client(client_id),

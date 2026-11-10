@@ -48,6 +48,52 @@ defmodule IdejoHub.Forums do
     }
   end
 
+  @inbox "inbox"
+
+  @doc """
+  The inbox's slug: `inbox` (its container `idejo-forum-inbox`, its database, its secrets),
+  reserved for it (FL-03). Its address is `my.<forum domain>` (`host/1`; Caddy's wildcard site
+  sends that host to it): two letters are below every forum name's minimum, which
+  docker-guard enforces too.
+  """
+  @spec inbox_subdomain() :: String.t()
+  def inbox_subdomain, do: @inbox
+
+  @doc """
+  The members' inbox (steward request 2026-11-10), not deleted, or nil: an Idejo container in
+  inbox mode (`IDEJO_INBOX=on`) at `my.<forum domain>`, run like any forum.
+  """
+  @spec inbox() :: Forum.t() | nil
+  def inbox,
+    do: Repo.one(from f in Forum, where: f.kind == "inbox" and f.status != "deleted", limit: 1)
+
+  @doc "Whether the forum is the members' inbox."
+  @spec inbox?(Forum.t()) :: boolean()
+  def inbox?(%Forum{kind: kind}), do: kind == "inbox"
+
+  @doc """
+  Sets up the members' inbox, as `actor` (the operator), owned by `owner_email`: a forum of
+  kind `inbox`, "Idejo", slug `inbox` at `my.<forum domain>`, kept out of the directory,
+  Idejo ID sign-in only. Then
+  "Apply to all forums now" gives the forums its addresses. `{:error, :exists}` with one.
+  """
+  @spec create_inbox(String.t(), String.t()) ::
+          {:ok, Forum.t()} | {:error, :exists | Ecto.Changeset.t()}
+  def create_inbox(owner_email, actor) do
+    if inbox() do
+      {:error, :exists}
+    else
+      attrs = %{"subdomain" => @inbox, "display_name" => "Idejo", "owner_email" => owner_email}
+
+      changeset =
+        Forum
+        |> struct(Map.merge(defaults(), %{kind: "inbox", listed: false}))
+        |> Forum.create_changeset(attrs)
+
+      create_forum(changeset, actor)
+    end
+  end
+
   @doc "A changeset for the create form."
   @spec change_new_forum(map()) :: Ecto.Changeset.t()
   def change_new_forum(attrs \\ %{}) do
@@ -66,7 +112,12 @@ defmodule IdejoHub.Forums do
   @spec create_forum(map(), String.t(), keyword()) ::
           {:ok, Forum.t()} | {:error, Ecto.Changeset.t()}
   def create_forum(attrs, actor, opts \\ []) do
-    changeset = change_new_forum(attrs)
+    changeset =
+      case attrs do
+        %Ecto.Changeset{} = changeset -> changeset
+        attrs -> change_new_forum(attrs)
+      end
+
     secret_key_base = Keyword.get_lazy(opts, :secret_key_base, &Secrets.new_secret_key_base/0)
     job_args = Keyword.get(opts, :job_args, %{})
     attach = Keyword.get(opts, :attach, fn _forum -> {:ok, %{}} end)
@@ -690,13 +741,24 @@ defmodule IdejoHub.Forums do
       # Idejo's community menu (Idejo 0.2.5; steward decision 2026-11-06): the member's other
       # forums, asked of the Hub with this client's credentials, and the directory.
       "IDEJO_COMMUNITY_URL" => IdejoHub.Community.community_url(),
-      "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url(),
-      # Idejo's chat service (steward request 2026-11-10): members' private conversations
-      # at my.<forum domain>/chat. Forums before it ignore the variable.
-      "IDEJO_CHAT_URL" => IdejoHub.Community.chat_url(),
-      # "All my topics" above the sidebar's Private Conversations (Idejo 0.3.4).
-      "IDEJO_TOPICS_URL" => IdejoHub.Community.topics_url()
+      "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url()
     }
+    |> Map.merge(inbox_env(forum))
+  end
+
+  # The members' inbox (steward request 2026-11-10): itself in Idejo's inbox mode (0.3.5);
+  # every other forum, once there is one, sends its members there: Idejo's chat service
+  # (`IDEJO_CHAT_URL`, private conversations; 0.3.4) and "All my topics"
+  # (`IDEJO_TOPICS_URL`). Forums before them ignore the variables.
+  defp inbox_env(%Forum{kind: "inbox"}), do: %{"IDEJO_INBOX" => "on"}
+
+  defp inbox_env(_forum) do
+    if inbox(),
+      do: %{
+        "IDEJO_CHAT_URL" => IdejoHub.Community.chat_url(),
+        "IDEJO_TOPICS_URL" => IdejoHub.Community.topics_url()
+      },
+      else: %{}
   end
 
   # Without a client there is no other way in: local accounts stay on.
@@ -747,6 +809,8 @@ defmodule IdejoHub.Forums do
 
   @doc "The forum's public host: `<subdomain>.<forum domain>`."
   @spec host(Forum.t()) :: String.t()
+  def host(%Forum{kind: "inbox"}), do: IdejoHub.Community.my_host()
+
   def host(%Forum{subdomain: subdomain}) do
     subdomain <> "." <> Application.fetch_env!(:idejo_hub, __MODULE__)[:domain]
   end
@@ -760,6 +824,10 @@ defmodule IdejoHub.Forums do
     suffix = "." <> Application.fetch_env!(:idejo_hub, __MODULE__)[:domain]
     host = String.downcase(host)
 
+    if host == IdejoHub.Community.my_host(), do: inbox(), else: forum_for_host(host, suffix)
+  end
+
+  defp forum_for_host(host, suffix) do
     with true <- String.ends_with?(host, suffix),
          subdomain = String.replace_suffix(host, suffix, ""),
          :ok <- Subdomain.validate(subdomain) do
@@ -781,8 +849,6 @@ defmodule IdejoHub.Forums do
       host in hub_hosts() -> true
       # The forums directory (steward decision 2026-11-06).
       host == IdejoHub.Community.directory_host() -> true
-      # The members' page (steward request 2026-11-10).
-      host == IdejoHub.Community.my_host() -> true
       forum = for_host(host) -> forum.status != "deleted"
       true -> false
     end

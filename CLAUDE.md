@@ -55,7 +55,8 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.2.11**, the default for new forums
+Supported Idejo versions (Hub NF-06): **0.3.5**, the default for new forums (steward
+request 2026-11-10, the members' inbox)
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
@@ -68,9 +69,10 @@ still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgra
 0.2.10 (0.2.9 the first with `/logo`, the forum's logo for the directory's cards; before it,
 a card shows no logo; 0.2.10 the first that never names an account after its email and that
 takes and shares the Idejo ID profile, below; 0.2.11 the first whose community menu fills
-its list: before it, the menu's script got 406 from the forum's `/community`). The members'
-page's Topics tab and the chats (below) need Idejo 0.3.4, the first with the chat service and "All my topics"
-(`IDEJO_TOPICS_URL`, `Community.topics_url/0`, the Topics tab); forums before it keep their own private conversations and show no topics there.
+its list: before it, the menu's script got 406 from the forum's `/community`). Forums need
+0.3.4 for the chat service and "All my topics" (the members' inbox, below; before, they keep
+their own private conversations and show no topics in the inbox); the inbox needs 0.3.5
+(Idejo's inbox mode).
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -110,40 +112,36 @@ or through its sign-in first, `account_return`) → `/signed-in?token=` (`Phoeni
 minutes, naming the subject and that `state`) → its own session, twelve hours. Tests:
 `community_directory_test.exs`.
 
-**Members' page and chats** (steward request 2026-11-10; `IdejoHub.Chats`, `MyLive`,
-`ChatLive`, `MyController`, `ChatServiceController`, `Plugs.MyHost`, `IdejoHubWeb.MyAuth`;
-extra review: DV-06): `https://my.<IDEJO_FORUM_DOMAIN>/` (a named Caddy site; `my` is
-reserved, FL-03; `ask` allows it; LiveView's origin check, `IdejoHubWeb.Origin`, takes the
-Hub's own host and this one only) for an Idejo ID, signed in as the directory is (`/sign-in` →
-`/account/my?state=` → `/signed-in?token=`, salt of its own, twelve hours, back to
-`my_return`), no sidebar, three tabs: **Forums** (`/`, `ForumLink.forums/1`: running hosted
-joins and outside forums signed in to, as compact directory cards), **Topics** (`/topics`,
-each forum's followed topics, `start_async`, as Idejo's expanded topic rows, the latest
-active first, naming their forum) and **Chats** (`/chat`, `Chats.list/1`). Private
-conversations live here, not in forums: every forum gets Idejo's `IDEJO_CHAT_URL`
-(`Community.chat_url/0`, `<my>/chat`; outside forums get `chat_url` from
-`registrations/verify`; and `IDEJO_TOPICS_URL`, `topics_url`, the Topics tab, for the
-sidebar's "All my topics" above it), so its sidebar's "Private Conversations" and a user card's
-"Private Message" (`/chat/new?with=<subject>`, between two IDs sharing a forum, ten new
-chats an hour) lead here. Tables `chats` (one per pair, `pair_key`), `chat_members`
-(`last_read_at`), `chat_messages` (Markdown and HTML through `Chats.Markdown`, MDEx with
-Idejo's options; a forum's HTML sanitised again), `chat_reactions` (six emoji), `chat_imports`,
-`chat_tickets`. Messages grow as Idejo's without timers (`Chats.commit/4`: Enter rewrites the
-author's open message, Ctrl+Enter or three quick Enters close it, one open per author; the
-`.Composer` colocated hook), Reply, React, Edit and Delete one's own closed messages; an open
-message closes 30 s after its author's last view goes (`Chats.Presence`). The Hub asks forums
-(never their databases) through Idejo's chat service interface with **tickets**
-(`Chats.Tickets`: random, two minutes, SHA-256 stored, bound to member, scope and the forum's
-client), which a forum checks back at `POST /internal/community/chats/tickets` (hosted) or
-`/account/api/chats/tickets` (outside), with its client credentials; `GET …/chats/unread?
-subject=` gives its sidebar count. `ForumLink` asks hosted forums at
-`http://idejo-forum-<slug>:4000`, outside ones at their public address only (resolved,
-`Proof.public?/1`, pinned, no redirects), four seconds each: `/community/topics`, and once an
-hour per member and forum on opening Chats `/community/conversations`, copied with
-`Chats.copy/2` (each message once by `source`, read up to it), then
-`/community/conversations/moved`; conversations with someone without an Idejo ID stay in the
-forum, linked from Chats. Forums on an Idejo without the interface show nothing there.
-Tests: `my_page_test.exs`.
+**Members' inbox** (steward requests 2026-11-10; `Forums.inbox/0`, `create_inbox/2`,
+`forums.kind`, `InboxServiceController`, `ChatServiceController`, `Chats.ForumLink`,
+`Chats.Tickets`; extra review: DV-06): `https://my.<IDEJO_FORUM_DOMAIN>/` is an Idejo
+container like any forum (`kind` `inbox`, slug `inbox`, reserved for it, FL-03, so container
+`idejo-forum-inbox`; at most one not deleted; its address `my.<forum domain>`, `Forums.host/1`
+and `for_host/1`, sent to that container by an `@inbox` handle in the wildcard Caddy site:
+two letters are below docker-guard's forum names), in Idejo's **inbox mode** (`IDEJO_INBOX=on`, Idejo 0.3.5): Idejo's own pages,
+header, menus, composer and topic rows, without a sidebar, with Forums, Topics and Chats
+tabs, upgraded with the forums. The operator sets it up from Settings (`#inbox`, "Set up the
+members' inbox": "Idejo", owned by them, out of the directory, Idejo ID only, setup with
+`--registration open`); `ask` allows its host as any forum's. Once it
+exists, every other forum's container gets `IDEJO_CHAT_URL` (`<my>/chat`) and
+`IDEJO_TOPICS_URL` (`<my>/topics`) (outside forums `chat_url` and `topics_url` from
+`registrations/verify`): their sidebar's "All my topics" and "Private Conversations" and a
+user card's "Private Message" (`/chat/new?with=<subject>`) lead there; "Apply to all forums
+now" brings them to forums made before. The inbox is left out of joined lists
+(`Community.joined/3`, `joined_hosts/1`, `ForumLink.forums/1`). It asks the Hub on the forum
+network with its own client credentials (`Community.inbox_client?/2`):
+`/internal/community/inbox/topics?subject=` and `inbox/conversations?subject=`, which the Hub
+relays from the member's forums through Idejo's chat service interface with **tickets**
+(`Chats.Tickets`: random, two minutes, SHA-256 stored, bound to member, scope and forum
+client; forums check them at `/internal/community/chats/tickets` or
+`/account/api/chats/tickets`), and `inbox/conversations/moved`; it reads any Idejo ID's
+profile (`/internal/community/profile`, never fills one). Forums' sidebar counts
+(`…/chats/unread?subject=`) are asked of the inbox (`ForumLink.inbox_unread/1`:
+`/community/inbox-unread`, with the inbox's client credentials). `ForumLink` asks hosted
+forums at `http://idejo-forum-<slug>:4000`, outside ones at their public address only
+(resolved, `Proof.public?/1`, pinned, no redirects), four seconds each. The Hub's own chat
+tables from 2026-11-10 (`chats`, `chat_members`, `chat_messages`, `chat_reactions`,
+`chat_imports`) are no longer used, kept until checked empty. Tests: `inbox_host_test.exs`.
 
 **Outside forums** (steward decisions 2026-11-06; `Identity.OutsideForums`,
 `RegistryController`, `OutsideForumsLive`; extra review: DV-06): an Idejo server hosted
@@ -241,8 +239,6 @@ As built by Foundations:
 - Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
   Node). Swoosh (MIT) with gen_smtp (BSD-2-Clause; ranch ISC, idna MIT) for the Hub's own
   email, OP-08's alerts (`IdejoHub.Mailer`, added 2026-11-06).
-- MDEx (MIT; mdex_native, rustler_precompiled: MIT/Apache-2.0) for chat messages' Markdown,
-  as Idejo renders it (added 2026-11-10).
 - Req (Apache-2.0) for HTTP to docker-guard. `docker_guard` is a path dependency in tests
   only, so the Hub's tests check that what the Hub sends is what the guard allows.
 - Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a

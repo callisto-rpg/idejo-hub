@@ -77,7 +77,7 @@ config :phoenix,
 config :idejo_hub, IdejoHub.Secrets, key: "fcjlnmVauctvHV2aRFqBHgQaZIAaJpWxxfs8xi4Eu5c="
 
 # The suite's forums start on 0.1.0 so upgrade tests (OP-04, OP-05) have a newer 0.2.0 to go to;
-# production defaults to 0.2.11 (config.exs, runtime.exs).
+# production defaults to 0.3.5 (config.exs, runtime.exs).
 config :idejo_hub, IdejoHub.Forums, default_version: "0.1.0"
 
 # OP-10: a stand-in pg_dump (test/support/bin/pg_dump); tests set a Zitadel password.

@@ -3,27 +3,26 @@
 
 defmodule IdejoHub.Chats.ForumLink do
   @moduledoc """
-  What the Hub asks the forums a member joined (steward request 2026-11-10), through Idejo's
+  What the Hub asks the forums a member joined for the members' inbox (steward request
+  2026-11-10; Idejo's inbox mode, `IdejoHubWeb.InboxServiceController`), through Idejo's
   chat service interface (Idejo's CLAUDE.md, Running under Idejo Hub → Chat service), never
   their databases:
 
-    * `forums/1`: the running hosted forums they joined (`identity_joins`) and the outside
-      forums they signed in to, by name;
+    * `forums/1`: the running hosted forums they joined (`identity_joins`; the inbox itself
+      left out) and the outside forums they signed in to, by name;
     * `topics/1`: each one's `GET /community/topics?ticket=` (the topics they follow);
-    * `import/1`: each one's `GET /community/conversations?ticket=`, copied into chats
-      (`IdejoHub.Chats.copy/2`), then `POST /community/conversations/moved`, so the forum
-      stops showing them; at most once an hour per member and forum (`chat_imports`), which
-      also keeps how many stayed there.
+    * `conversations/1`: each one's `GET /community/conversations?ticket=` (their private
+      conversations the inbox copies), and `moved/3`, `POST /community/conversations/moved`.
 
   Hosted forums are asked on the forum network (`http://idejo-forum-<slug>:4000`), outside
-  ones at `https://<host>`. Each forum gets four seconds; a forum that does not answer, or
-  runs an Idejo without the interface (404), adds nothing.
+  ones at their public address only. Each forum gets four seconds; a forum that does not
+  answer, or runs an Idejo without the interface (404), adds nothing.
   """
 
   import Ecto.Query
 
-  alias IdejoHub.{Chats, Forums, Repo}
   alias IdejoHub.Chats.Tickets
+  alias IdejoHub.{Forums, Repo}
   alias IdejoHub.Forums.Forum
   alias IdejoHub.Hosting.ForumContainer
   alias IdejoHub.Identity.{Join, OutsideForum, Proof}
@@ -40,7 +39,9 @@ defmodule IdejoHub.Chats.ForumLink do
       Repo.all(
         from j in Join,
           join: f in assoc(j, :forum),
-          where: j.subject == ^subject and j.state == "joined" and f.status == "running",
+          where:
+            j.subject == ^subject and j.state == "joined" and f.status == "running" and
+              f.kind == "forum",
           select: f
       )
       |> Enum.map(fn %Forum{} = f ->
@@ -99,92 +100,66 @@ defmodule IdejoHub.Chats.ForumLink do
   end
 
   @doc """
-  Copies `subject`'s private conversations from the forums they joined, those not asked in
-  the last hour (`force: true` asks all). `:ok`.
+  `subject`'s private conversations in each forum, as the forums sent them:
+  `[%{forum:, body:}]`, `body` the forum's JSON (`conversations`, `remaining`, `url`).
   """
-  @spec import(String.t(), keyword()) :: :ok
-  def import(subject, opts \\ []) do
-    recent = if opts[:force], do: MapSet.new(), else: recent_imports(subject)
-
+  @spec conversations(String.t()) :: [map()]
+  def conversations(subject) do
     subject
     |> forums()
-    |> Enum.reject(&MapSet.member?(recent, &1.host))
-    |> each(&import_from(subject, &1))
+    |> each(fn forum ->
+      ticket = Tickets.issue(subject, "conversations", forum.client)
 
-    :ok
-  end
-
-  defp import_from(subject, forum) do
-    ticket = Tickets.issue(subject, "conversations", forum.client)
-
-    with {:ok, %{"conversations" => list} = body} when is_list(list) <-
-           get(forum, "/community/conversations", ticket) do
-      copied =
-        for %{"id" => id} = conversation <- list,
-            match?({:ok, _}, copy(forum.host, conversation)),
-            do: id
-
-      if copied != [], do: post(forum, "/community/conversations/moved", ticket, copied)
-
-      remaining = if is_integer(body["remaining"]), do: body["remaining"], else: 0
-      forum_url = if is_binary(body["url"]), do: body["url"], else: forum.url
-
-      Repo.insert_all(
-        "chat_imports",
-        [
-          %{
-            subject: subject,
-            host: forum.host,
-            remaining: remaining,
-            forum_url: forum_url,
-            imported_at: DateTime.utc_now(:second)
-          }
-        ],
-        on_conflict: {:replace, [:remaining, :forum_url, :imported_at]},
-        conflict_target: [:subject, :host]
-      )
-    end
-
-    nil
-  end
-
-  # One conversation a forum sent wrong never stops the others.
-  defp copy(host, conversation) do
-    Chats.copy(host, conversation)
-  rescue
-    error ->
-      require Logger
-      Logger.warning("chat copy from #{host} failed: #{inspect(error.__struct__)}")
-      {:error, :unsupported}
+      case get(forum, "/community/conversations", ticket) do
+        {:ok, %{"conversations" => list} = body} when is_list(list) -> %{forum: forum, body: body}
+        _ -> nil
+      end
+    end)
   end
 
   @doc """
-  The conversations of `subject`'s that stayed in forums (someone there has no Idejo ID):
-  `[%{name:, url:, remaining:}]`, from the last copies.
+  Tells the forum at `host` (one `subject` joined) that the inbox copied those of their
+  conversations: it stops showing them. `:ok`, or `:error`.
   """
-  @spec remaining(String.t()) :: [map()]
-  def remaining(subject) do
-    names = Map.new(forums(subject), &{&1.host, &1.name})
+  @spec moved(String.t(), String.t(), [String.t()]) :: :ok | :error
+  def moved(subject, host, ids) when is_list(ids) do
+    case Enum.find(forums(subject), &(&1.host == host)) do
+      nil ->
+        :error
 
-    Repo.all(
-      from i in "chat_imports",
-        where: i.subject == ^subject and i.remaining > 0,
-        select: %{host: i.host, url: i.forum_url, remaining: i.remaining}
-    )
-    |> Enum.filter(&Map.has_key?(names, &1.host))
-    |> Enum.map(&Map.put(&1, :name, names[&1.host]))
-    |> Enum.sort_by(&String.downcase(&1.name))
+      forum ->
+        ticket = Tickets.issue(subject, "conversations", forum.client)
+
+        case post(forum, "/community/conversations/moved", ticket, ids) do
+          {:ok, %{status: 200}} -> :ok
+          _ -> :error
+        end
+    end
   end
 
-  defp recent_imports(subject) do
-    since = DateTime.add(DateTime.utc_now(:second), -3600)
-
-    Repo.all(
-      from i in "chat_imports",
-        where: i.subject == ^subject and i.imported_at > ^since,
-        select: i.host
-    )
-    |> MapSet.new()
+  @doc """
+  How many of `subject`'s chats in the members' inbox have something new (a forum's sidebar
+  count): asked of the inbox on the forum network, `GET /community/inbox-unread?subject=`,
+  with the inbox's own client credentials, which only the Hub and the inbox know. 0 without
+  a running inbox or an answer.
+  """
+  @spec inbox_unread(String.t()) :: non_neg_integer()
+  def inbox_unread(subject) do
+    with %Forum{status: "running"} = inbox <- Forums.inbox(),
+         {:ok, secret} <- Forums.secret(inbox, :oidc_client_secret),
+         {:ok, %{status: 200, body: %{"unread" => n}}} when is_integer(n) and n >= 0 <-
+           Req.get(
+             base_request(
+               "http://#{ForumContainer.name(inbox.subdomain)}:4000/community/inbox-unread",
+               auth: {:basic, inbox.oidc_client_id <> ":" <> secret},
+               params: [subject: subject],
+               receive_timeout: 2_000
+             )
+           ) do
+      n
+    else
+      _ -> 0
+    end
   end
 
   defp each(forums, fun) do

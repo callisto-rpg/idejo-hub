@@ -27,7 +27,10 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
         "/internal/community",
         "/internal/community/profile",
         "/internal/community/chats/tickets",
-        "/internal/community/chats/unread"
+        "/internal/community/chats/unread",
+        "/internal/community/inbox/topics",
+        "/internal/community/inbox/conversations",
+        "/internal/community/inbox/conversations/moved"
       ],
       hosts: ["localhost", "127.0.0.1"]
     ]
