@@ -12,7 +12,8 @@ defmodule IdejoHubWeb.RegistryController do
     * `POST /account/api/registrations` `{"host", "name"}` → 201 `{"registration",
       "proof", "proof_path", "expires_in"}` (ten an hour per address);
     * `POST /account/api/registrations/verify` `{"registration"}` → 200 `{"issuer",
-      "client_id", "client_secret", "label", "sign_up_url", "directory_url"}`;
+      "client_id", "client_secret", "label", "sign_up_url", "directory_url",
+      "chat_url", "topics_url"}`;
     * `GET /account/api/listing`, `PUT /account/api/listing` `{"listed", "name"}`, with the
       client id and secret → `{"listing"}`: `none`, `requested`, `approved`, `refused`.
 

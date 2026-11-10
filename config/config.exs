@@ -111,7 +111,10 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
     layout: false
   ],
   pubsub_server: IdejoHub.PubSub,
-  live_view: [signing_salt: "d84fVpXu"]
+  live_view: [signing_salt: "d84fVpXu"],
+  # SC-02: LiveView's socket only from the Hub's own host and, since the members' page
+  # (steward request 2026-11-10), my.<forum domain>; never a forum's page.
+  check_origin: {IdejoHubWeb.Origin, :allowed?, []}
 
 # Configure LiveView
 config :phoenix_live_view,

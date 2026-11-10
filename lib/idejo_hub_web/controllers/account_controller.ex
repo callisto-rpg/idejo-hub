@@ -26,6 +26,7 @@ defmodule IdejoHubWeb.AccountController do
   @member_key "member"
   @return_key "account_return"
   @directory_salt "directory member"
+  @my_salt "my page member"
   @request_seconds 600
   @session_seconds 3600
   @fresh_seconds 300
@@ -284,6 +285,34 @@ defmodule IdejoHubWeb.AccountController do
 
   def directory(conn, _params), do: redirect(conn, external: IdejoHub.Community.directory_url())
 
+  @doc """
+  The members' page asks who is looking (steward request 2026-11-10), as the directory
+  does: signed in here, back to `my.<forum domain>/signed-in` with a token naming the
+  member and that page's `state`; else through this site's sign-in first.
+  """
+  def my(conn, %{"state" => state}) when is_binary(state) and byte_size(state) in 16..64 do
+    case member(conn) do
+      %{"sub" => subject} ->
+        token =
+          Phoenix.Token.sign(IdejoHubWeb.Endpoint, @my_salt, %{"sub" => subject, "state" => state})
+
+        redirect(conn,
+          external:
+            IdejoHub.Community.my_url() <> "signed-in?" <> URI.encode_query(%{"token" => token})
+        )
+
+      nil ->
+        conn
+        |> put_session(@return_key, "/account/my?" <> URI.encode_query(%{"state" => state}))
+        |> redirect(to: ~p"/account/sign-in")
+    end
+  end
+
+  def my(conn, _params), do: redirect(conn, external: IdejoHub.Community.my_url())
+
+  @doc false
+  def my_salt, do: @my_salt
+
   @doc false
   def directory_salt, do: @directory_salt
 
@@ -301,6 +330,7 @@ defmodule IdejoHubWeb.AccountController do
 
   # Only the directory's hand-off may be returned to; anything else goes to the account page.
   defp return_path("/account/directory?" <> _ = path, _request), do: path
+  defp return_path("/account/my?" <> _ = path, _request), do: path
 
   defp return_path(_return, request),
     do: ~p"/account" <> if(request["fresh"], do: "#delete", else: "")

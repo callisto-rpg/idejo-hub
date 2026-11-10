@@ -25,7 +25,9 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
         "/internal/caddy/ask",
         "/internal/forum-unavailable",
         "/internal/community",
-        "/internal/community/profile"
+        "/internal/community/profile",
+        "/internal/community/chats/tickets",
+        "/internal/community/chats/unread"
       ],
       hosts: ["localhost", "127.0.0.1"]
     ]
