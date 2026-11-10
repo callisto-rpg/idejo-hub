@@ -81,7 +81,9 @@ defmodule IdejoHub.SCIsolationTest do
       # The forums directory's sign-in hand-off: a token signed by the Hub, not an operator
       # page (tested in community_directory_test.exs).
       "/signed-in",
-      "/internal/community/profile"
+      "/internal/community/profile",
+      # Idejo's chat service: a forum's client credentials (tested in my_page_test.exs).
+      "/internal/community/chats/unread"
     ]
 
     # Members' pages (ID-02) are for everyone, but only on the identity host (the directory's
@@ -108,7 +110,16 @@ defmodule IdejoHub.SCIsolationTest do
       "/account/pictures/:key",
       # The forums directory's search as JSON, public like the page, only on the directory's
       # host (tested in community_directory_test.exs).
-      "/api/forums"
+      "/api/forums",
+      # The members' page (steward request 2026-11-10): only on my.<forum domain>, for a
+      # signed-in Idejo ID, and its hand-off on the identity host (tested in my_page_test.exs).
+      "/account/my",
+      "/account/api/chats/unread",
+      "/sign-in-again",
+      "/topics",
+      "/chat",
+      "/chat/new",
+      "/chat/:id"
     ]
 
     for path <- members do

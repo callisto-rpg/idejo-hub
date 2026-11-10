@@ -31,7 +31,7 @@ defmodule IdejoHub.Forums.Subdomain do
     help support docs blog news about static assets cdn media files uploads
     app apps dashboard console panel billing
     dev test staging demo localhost root
-    forum forums idejo
+    forum forums idejo my
   )
 
   @doc "The reserved names."

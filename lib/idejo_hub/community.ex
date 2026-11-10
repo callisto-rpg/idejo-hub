@@ -24,6 +24,25 @@ defmodule IdejoHub.Community do
   @spec directory_host() :: String.t()
   def directory_host, do: "forums." <> Application.fetch_env!(:idejo_hub, Forums)[:domain]
 
+  @doc """
+  The members' own page (steward request 2026-11-10): `my.<forum domain>`, their forums,
+  followed topics and chats. `my` is a reserved subdomain (FL-03).
+  """
+  @spec my_host() :: String.t()
+  def my_host, do: "my." <> Application.fetch_env!(:idejo_hub, Forums)[:domain]
+
+  @doc "The members' page's address."
+  @spec my_url() :: String.t()
+  def my_url, do: "https://" <> my_host() <> "/"
+
+  @doc "Where members' chats are, given to forums as `IDEJO_CHAT_URL`."
+  @spec chat_url() :: String.t()
+  def chat_url, do: my_url() <> "chat"
+
+  @doc "The members' Topics tab, given to forums as `IDEJO_TOPICS_URL` (\"All my topics\")."
+  @spec topics_url() :: String.t()
+  def topics_url, do: my_url() <> "topics"
+
   @doc "The directory's address, given to forums as `IDEJO_COMMUNITY_DIRECTORY_URL`."
   @spec directory_url() :: String.t()
   def directory_url, do: "https://" <> directory_host() <> "/"
@@ -199,6 +218,21 @@ defmodule IdejoHub.Community do
   end
 
   def member_of_client?(_client_id, _secret, _subject), do: false
+
+  @doc """
+  Which forum a client id and secret are (hosted or outside), as a key for chat tickets:
+  `"forum:<id>"`, `"outside:<id>"`, or nil.
+  """
+  @spec client_key(term(), term()) :: String.t() | nil
+  def client_key(client_id, secret) when is_binary(client_id) and is_binary(secret) do
+    case client(client_id, secret) do
+      %Forum{id: id} -> "forum:#{id}"
+      %IdejoHub.Identity.OutsideForum{id: id} -> "outside:#{id}"
+      nil -> nil
+    end
+  end
+
+  def client_key(_client_id, _secret), do: nil
 
   defp client(client_id, secret) do
     with %Forum{} = forum <- forum_of_client(client_id),

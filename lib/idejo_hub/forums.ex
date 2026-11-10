@@ -690,7 +690,12 @@ defmodule IdejoHub.Forums do
       # Idejo's community menu (Idejo 0.2.5; steward decision 2026-11-06): the member's other
       # forums, asked of the Hub with this client's credentials, and the directory.
       "IDEJO_COMMUNITY_URL" => IdejoHub.Community.community_url(),
-      "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url()
+      "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url(),
+      # Idejo's chat service (steward request 2026-11-10): members' private conversations
+      # at my.<forum domain>/chat. Forums before it ignore the variable.
+      "IDEJO_CHAT_URL" => IdejoHub.Community.chat_url(),
+      # "All my topics" above the sidebar's Private Conversations (Idejo 0.3.4).
+      "IDEJO_TOPICS_URL" => IdejoHub.Community.topics_url()
     }
   end
 
@@ -776,6 +781,8 @@ defmodule IdejoHub.Forums do
       host in hub_hosts() -> true
       # The forums directory (steward decision 2026-11-06).
       host == IdejoHub.Community.directory_host() -> true
+      # The members' page (steward request 2026-11-10).
+      host == IdejoHub.Community.my_host() -> true
       forum = for_host(host) -> forum.status != "deleted"
       true -> false
     end

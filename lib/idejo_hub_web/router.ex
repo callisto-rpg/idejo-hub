@@ -47,6 +47,30 @@ defmodule IdejoHubWeb.Router do
     get "/forums", DirectoryController, :search
   end
 
+  # The members' page (steward request 2026-11-10), only on my.<forum domain>: their forums,
+  # followed topics and chats.
+  pipeline :my_host do
+    plug IdejoHubWeb.Plugs.MyHost
+  end
+
+  scope "/", IdejoHubWeb, host: "my." do
+    pipe_through [:my_host, :browser]
+
+    get "/sign-in", MyController, :sign_in
+    get "/signed-in", MyController, :signed_in
+    get "/sign-in-again", MyController, :sign_in_again
+    post "/sign-out", MyController, :sign_out
+    # Idejo's "Private Message", through its chat service.
+    get "/chat/new", MyController, :new_chat
+
+    live_session :member, on_mount: {IdejoHubWeb.MyAuth, :require_member} do
+      live "/", MyLive, :forums
+      live "/topics", MyLive, :topics
+      live "/chat", MyLive, :chats
+      live "/chat/:id", ChatLive, :show
+    end
+  end
+
   # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).
   pipeline :identity_host do
     plug IdejoHubWeb.Plugs.IdentityHost
@@ -63,6 +87,9 @@ defmodule IdejoHubWeb.Router do
     put "/listing", RegistryController, :update_listing
     get "/profile", CommunityController, :profile
     post "/profile", CommunityController, :fill_profile
+    # Idejo's chat service (steward request 2026-11-10).
+    post "/chats/tickets", ChatServiceController, :ticket
+    get "/chats/unread", ChatServiceController, :unread
   end
 
   # An Idejo ID's picture, public (steward decisions 2026-11-06).
@@ -93,6 +120,8 @@ defmodule IdejoHubWeb.Router do
     post "/delete", AccountController, :delete
     post "/profile", AccountController, :update_profile
     get "/directory", AccountController, :directory
+    # The members' page's hand-off (steward request 2026-11-10).
+    get "/my", AccountController, :my
     post "/profile/picture", AccountController, :remove_picture
   end
 
@@ -154,6 +183,9 @@ defmodule IdejoHubWeb.Router do
     get "/community", CommunityController, :index
     get "/community/profile", CommunityController, :profile
     post "/community/profile", CommunityController, :fill_profile
+    # Idejo's chat service, asked by hosted forums (steward request 2026-11-10).
+    post "/community/chats/tickets", ChatServiceController, :ticket
+    get "/community/chats/unread", ChatServiceController, :unread
   end
 
   # Other scopes may use custom stacks.

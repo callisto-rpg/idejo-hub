@@ -72,7 +72,8 @@ defmodule IdejoHub.Identity.OutsideForums do
 
   @doc """
   Step 2: the proof checked, the client made (or its secret renewed):
-  `{:ok, %{issuer:, client_id:, client_secret:, label:, sign_up_url:, directory_url:}}`.
+  `{:ok, %{issuer:, client_id:, client_secret:, label:, sign_up_url:, directory_url:,
+  chat_url:, topics_url:}}`.
   """
   @spec verify(term()) :: {:ok, map()} | {:error, term()}
   def verify(registration) when is_binary(registration) and registration != "" do
@@ -108,7 +109,10 @@ defmodule IdejoHub.Identity.OutsideForums do
          client_secret: client.client_secret,
          label: @label,
          sign_up_url: Identity.issuer() <> "/account/sign-up",
-         directory_url: Community.directory_url()
+         directory_url: Community.directory_url(),
+         # Idejo's chat service (steward request 2026-11-10).
+         chat_url: Community.chat_url(),
+         topics_url: Community.topics_url()
        }}
     else
       {:error, :unknown} = error ->

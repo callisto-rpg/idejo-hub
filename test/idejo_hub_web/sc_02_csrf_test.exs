@@ -40,7 +40,8 @@ defmodule IdejoHubWeb.SC02CSRFTest do
       for %{path: "/account/api/" <> _ = path, verb: verb} <- IdejoHubWeb.Router.__routes__(),
           do: {verb, path}
 
-    assert length(api) == 6
+    # Since the chat service (steward request 2026-11-10): tickets and unread counts.
+    assert length(api) == 8
     # Only the API's controller, through the :api pipeline (no :fetch_session, no forgery
     # protection): the router source says so.
     router = File.read!("lib/idejo_hub_web/router.ex")
@@ -80,6 +81,8 @@ defmodule IdejoHubWeb.SC02CSRFTest do
           String.starts_with?(path, "/account") -> %{build_conn() | host: @id_host}
           # The forums directory's own routes (its sign-out) answer on its host only.
           plug == IdejoHubWeb.DirectoryController -> %{build_conn() | host: "forums.idejo.test"}
+          # The members' page's (steward request 2026-11-10), on its host only.
+          plug == IdejoHubWeb.MyController -> %{build_conn() | host: "my.idejo.test"}
           true -> recycle(signed_in)
         end
 
@@ -123,11 +126,20 @@ defmodule IdejoHubWeb.SC02CSRFTest do
     # ... against the Hub's own host: a forum's page is refused.
     handler = {Phoenix.LiveView.Socket, nil}
 
-    for {origin, allowed?} <- [{"http://localhost", true}, {"https://tennis.idejo.test", false}] do
+    for {origin, allowed?} <- [
+          {"http://localhost", true},
+          {"https://tennis.idejo.test", false},
+          # The members' page (steward request 2026-11-10), on the Hub's own scheme.
+          {"http://my.idejo.test", true},
+          {"https://my.idejo.test", false},
+          {"http://my.idejo.test.evil.test", false}
+        ] do
       conn =
         build_conn(:get, "/live/websocket")
         |> Plug.Conn.put_req_header("origin", origin)
-        |> Transport.check_origin(handler, @endpoint, check_origin: true)
+        |> Transport.check_origin(handler, @endpoint,
+          check_origin: Application.fetch_env!(:idejo_hub, IdejoHubWeb.Endpoint)[:check_origin]
+        )
 
       assert conn.halted == not allowed?, origin
     end
