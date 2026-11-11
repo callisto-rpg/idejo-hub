@@ -75,6 +75,64 @@ defmodule IdejoHubWeb.DirectoryController do
     |> json(%{forums: forums})
   end
 
+  @app_page_size 20
+
+  @doc """
+  `GET /api/v1/forums?q=&page=` (HA-10; steward decision 2026-11-10): the directory as JSON
+  for the official Idejo app, which finds it at `<IDEJO_COMMUNITY_DIRECTORY_URL>api/v1/forums`.
+  The same listed, running forums as the page, the same search, #{@app_page_size} a page:
+  `{"forums": [{"name", "url", "host", "description", "logo_url", "members"}], "page",
+  "pages", "total"}`. `description` is null (forums have none here yet); `members` from the
+  last `stats`, null for outside forums. Public, no session or cookie (the `:api`
+  pipeline), 120 a minute per address, cached a minute like the page's search.
+  """
+  def forums(conn, params) do
+    case IdejoHub.RateLimit.hit({:directory_api, client_ip(conn)}, 120, 60) do
+      :ok ->
+        result = Community.directory_page(params["q"], page_number(params), @app_page_size)
+
+        conn
+        |> put_resp_header("cache-control", "public, max-age=60")
+        |> json(%{
+          forums: Enum.map(result.forums, &app_entry/1),
+          page: result.page,
+          pages: result.pages,
+          total: result.total
+        })
+
+      {:error, :rate_limited} ->
+        conn
+        |> put_resp_header("retry-after", "60")
+        |> put_status(429)
+        |> json(%{error: "rate_limited"})
+    end
+  end
+
+  defp page_number(params) do
+    case Integer.parse(to_string(params["page"] || "1")) do
+      {n, ""} when n > 0 -> n
+      _ -> 1
+    end
+  end
+
+  defp app_entry(%{name: name, host: host} = entry) do
+    %{
+      name: name,
+      url: "https://#{host}/",
+      host: host,
+      description: nil,
+      logo_url: "https://#{host}/logo",
+      members: entry[:members]
+    }
+  end
+
+  defp client_ip(conn) do
+    case get_req_header(conn, "x-forwarded-for") do
+      [value | _] -> value |> String.split(",") |> List.last() |> String.trim()
+      [] -> conn.remote_ip |> :inet.ntoa() |> to_string()
+    end
+  end
+
   # The forum's logo at Idejo's fixed address (0.2.9); Join is its sign-in with Idejo ID.
   defp card(%{name: name, host: host} = entry, joined) do
     %{
