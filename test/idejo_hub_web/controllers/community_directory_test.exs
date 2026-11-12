@@ -220,6 +220,47 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     refute html =~ "directory-pages"
   end
 
+  @tag req: "HA-10"
+  test "HA-10 the directory as JSON for the app: listed running forums, 20 a page, no cookie" do
+    for n <- 1..23,
+        do:
+          forum!("app-#{String.pad_leading("#{n}", 2, "0")}", %{
+            display_name: "Garden #{String.pad_leading("#{n}", 2, "0")}",
+            members: n
+          })
+
+    forum!("app-hidden", %{display_name: "Garden hidden", listed: false})
+    forum!("app-suspended", %{display_name: "Garden suspended", status: "suspended"})
+    conn = %{build_conn() | host: @directory}
+
+    first = get(conn, ~p"/api/v1/forums")
+    body = json_response(first, 200)
+    assert get_resp_header(first, "set-cookie") == []
+    assert body["total"] == 23 and body["pages"] == 2 and body["page"] == 1
+    assert length(body["forums"]) == 20
+
+    assert hd(body["forums"]) == %{
+             "name" => "Garden 01",
+             "url" => "https://app-01.idejo.test/",
+             "host" => "app-01.idejo.test",
+             "description" => nil,
+             "logo_url" => "https://app-01.idejo.test/logo",
+             "members" => 1
+           }
+
+    names = Enum.map(body["forums"], & &1["name"])
+    refute "Garden hidden" in names
+    refute "Garden suspended" in names
+
+    second = conn |> get(~p"/api/v1/forums?page=2") |> json_response(200)
+    assert Enum.map(second["forums"], & &1["name"]) == ["Garden 21", "Garden 22", "Garden 23"]
+
+    found = conn |> get(~p"/api/v1/forums?q=garden%2007") |> json_response(200)
+    assert [%{"name" => "Garden 07"}] = found["forums"]
+
+    assert build_conn() |> get(~p"/api/v1/forums") |> response(404)
+  end
+
   test "the directory's search answers as JSON, five forums at most, on its own host only" do
     for n <- 1..7, do: forum!("api-#{n}", %{display_name: "Garden #{n}"})
     forum!("api-chess", %{display_name: "Chess club"})

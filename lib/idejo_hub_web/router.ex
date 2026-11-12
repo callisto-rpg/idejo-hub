@@ -45,6 +45,8 @@ defmodule IdejoHubWeb.Router do
   scope "/api", IdejoHubWeb, host: "forums." do
     pipe_through [:directory_host, :api]
     get "/forums", DirectoryController, :search
+    # HA-10 (steward decision 2026-11-10): the directory for the official Idejo app.
+    get "/v1/forums", DirectoryController, :forums
   end
 
   # ID-02: members' pages, only on the identity provider's host (id.<hub domain>).

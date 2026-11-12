@@ -185,6 +185,7 @@ The Hub is a small web app for the operator, built with the same stack as Idejo 
 | HA-07 | Several operator accounts with roles: owner and operator. | Should |
 | HA-08 | Hub CLI mirroring the main actions (create, backup, upgrade, suspend), for scripting and recovery. | Should |
 | HA-09 | Interface available in the same languages as Idejo at launch. | Should |
+| HA-10 | Public JSON forums directory for the app, `GET https://forums.<domain>/api/v1/forums`: listed running forums with name, address, description, logo and member count, searchable and paged (steward decision, 2026-11-10) | Should |
 
 ## 10. Non-functional requirements
 

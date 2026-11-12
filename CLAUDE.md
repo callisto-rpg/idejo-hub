@@ -110,7 +110,13 @@ The directory learns who is looking from the sign-in host: "Sign in to see your 
 (`/sign-in`, a random `state` in its session) → `/account/directory?state=` (signed in there,
 or through its sign-in first, `account_return`) → `/signed-in?token=` (`Phoenix.Token`, two
 minutes, naming the subject and that `state`) → its own session, twelve hours. Tests:
-`community_directory_test.exs`.
+`community_directory_test.exs`. **HA-10** (steward decision 2026-11-10): the same listing
+as JSON for the official Idejo app at `/api/v1/forums?q=&page=` (`DirectoryController.forums`,
+the `:api` pipeline: no session or cookie; 20 a page through `directory_page/3`'s
+`per_page`; `{forums: [{name, url, host, description (null), logo_url, members}], page,
+pages, total}`; 120 a minute per address, `IdejoHub.RateLimit`; cached a minute). Idejo's
+API guide tells the app to find it at `<IDEJO_COMMUNITY_DIRECTORY_URL>api/v1/forums`; no
+forum code changes for it (the one rule).
 
 **Members' inbox** (steward requests 2026-11-10; `Forums.inbox/0`, `create_inbox/2`,
 `forums.kind`, `InboxServiceController`, `ChatServiceController`, `Chats.ForumLink`,

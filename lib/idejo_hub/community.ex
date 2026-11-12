@@ -68,10 +68,11 @@ defmodule IdejoHub.Community do
   outside forums an operator approved (`OutsideForums`), by name, those whose name or host
   holds `search` (any case), #{@per_page} a page. `%{forums: [%{name:, host:, members:}], page:,
   pages:, total:, listed:}`, where `listed` counts every listed forum (search and pages show
-  past #{@per_page}).
+  past #{@per_page}). `per_page`: the page size, #{@per_page} by default (the app's JSON, HA-10,
+  asks 20).
   """
-  @spec directory_page(String.t() | nil, pos_integer()) :: map()
-  def directory_page(search, page) do
+  @spec directory_page(String.t() | nil, pos_integer(), pos_integer()) :: map()
+  def directory_page(search, page, per_page \\ @per_page) do
     search = (search || "") |> String.trim() |> String.slice(0, 100)
 
     all = from(e in subquery(entries()))
@@ -86,7 +87,7 @@ defmodule IdejoHub.Community do
           )
 
     total = Repo.aggregate(matching, :count)
-    pages = max(div(total + @per_page - 1, @per_page), 1)
+    pages = max(div(total + per_page - 1, per_page), 1)
     page = page |> max(1) |> min(pages)
 
     %{
@@ -94,8 +95,8 @@ defmodule IdejoHub.Community do
         Repo.all(
           matching
           |> order_by([e], asc: fragment("lower(?)", e.name), asc: e.host)
-          |> limit(@per_page)
-          |> offset(^((page - 1) * @per_page))
+          |> limit(^per_page)
+          |> offset(^((page - 1) * per_page))
         ),
       page: page,
       pages: pages,

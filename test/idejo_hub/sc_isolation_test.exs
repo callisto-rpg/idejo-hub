@@ -114,6 +114,9 @@ defmodule IdejoHub.SCIsolationTest do
       # The forums directory's search as JSON, public like the page, only on the directory's
       # host (tested in community_directory_test.exs).
       "/api/forums",
+      # HA-10: the same directory as JSON for the official Idejo app, public (tested in
+      # community_directory_test.exs).
+      "/api/v1/forums",
       # Idejo's chat service, for outside forums (tested in inbox_host_test.exs).
       "/account/api/chats/unread"
     ]
