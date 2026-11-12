@@ -101,7 +101,7 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
     body = Jason.decode!(body)
     assert body["primaryColor"] == "#daa304"
     assert body["backgroundColor"] == "#fdfcf6"
-    assert body["backgroundColorDark"] == "#1d1a00"
+    assert body["backgroundColorDark"] == "#000000"
     assert body["themeMode"] == "THEME_MODE_AUTO"
     # What the operator or Zitadel set otherwise is kept.
     assert body["warnColor"] == "#cd3d56"
@@ -128,10 +128,10 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
     zitadel(%{
       "primaryColor" => "#daa304",
       "backgroundColor" => "#fdfcf6",
-      "fontColor" => "#1d1a00",
+      "fontColor" => "#000000",
       "primaryColorDark" => "#daa304",
-      "backgroundColorDark" => "#1d1a00",
-      "fontColorDark" => "#ebeae2",
+      "backgroundColorDark" => "#000000",
+      "fontColorDark" => "#e9e8e2",
       "themeMode" => "THEME_MODE_AUTO",
       "logoUrl" => "https://id.idejo.test/assets/v1/x/logo",
       "logoUrlDark" => "https://id.idejo.test/assets/v1/x/logo-dark",
