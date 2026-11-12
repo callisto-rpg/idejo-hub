@@ -12,7 +12,9 @@ defmodule IdejoHubWeb.InboxServiceController do
     * `GET topics?subject=` → `{"forums": [{"name", "url", "topics"}]}`;
     * `GET conversations?subject=` → `{"forums": [{"name", "host", "url", "remaining",
       "conversations"}]}`;
-    * `POST conversations/moved` `{"subject", "host", "ids"}` → `{"moved"}`.
+    * `POST conversations/moved` `{"subject", "host", "ids"}` → `{"moved"}`;
+    * `POST settings` `{"subject", "settings"}` → `{"forums": [{"name", "host", "answered",
+      "saved", "failed"}]}`: "Save for all forums" (steward request 2026-11-13).
   """
   use IdejoHubWeb, :controller
 
@@ -65,6 +67,14 @@ defmodule IdejoHubWeb.InboxServiceController do
   end
 
   def moved(conn, _params), do: bad_request(conn)
+
+  def settings(conn, %{"subject" => subject, "settings" => %{} = settings})
+      when is_binary(subject) and subject != "" do
+    forums = ForumLink.save_settings(subject, settings)
+    conn |> put_resp_header("cache-control", "no-store") |> json(%{forums: forums})
+  end
+
+  def settings(conn, _params), do: bad_request(conn)
 
   defp bad_request(conn), do: conn |> put_status(400) |> json(%{error: "bad request"})
 end

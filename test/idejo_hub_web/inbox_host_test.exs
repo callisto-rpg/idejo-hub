@@ -102,6 +102,8 @@ defmodule IdejoHubWeb.InboxHostTest do
     refute Map.has_key?(env(inbox), "IDEJO_CHAT_URL")
     assert env(club)["IDEJO_CHAT_URL"] == "https://my.idejo.test/chat"
     assert env(club)["IDEJO_TOPICS_URL"] == "https://my.idejo.test/topics"
+    assert env(club)["IDEJO_SETTINGS_URL"] == "https://my.idejo.test/users/settings"
+    refute Map.has_key?(env(inbox), "IDEJO_SETTINGS_URL")
     assert Forums.certificate_allowed?("my.idejo.test")
   end
 
@@ -192,6 +194,66 @@ defmodule IdejoHubWeb.InboxHostTest do
 
     assert build_conn()
            |> get("/internal/community/inbox/topics?subject=ada")
+           |> json_response(401)
+  end
+
+  test "the inbox's settings are saved on each of the member's forums, with settings tickets" do
+    garden = forum!("ib-garden")
+    kitchen = forum!("ib-kitchen")
+    inbox = inbox!()
+    join!("ada", garden)
+    join!("ada", kitchen)
+    join!("ada", inbox)
+    test = self()
+
+    # The kitchen runs an Idejo before 0.3.7: its address does not exist.
+    Req.Test.stub(ForumLink, fn conn ->
+      assert conn.request_path == "/community/settings"
+      ticket = conn.body_params["ticket"]
+
+      case Tickets.redeem(ticket, "forum:#{garden.id}") do
+        {:ok, %{subject: "ada", scope: "settings"}} ->
+          send(test, {:settings, conn.body_params["settings"]})
+          Req.Test.json(conn, %{"saved" => ["profile"], "failed" => []})
+
+        :error ->
+          assert {:ok, %{scope: "settings"}} = Tickets.redeem(ticket, "forum:#{kitchen.id}")
+          conn |> Plug.Conn.put_status(404) |> Req.Test.json(%{})
+      end
+    end)
+
+    settings = %{"profile" => %{"display_name" => "Ada King", "user_tag" => ""}}
+
+    conn =
+      build_conn()
+      |> basic("inbox")
+      |> post("/internal/community/inbox/settings", %{subject: "ada", settings: settings})
+
+    assert %{"forums" => forums} = json_response(conn, 200)
+
+    assert Enum.sort_by(forums, & &1["name"]) == [
+             %{
+               "name" => "Club ib-garden",
+               "host" => "ib-garden.idejo.test",
+               "answered" => true,
+               "saved" => ["profile"],
+               "failed" => []
+             },
+             %{
+               "name" => "Club ib-kitchen",
+               "host" => "ib-kitchen.idejo.test",
+               "answered" => false,
+               "saved" => [],
+               "failed" => []
+             }
+           ]
+
+    assert_received {:settings, ^settings}
+
+    # Only the inbox asks.
+    assert build_conn()
+           |> basic("ib-garden")
+           |> post("/internal/community/inbox/settings", %{subject: "ada", settings: settings})
            |> json_response(401)
   end
 

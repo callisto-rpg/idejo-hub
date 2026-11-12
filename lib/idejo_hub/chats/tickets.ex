@@ -5,7 +5,8 @@ defmodule IdejoHub.Chats.Tickets do
   @moduledoc """
   Tickets (steward request 2026-11-10): before asking a forum about a member (their followed
   topics, their private conversations to copy), the Hub makes a random ticket naming that
-  member, a scope (`topics`, `conversations`) and that forum's client (`"forum:<id>"`,
+  member, a scope (`topics`, `conversations`, and `settings`: the member's Profile and
+  account saved from the inbox, steward request 2026-11-13) and that forum's client (`"forum:<id>"`,
   `"outside:<id>"`), good for two minutes. The forum hands it back with its client id and
   secret (`IdejoHubWeb.ChatServiceController`); only that forum learns whom it names. Only
   the SHA-256 is stored.
@@ -16,7 +17,7 @@ defmodule IdejoHub.Chats.Tickets do
   alias IdejoHub.Repo
 
   @seconds 120
-  @scopes ~w(topics conversations)
+  @scopes ~w(topics conversations settings)
 
   @doc "A new ticket for `subject`, `scope` and `client`."
   @spec issue(String.t(), String.t(), String.t()) :: String.t()

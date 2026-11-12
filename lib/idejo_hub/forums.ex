@@ -748,15 +748,17 @@ defmodule IdejoHub.Forums do
 
   # The members' inbox (steward request 2026-11-10): itself in Idejo's inbox mode (0.3.5);
   # every other forum, once there is one, sends its members there: Idejo's chat service
-  # (`IDEJO_CHAT_URL`, private conversations; 0.3.4) and "All my topics"
-  # (`IDEJO_TOPICS_URL`). Forums before them ignore the variables.
+  # (`IDEJO_CHAT_URL`, private conversations; 0.3.4), "All my topics" (`IDEJO_TOPICS_URL`)
+  # and the inbox's Profile and account, saving for all forums (`IDEJO_SETTINGS_URL`;
+  # 0.3.7). Forums before them ignore the variables.
   defp inbox_env(%Forum{kind: "inbox"}), do: %{"IDEJO_INBOX" => "on"}
 
   defp inbox_env(_forum) do
     if inbox(),
       do: %{
         "IDEJO_CHAT_URL" => IdejoHub.Community.chat_url(),
-        "IDEJO_TOPICS_URL" => IdejoHub.Community.topics_url()
+        "IDEJO_TOPICS_URL" => IdejoHub.Community.topics_url(),
+        "IDEJO_SETTINGS_URL" => IdejoHub.Community.settings_url()
       },
       else: %{}
   end
