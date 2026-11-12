@@ -99,7 +99,7 @@ defmodule IdejoHubWeb.Router do
     post "/profile/picture", AccountController, :remove_picture
   end
 
-  # SC-08: sign-in, two-factor setup and code, sign-out.
+  # SC-08: sign-in, two-factor setup and code, a forgotten password, sign-out.
   scope "/", IdejoHubWeb do
     pipe_through :browser
 
@@ -107,6 +107,10 @@ defmodule IdejoHubWeb.Router do
     post "/sign-in", SessionController, :create
     get "/sign-in/two-factor", SessionController, :two_factor
     post "/sign-in/two-factor", SessionController, :verify
+    get "/sign-in/reset", PasswordResetController, :new
+    post "/sign-in/reset", PasswordResetController, :create
+    get "/sign-in/reset/:token", PasswordResetController, :edit
+    post "/sign-in/reset/:token", PasswordResetController, :update
     delete "/sign-out", SessionController, :delete
   end
 

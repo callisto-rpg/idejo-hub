@@ -1,0 +1,27 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Choose a new password</h1>
+  <p>At least {@min} characters. Signing in still asks for your two-factor code.</p>
+  <.form for={@form} id="password-reset-new" action={~p"/sign-in/reset/#{@token}"} method="post">
+    <.input
+      field={@form[:password]}
+      type="password"
+      label="New password"
+      autocomplete="new-password"
+      minlength={@min}
+      required
+    />
+    <.input
+      field={@form[:password_confirmation]}
+      type="password"
+      label="New password again"
+      autocomplete="new-password"
+      minlength={@min}
+      required
+    />
+    <.button>Change password</.button>
+  </.form>
+</Layouts.app>

@@ -18,6 +18,9 @@ defmodule IdejoHub.Operators.Operator do
     field :locked_until, :utc_datetime
     # HA-07: owners also manage operator accounts.
     field :role, :string, default: "operator"
+    # SC-08: the pending password-reset link (its SHA-256) and when it was sent.
+    field :reset_token_hash, :binary, redact: true
+    field :reset_sent_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end

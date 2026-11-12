@@ -4,8 +4,9 @@
 defmodule IdejoHubWeb.OperatorsLive do
   @moduledoc """
   HA-07: operator accounts, for owners. Add one (its one-time password shown here once, as
-  the command line does; two-factor set up at its first sign-in), change a role, remove an
-  account. The last owner stays an owner, and nobody removes their own account.
+  the command line does; two-factor set up at its first sign-in), change a role, reset an
+  account's two-factor (a lost phone; SC-08), remove an account. The last owner stays an
+  owner, and nobody removes or resets their own account.
   """
   use IdejoHubWeb, :live_view
 
@@ -57,12 +58,30 @@ defmodule IdejoHubWeb.OperatorsLive do
     end
   end
 
+  def handle_event("reset_two_factor", %{"id" => id}, socket) do
+    operator = Operators.get_operator!(String.to_integer(id))
+
+    case Operators.reset_two_factor(operator, socket.assigns.current_operator) do
+      :ok ->
+        {:noreply,
+         socket
+         |> put_flash(
+           :info,
+           "Two-factor reset for #{operator.email}: they set it up again at their next sign-in."
+         )
+         |> load()}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, message(reason))}
+    end
+  end
+
   defp load(socket),
     do: assign(socket, operators: Operators.list_operators(), roles: Operator.roles())
 
   defp message(:forbidden), do: "Only owners manage operator accounts."
   defp message(:last_owner), do: "The last owner stays an owner: make another owner first."
-  defp message(:self), do: "You cannot remove your own account."
+  defp message(:self), do: "Not on your own account: ask another owner."
   defp message(:invalid_role), do: "Choose owner or operator."
   defp message(other), do: "Not done: #{inspect(other)}"
 
@@ -117,6 +136,16 @@ defmodule IdejoHubWeb.OperatorsLive do
             </td>
             <td>{if Operators.two_factor?(o), do: "set up", else: "at first sign-in"}</td>
             <td>
+              <button
+                :if={o.id != @current_operator.id and Operators.two_factor?(o)}
+                id={"operator-#{o.id}-reset-two-factor"}
+                phx-click="reset_two_factor"
+                phx-value-id={o.id}
+                data-confirm={"Reset two-factor for #{o.email}? Their sessions end now, and they set it up again at their next sign-in."}
+                class="btn btn-sm btn-ghost"
+              >
+                Reset two-factor
+              </button>
               <button
                 :if={o.id != @current_operator.id}
                 id={"operator-#{o.id}-remove"}
