@@ -61,7 +61,7 @@ config :idejo_hub, IdejoHub.Hosting,
 config :idejo_hub, IdejoHub.Forums,
   domain: "idejo.test",
   db_host: "db",
-  default_version: "0.3.5",
+  default_version: "0.3.6",
   default_memory_mb: 384,
   default_cpus: 0.5,
   # FL-05: days between a deletion and the purge.
