@@ -113,7 +113,7 @@
    request, 2026-11-06): Idejo's fonts (Fraunces for titles, Rubik for text; the
    @font-face rules copied from Idejo's app.css, files in priv/static/fonts, OFL-1.1) and its
    default theme colours (Idejo's Admin → Settings defaults: gold #daa304, #f2c94c, #b8860b
-   on cream #fdfcf6, or on #1d1a00 in the dark theme), with the formulas Idejo's
+   on cream #fdfcf6, or on #000000 in the dark theme), with the formulas Idejo's
    Layouts.theme_rules/1 uses. Scoped to `.idejo-member` (Layouts.app on members' pages):
    operators' pages keep the Hub's own theme. */
 @font-face {
@@ -249,7 +249,7 @@
   --color-base-100: color-mix(in oklab, #fdfcf6 35%, #fff);
   --color-base-200: #fdfcf6;
   --color-base-300: color-mix(in oklab, #fdfcf6 91%, #000);
-  --color-base-content: #1d1a00;
+  --color-base-content: #000000;
   font-family: var(--font-body);
   background: var(--color-base-200);
   color: var(--color-base-content);
@@ -259,10 +259,10 @@
   & .input, & .textarea, & .select { background: var(--color-base-100); }
 }
 [data-theme=dark] .idejo-member {
-  --color-base-100: color-mix(in oklab, #1d1a00 92%, #fff);
-  --color-base-200: #1d1a00;
-  --color-base-300: color-mix(in oklab, #1d1a00 82%, #fff);
-  --color-base-content: color-mix(in oklab, #fdfcf6 92%, #1d1a00);
+  --color-base-100: color-mix(in oklab, #000000 92%, #fff);
+  --color-base-200: #000000;
+  --color-base-300: color-mix(in oklab, #000000 82%, #fff);
+  --color-base-content: color-mix(in oklab, #fdfcf6 92%, #000000);
 }
 /* The Idejo logos: the small one by the title, the full one above the sign-up form. */
 .idejo-member .member-mark { width: 2rem; height: 2rem; border-radius: 0.5rem; }

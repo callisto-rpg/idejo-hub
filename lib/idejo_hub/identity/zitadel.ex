@@ -119,16 +119,16 @@ defmodule IdejoHub.Identity.Zitadel do
   end
 
   # Zitadel's sign-in screens in Idejo's look (steward request 2026-11-06), like the Hub's
-  # members' pages: Idejo's default colours (gold on cream, or on #1d1a00 in the dark theme;
+  # members' pages: Idejo's default colours (gold on cream, or on #000000 in the dark theme;
   # its warning red kept) and the Idejo logo, as the instance's branding (label policy).
   # Applied when the colours differ or a logo is missing, then activated; else nothing.
   @branding %{
     "primaryColor" => "#daa304",
     "backgroundColor" => "#fdfcf6",
-    "fontColor" => "#1d1a00",
+    "fontColor" => "#000000",
     "primaryColorDark" => "#daa304",
-    "backgroundColorDark" => "#1d1a00",
-    "fontColorDark" => "#ebeae2",
+    "backgroundColorDark" => "#000000",
+    "fontColorDark" => "#e9e8e2",
     "themeMode" => "THEME_MODE_AUTO"
   }
 

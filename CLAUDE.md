@@ -651,7 +651,8 @@ Design points (Implementation Prompt, Part B, milestone 2):
 - **Member pages' look** (steward request 2026-11-06): pages whose `Layouts.app` `title` is
   not "Idejo Hub" (the Idejo ID site, the forums directory) sit in `.idejo-member`: Idejo's
   fonts (Fraunces, Rubik; `priv/static/fonts`, OFL-1.1) and its default theme colours (gold
-  on cream, `#1d1a00` in the dark theme; `assets/css/app.css`, Idejo's own formulas), the
+  on cream, `#000000` in the dark theme since 2026-11-12, before `#1d1a00`;
+  `assets/css/app.css`, Idejo's own formulas), the
   small Idejo logo by the title and the full one above the sign-up form
   (`priv/static/images/logo*.svg`, CC-BY-4.0; NOTICE, REUSE.toml). Operators' pages keep
   the Hub's theme. A change to Idejo's default colours or fonts is copied here. Zitadel's
