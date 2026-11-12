@@ -1,0 +1,23 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Reset your password</h1>
+  <%= if @email_ready do %>
+    <p>
+      Enter your operator email. We send a link to choose a new password; your two-factor
+      code is still asked when you sign in.
+    </p>
+    <.form for={@form} id="password-reset" action={~p"/sign-in/reset"} method="post">
+      <.input field={@form[:email]} type="email" label="Email" autocomplete="username" required />
+      <.button>Send the link</.button>
+    </.form>
+  <% else %>
+    <p id="password-reset-no-smtp">
+      This Hub has no email server set up, so it cannot send the link. Ask an owner for a new
+      one-time password.
+    </p>
+  <% end %>
+  <p><.link href={~p"/sign-in"}>Back to sign in</.link></p>
+</Layouts.app>

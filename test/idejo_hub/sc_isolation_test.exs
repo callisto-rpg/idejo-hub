@@ -73,6 +73,10 @@ defmodule IdejoHub.SCIsolationTest do
     open = [
       "/sign-in",
       "/sign-in/two-factor",
+      # SC-08: a forgotten password, by an emailed link (tested in
+      # sc_08_password_reset_test.exs).
+      "/sign-in/reset",
+      "/sign-in/reset/:token",
       "/internal/caddy/ask",
       "/internal/forum-unavailable",
       # Idejo's community menu: a forum's client credentials, not a sign-in (tested in

@@ -24,6 +24,10 @@ defmodule IdejoHub.Mailer do
     end
   end
 
+  @doc "Whether the Hub can send email at all (an SMTP server set, or a test adapter)."
+  @spec configured?() :: boolean()
+  def configured?, do: match?({:ok, _}, smtp_config())
+
   @doc "The sender: the Hub's own (`Settings.sender/0`)."
   @spec from_address() :: String.t()
   def from_address, do: IdejoHub.Settings.sender()

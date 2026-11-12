@@ -465,16 +465,27 @@ Design points (Implementation Prompt, Part B, milestone 2):
   downloads); LiveView's socket needs the session's token (`connect_info: [session: …]`) and
   the Hub's own origin (default `check_origin`, never set off outside development). A new
   route is checked by `test/idejo_hub_web/sc_02_csrf_test.exs`. Forums: Idejo SP-05, SP-10.
-  `bin/hub-admin reset-two-factor EMAIL` clears the setup and ends the sessions. Every
-  operator page goes through the router's `:operator` pipeline; pass
+  `bin/hub-admin reset-two-factor EMAIL`, or an owner's "Reset two-factor" on `/operators`
+  (`Operators.reset_two_factor/2`: never one's own), clears the setup and ends the sessions.
+  **Forgotten password** (steward request 2026-11-12; `PasswordResetController`): "Forgot
+  your password?" on `/sign-in` → `/sign-in/reset` emails (`IdejoHub.Mailer`) a link
+  `/sign-in/reset/<token>` (random, SHA-256 in `operators.reset_token_hash`, 30 minutes, used
+  once, a new request replaces it); the new password (12 to 200 characters) ends every
+  session, lifts no lock, and two factor is still asked. The answer never says whether an
+  email is an operator's; five requests an hour per address, three per email (`RateLimit`);
+  without SMTP the page says to ask an owner. Every operator page goes through the router's
+  `:operator` pipeline; pass
   `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
   `operator.create`, `operator.sign_in` (ok/failed with the factor, never a password or
-  code), `operator.two_factor_reset`.
+  code), `operator.two_factor_reset` (by the command line or the owner),
+  `operator.password_reset` (`requested`/`failed` when the email is sent, `ok` when used;
+  never the token). Tests: `sc_08_password_reset_test.exs`.
 - **Operator roles** (HA-07, `operators.role`, `Operators.owner?/1`, `set_role/3`,
   `remove_operator/2`; extra review: DV-06): `owner` or `operator`. Owners also manage
   operator accounts at `/operators` (`OperatorsLive`, `live_session :owner`,
   `on_mount: {OperatorAuth, :require_owner}`; linked in the header for owners only): add one
-  (one-time password shown once), change a role, remove one (its sessions end with it). The
+  (one-time password shown once), change a role, reset its two-factor (SC-08), remove one
+  (its sessions end with it). The
   last owner stays an owner, nobody removes their own account. Everything else is open to
   both roles (a further split needs a steward decision). `create_operator/3` without a role
   makes the first account an owner and later ones operators; `bin/hub-admin create-operator
