@@ -55,8 +55,8 @@ database query, a patched image or a Hub-only code path inside Idejo. The Hub mu
 working across Idejo minor versions without code changes, and each Hub release states the
 Idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.3.5**, the default for new forums (steward
-request 2026-11-10, the members' inbox)
+Supported Idejo versions (Hub NF-06): **0.3.6**, the default for new forums (steward
+request 2026-11-13; 0.3.5 since 2026-11-10, the members' inbox)
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
@@ -72,7 +72,9 @@ takes and shares the Idejo ID profile, below; 0.2.11 the first whose community m
 its list: before it, the menu's script got 406 from the forum's `/community`). Forums need
 0.3.4 for the chat service and "All my topics" (the members' inbox, below; before, they keep
 their own private conversations and show no topics in the inbox); the inbox needs 0.3.5
-(Idejo's inbox mode).
+(Idejo's inbox mode). 0.3.6 adds, in the inbox's topic cards, each forum's logo and its
+unread mentions and new reactions (the forums send them from 0.3.6; before, only new
+messages), and makes a forum's logo its favicon.
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
