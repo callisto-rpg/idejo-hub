@@ -40,8 +40,9 @@ defmodule IdejoHubWeb.SC02CSRFTest do
       for %{path: "/account/api/" <> _ = path, verb: verb} <- IdejoHubWeb.Router.__routes__(),
           do: {verb, path}
 
-    # Since Idejo's chat service (steward request 2026-11-10): tickets and unread counts.
-    assert length(api) == 8
+    # Since Idejo's chat service (steward request 2026-11-10): tickets and unread counts;
+    # since 2026-11-13, what is new in the member's other forums.
+    assert length(api) == 9
     # Only the API's controller, through the :api pipeline (no :fetch_session, no forgery
     # protection): the router source says so.
     router = File.read!("lib/idejo_hub_web/router.ex")
