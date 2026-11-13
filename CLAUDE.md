@@ -74,7 +74,8 @@ its list: before it, the menu's script got 406 from the forum's `/community`). F
 their own private conversations and show no topics in the inbox); the inbox needs 0.3.5
 (Idejo's inbox mode). 0.3.6 adds, in the inbox's topic cards, each forum's logo and its
 unread mentions and new reactions (the forums send them from 0.3.6; before, only new
-messages), and makes a forum's logo its favicon.
+messages), and makes a forum's logo its favicon. Idejo 0.3.7 (next) takes the inbox's
+"Save for all forums" (below); forums before it answer nothing there and the inbox names them.
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -134,7 +135,9 @@ members' inbox": "Idejo", owned by them, out of the directory, Idejo ID only, se
 exists, every other forum's container gets `IDEJO_CHAT_URL` (`<my>/chat`) and
 `IDEJO_TOPICS_URL` (`<my>/topics`) (outside forums `chat_url` and `topics_url` from
 `registrations/verify`): their sidebar's "All my topics" and "Private Conversations" and a
-user card's "Private Message" (`/chat/new?with=<subject>`) lead there; "Apply to all forums
+user card's "Private Message" (`/chat/new?with=<subject>`) lead there; and
+`IDEJO_SETTINGS_URL` (`<my>/users/settings`; Idejo 0.3.7, steward request 2026-11-13): their
+Profile and account says its settings apply only there and links to the inbox's; "Apply to all forums
 now" brings them to forums made before. The inbox is left out of joined lists
 (`Community.joined/3`, `joined_hosts/1`, `ForumLink.forums/1`). It asks the Hub on the forum
 network with its own client credentials (`Community.inbox_client?/2`):
@@ -142,7 +145,10 @@ network with its own client credentials (`Community.inbox_client?/2`):
 relays from the member's forums through Idejo's chat service interface with **tickets**
 (`Chats.Tickets`: random, two minutes, SHA-256 stored, bound to member, scope and forum
 client; forums check them at `/internal/community/chats/tickets` or
-`/account/api/chats/tickets`), and `inbox/conversations/moved`; it reads any Idejo ID's
+`/account/api/chats/tickets`), `inbox/conversations/moved` and `inbox/settings` (`{subject, settings}`, "Save for all
+forums": `ForumLink.save_settings/2` passes the inbox's JSON as it is to each joined forum's
+`POST /community/settings` with a `settings` ticket and answers `{"forums": [{"name", "host",
+"answered", "saved", "failed"}]}`, a forum before 0.3.7 `answered: false`); it reads any Idejo ID's
 profile (`/internal/community/profile`, never fills one). Forums' sidebar counts
 (`…/chats/unread?subject=`) are asked of the inbox (`ForumLink.inbox_unread/1`:
 `/community/inbox-unread`, with the inbox's client credentials). `ForumLink` asks hosted

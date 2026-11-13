@@ -170,6 +170,7 @@ defmodule IdejoHubWeb.Router do
     get "/community/inbox/topics", InboxServiceController, :topics
     get "/community/inbox/conversations", InboxServiceController, :conversations
     post "/community/inbox/conversations/moved", InboxServiceController, :moved
+    post "/community/inbox/settings", InboxServiceController, :settings
   end
 
   # Other scopes may use custom stacks.

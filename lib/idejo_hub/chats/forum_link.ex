@@ -12,7 +12,9 @@ defmodule IdejoHub.Chats.ForumLink do
       left out) and the outside forums they signed in to, by name;
     * `topics/1`: each one's `GET /community/topics?ticket=` (the topics they follow);
     * `conversations/1`: each one's `GET /community/conversations?ticket=` (their private
-      conversations the inbox copies), and `moved/3`, `POST /community/conversations/moved`.
+      conversations the inbox copies), and `moved/3`, `POST /community/conversations/moved`;
+    * `save_settings/2`: each one's `POST /community/settings` (Idejo 0.3.7; steward request
+      2026-11-13), the member's Profile and account sections saved for all forums.
 
   Hosted forums are asked on the forum network (`http://idejo-forum-<slug>:4000`), outside
   ones at their public address only. Each forum gets four seconds; a forum that does not
@@ -130,11 +132,54 @@ defmodule IdejoHub.Chats.ForumLink do
       forum ->
         ticket = Tickets.issue(subject, "conversations", forum.client)
 
-        case post(forum, "/community/conversations/moved", ticket, ids) do
+        case post(forum, "/community/conversations/moved", %{ticket: ticket, ids: ids}) do
           {:ok, %{status: 200}} -> :ok
           _ -> :error
         end
     end
+  end
+
+  @doc """
+  Saves `settings` (the inbox's JSON, passed on as it is) on every forum `subject` joined,
+  each with a ticket of scope `settings`: one entry per forum, `%{name:, host:, answered:,
+  saved:, failed:}`, `answered` false for a forum that did not answer or runs an Idejo
+  without the interface (before 0.3.7).
+  """
+  @spec save_settings(String.t(), map()) :: [map()]
+  def save_settings(subject, settings) when is_map(settings) do
+    subject
+    |> forums()
+    |> Task.async_stream(
+      fn forum ->
+        ticket = Tickets.issue(subject, "settings", forum.client)
+
+        case post(forum, "/community/settings", %{ticket: ticket, settings: settings}) do
+          {:ok, %{status: 200, body: %{"saved" => saved, "failed" => failed}}}
+          when is_list(saved) and is_list(failed) ->
+            settings_entry(forum, true, saved, failed)
+
+          _ ->
+            settings_entry(forum, false, [], [])
+        end
+      end,
+      timeout: @timeout + 1_000,
+      on_timeout: :kill_task,
+      zip_input_on_exit: true
+    )
+    |> Enum.map(fn
+      {:ok, entry} -> entry
+      {:exit, {forum, _reason}} -> settings_entry(forum, false, [], [])
+    end)
+  end
+
+  defp settings_entry(forum, answered, saved, failed) do
+    %{
+      name: forum.name,
+      host: forum.host,
+      answered: answered,
+      saved: Enum.filter(saved, &is_binary/1),
+      failed: Enum.filter(failed, &is_binary/1)
+    }
   end
 
   @doc """
@@ -181,9 +226,9 @@ defmodule IdejoHub.Chats.ForumLink do
     end
   end
 
-  defp post(forum, path, ticket, ids) do
+  defp post(forum, path, body) do
     with {:ok, request} <- request(forum, path),
-         do: Req.post(request, json: %{ticket: ticket, ids: ids})
+         do: Req.post(request, json: body)
   end
 
   # An outside forum is asked at the address its name resolves to, checked public (as its

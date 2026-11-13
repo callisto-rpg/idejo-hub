@@ -43,6 +43,13 @@ defmodule IdejoHub.Community do
   @spec topics_url() :: String.t()
   def topics_url, do: my_url() <> "topics"
 
+  @doc """
+  The inbox's Profile and account, where a member saves settings for all their forums, given
+  to forums as `IDEJO_SETTINGS_URL` (steward request 2026-11-13).
+  """
+  @spec settings_url() :: String.t()
+  def settings_url, do: my_url() <> "users/settings"
+
   @doc "The directory's address, given to forums as `IDEJO_COMMUNITY_DIRECTORY_URL`."
   @spec directory_url() :: String.t()
   def directory_url, do: "https://" <> directory_host() <> "/"
