@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Operations.UpgradeWorker do
   @moduledoc """
-  OP-04: upgrades one forum to another Idejo version, rolling back on failure.
+  OP-04: upgrades one forum to another idejo version, rolling back on failure.
 
   1. Pull the new image while the forum keeps running (Hub NF-04: a download never adds to
      the downtime). A failed pull changes nothing.
@@ -12,7 +12,7 @@ defmodule IdejoHub.Operations.UpgradeWorker do
      `upgrade` (never pruned). It also stays in the forum's backups volume for step 6. A
      failure up to here changes nothing: the mark is removed.
   4. Recreate the container on the new image (`ForumContainer.recreate/1`: volumes kept),
-     with `IDEJO_SOURCE_URL` for the new version (LB-03). Its command runs Idejo's
+     with `IDEJO_SOURCE_URL` for the new version (LB-03). Its command runs idejo's
      migrations, then the server.
   5. Start it and wait for `/health` 200 within `:upgrade_health_timeout` (default 5 min).
      Success: `running` on the new version, mark removed.

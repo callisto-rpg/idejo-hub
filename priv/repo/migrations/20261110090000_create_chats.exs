@@ -4,9 +4,9 @@
 defmodule IdejoHub.Repo.Migrations.CreateChats do
   use Ecto.Migration
 
-  # Chats (steward request 2026-11-10): private conversations between Idejo IDs, held by the
-  # Hub at my.<forum domain>/chat rather than by each forum, written like an Idejo topic
-  # (growing messages) without patience timers. Members are Idejo ID subjects.
+  # Chats (steward request 2026-11-10): private conversations between idejo IDs, held by the
+  # Hub at my.<forum domain>/chat rather than by each forum, written like an idejo topic
+  # (growing messages) without patience timers. Members are idejo ID subjects.
   def change do
     create table(:chats) do
       # The two subjects, sorted, one per line: one chat per pair.
@@ -46,7 +46,7 @@ defmodule IdejoHub.Repo.Migrations.CreateChats do
     create index(:chat_messages, [:reply_to_id])
     create unique_index(:chat_messages, [:source])
 
-    # One open message per author per chat (as Idejo's GM-09).
+    # One open message per author per chat (as idejo's GM-09).
     create unique_index(:chat_messages, [:chat_id, :author_subject],
              where: "state = 'open'",
              name: :chat_messages_one_open_index

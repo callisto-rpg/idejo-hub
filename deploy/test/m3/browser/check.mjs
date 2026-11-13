@@ -3,11 +3,11 @@
 //
 // Hub milestone 3 exit check, the person's side (run by ../run.sh in Playwright's image).
 // PHASE=join: sign up on the Hub's page, take Zitadel's invite from the email, choose a
-// password, then join alpha and bravo through "Idejo ID" (each forum asks first).
+// password, then join alpha and bravo through "idejo ID" (each forum asks first).
 // PHASE=hubdown (NF-05), with the Hub stopped: the session kept from join still works on alpha,
 // the forum serves, Zitadel answers, and the Hub's own page does not.
 // PHASE=delete: alpha shows the moderator role and bravo refuses the banned member; then the
-// member's page lists both forums, and the member deletes their Idejo ID.
+// member's page lists both forums, and the member deletes their idejo ID.
 
 import { chromium } from "playwright"
 import fs from "node:fs"
@@ -135,7 +135,7 @@ try {
       await page.click("#oidc-consent-join")
       await page.waitForURL(`https://${host}/`)
       await page.goto(`https://${host}/users/settings`)
-      check(new URL(page.url()).pathname === "/users/settings", `${host}: joined and signed in through Idejo ID`)
+      check(new URL(page.url()).pathname === "/users/settings", `${host}: joined and signed in through idejo ID`)
     }
     await context.storageState({ path: "/out/state.json" })
   }
@@ -162,7 +162,7 @@ try {
 
     const bravoPath = await signInTo("bravo.idejo.test")
     const bravoFlash = await page.textContent("body")
-    check(bravoPath === "/users/sign-in" && /banned/i.test(bravoFlash), "bravo: the same Idejo ID is refused, banned there")
+    check(bravoPath === "/users/sign-in" && /banned/i.test(bravoFlash), "bravo: the same idejo ID is refused, banned there")
     await page.goto(`https://alpha.idejo.test/users/settings`)
     check(new URL(page.url()).pathname === "/users/settings", "alpha: still active and signed in")
 
@@ -183,7 +183,7 @@ try {
     await page.click("#delete button.btn-error")
     await page.waitForLoadState("networkidle").catch(() => {})
     await snap("deleting")
-    check((await page.textContent("body")).includes("Deleting your Idejo ID"), "deleting the Idejo ID, forum accounts first")
+    check((await page.textContent("body")).includes("Deleting your idejo ID"), "deleting the idejo ID, forum accounts first")
 
   }
   fs.writeFileSync(`/out/${PHASE}.done`, "")

@@ -11,7 +11,7 @@ defmodule IdejoHub.Settings do
   | `alert_email` | Where alerts go (OP-08, milestone 4) | none |
   | `reserved_subdomains` | Names refused for new forums, on top of FL-03's | none |
   | `access_policy` | When the operator would access a forum, in their words, on the forum owners' disclosure page (SC-10; plain text, at most 4000 characters) | none |
-  | `privacy_notice` | The privacy notice members read on the sign-in host (Hub NF-07, as Idejo's AD-02; plain text, at most 50 000 characters) | none |
+  | `privacy_notice` | The privacy notice members read on the sign-in host (Hub NF-07, as idejo's AD-02; plain text, at most 50 000 characters) | none |
 
   The forum domain stays in the environment (`IDEJO_FORUM_DOMAIN`): every forum's address,
   certificate and links depend on it. Backups are kept in the exports volume; off-server

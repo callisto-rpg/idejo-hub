@@ -45,7 +45,7 @@ Nothing else: no `/build`, `/swarm`, `/plugins`, `/secrets`, `/system`, `/networ
 | Stops a compromised Hub from getting root? | **No**: create still accepts `Privileged` | **Yes**, as long as the guard's policy is right | **Mostly**: the attacker gets the Docker user, not root |
 | Memory | ~10 MB | ~10 MB + ~50 MB (Elixir release) | none |
 | Maintenance | Update an image | Update an image + ~300 lines of our own, reviewed under DV-06 | Install script sets up rootless mode; operators must keep it |
-| Side effects | none | none | Client IPs are hidden behind the port driver unless `slirp4netns` is used (that breaks Idejo's IP rate limits, SP-05). CPU/IO limits (SC-05) need cgroup delegation set up by hand. Ports 80/443 need a sysctl. |
+| Side effects | none | none | Client IPs are hidden behind the port driver unless `slirp4netns` is used (that breaks idejo's IP rate limits, SP-05). CPU/IO limits (SC-05) need cgroup delegation set up by hand. Ports 80/443 need a sysctl. |
 
 Also looked at: Tecnativa/docker-socket-proxy (Apache-2.0) only switches whole sections on
 or off (`CONTAINERS=1`, `POST=1`), which is coarser than A. linuxserver/docker-socket-proxy

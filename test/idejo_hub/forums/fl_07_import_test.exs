@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Forums.FL07ImportTest do
-  @moduledoc "FL-07: import an existing standalone Idejo backup as a new Hub forum."
+  @moduledoc "FL-07: import an existing standalone idejo backup as a new Hub forum."
   use IdejoHub.DataCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
 
@@ -31,7 +31,7 @@ defmodule IdejoHub.Forums.FL07ImportTest do
     %{dir: dir}
   end
 
-  # A standalone Idejo backup as Idejo.Backup writes it (or a broken one, by `entries`).
+  # A standalone idejo backup as Idejo.Backup writes it (or a broken one, by `entries`).
   defp backup(dir, entries \\ nil) do
     entries =
       entries ||

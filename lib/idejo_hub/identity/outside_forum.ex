@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Identity.OutsideForum do
   @moduledoc """
-  An Idejo server not hosted by this Hub that signs in with its Idejo ID (steward decisions
+  An idejo server not hosted by this Hub that signs in with its idejo ID (steward decisions
   2026-11-06; `IdejoHub.Identity.OutsideForums`). Only hashes of its secrets are kept: the
   client secret goes to the forum once, at each registration.
 

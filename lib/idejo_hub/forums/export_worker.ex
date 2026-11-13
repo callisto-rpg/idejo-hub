@@ -3,13 +3,13 @@
 
 defmodule IdejoHub.Forums.ExportWorker do
   @moduledoc """
-  FL-06: exports a forum as a standard Idejo backup.
+  FL-06: exports a forum as a standard idejo backup.
 
   A one-off container (`idejo-forum-<slug>-export`: the forum's image, environment and
-  volumes) runs `idejo-admin backup` (Idejo AD-05, AD-09), which works whether the forum
+  volumes) runs `idejo-admin backup` (idejo AD-05, AD-09), which works whether the forum
   is running or suspended. The Hub reads the file name from its output (only
   `/data/backups/idejo-YYYYMMDD-HHMMSS.tar`), copies that file into its exports volume,
-  records its size and SHA-256, and removes the one-off container. The file is Idejo's own
+  records its size and SHA-256, and removes the one-off container. The file is idejo's own
   backup format, so `idejo-admin restore` takes it on a standalone install.
   """
   use Oban.Worker, queue: :operations, max_attempts: 1

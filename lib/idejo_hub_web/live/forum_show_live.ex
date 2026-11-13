@@ -143,7 +143,7 @@ defmodule IdejoHubWeb.ForumShowLive do
       done(
         socket,
         Forums.set_local_accounts(forum, allowed == "true", actor),
-        if(allowed == "true", do: "Allowing local accounts.", else: "Idejo ID accounts only.")
+        if(allowed == "true", do: "Allowing local accounts.", else: "idejo ID accounts only.")
       )
 
   defp run("recreate", _p, forum, actor, socket),
@@ -213,7 +213,7 @@ defmodule IdejoHubWeb.ForumShowLive do
       <h1 class="text-2xl font-semibold">{@forum.display_name}</h1>
       <p>
         <a href={"https://" <> Forums.host(@forum)} rel="noopener">{Forums.host(@forum)}</a>
-        · owner {@forum.owner_email} · Idejo {@forum.idejo_version}
+        · owner {@forum.owner_email} · idejo {@forum.idejo_version}
       </p>
 
       <section id="state" aria-labelledby="state-title">
@@ -359,13 +359,13 @@ defmodule IdejoHubWeb.ForumShowLive do
       <section id="identity" aria-labelledby="identity-title" class="space-y-2">
         <h2 id="identity-title" class="text-xl font-semibold">Sign-in</h2>
         <p :if={@forum.oidc_client_id} id="identity-client">
-          Members sign in with Idejo ID (client <code>{@forum.oidc_client_id}</code>).
+          Members sign in with idejo ID (client <code>{@forum.oidc_client_id}</code>).
         </p>
         <p :if={!@forum.oidc_client_id} id="identity-none">
-          Not connected to Idejo ID yet: "Recreate (apply settings)" connects it.
+          Not connected to idejo ID yet: "Recreate (apply settings)" connects it.
         </p>
         <p id="local-accounts">
-          Local accounts (without an Idejo ID):
+          Local accounts (without an idejo ID):
           <strong>{if @forum.local_accounts, do: "allowed", else: "not allowed"}</strong>
           <button
             :if={@forum.status in ["running", "suspended"]}
@@ -374,7 +374,7 @@ defmodule IdejoHubWeb.ForumShowLive do
             class="btn btn-ghost btn-xs"
             data-confirm="Change this and make the forum's container again (briefly unavailable)?"
           >
-            {if @forum.local_accounts, do: "Allow Idejo ID only", else: "Allow local accounts"}
+            {if @forum.local_accounts, do: "Allow idejo ID only", else: "Allow local accounts"}
           </button>
         </p>
         <button
@@ -439,7 +439,7 @@ defmodule IdejoHubWeb.ForumShowLive do
 
         <div :if={@archives != []} id="standalone-key" class="space-y-1">
           <p class="text-sm">
-            Restoring an export on a standalone Idejo? Give that install this forum's <code>SECRET_KEY_BASE</code>, or its push keys and any SMTP password set in the
+            Restoring an export on a standalone idejo? Give that install this forum's <code>SECRET_KEY_BASE</code>, or its push keys and any SMTP password set in the
             forum can't be read (see the deployment guide).
           </p>
           <button

@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.ArchiveController do
   @moduledoc """
-  HA-03: downloads one of a forum's kept archives (a standard Idejo backup) for a signed-in
+  HA-03: downloads one of a forum's kept archives (a standard idejo backup) for a signed-in
   operator. Taking a forum's data out is an operator action like any other: audited
   (`forum.archive.download`, SC-06). `no-store`, as an attachment.
   """

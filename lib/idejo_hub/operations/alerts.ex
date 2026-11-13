@@ -152,7 +152,7 @@ defmodule IdejoHub.Operations.Alerts do
     result =
       case Settings.get("alert_email") do
         to when is_binary(to) and to != "" ->
-          Mailer.send_text(to, "[Idejo Hub] " <> subject, body)
+          Mailer.send_text(to, "[idejo Hub] " <> subject, body)
 
         _none ->
           {:error, :no_alert_email}

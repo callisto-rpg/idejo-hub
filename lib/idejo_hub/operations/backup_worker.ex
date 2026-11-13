@@ -4,7 +4,7 @@
 defmodule IdejoHub.Operations.BackupWorker do
   @moduledoc """
   OP-01: one scheduled backup of one running forum. `idejo-admin backup` runs inside its
-  container (Idejo AD-09; it also keeps the forum's own last 7 in its volume), the Hub copies
+  container (idejo AD-09; it also keeps the forum's own last 7 in its volume), the Hub copies
   the file into its store as kind `backup` (`Forums.Archives`) and keeps that forum's newest
   14 (`:keep`), deleting older ones. Audited as `forum.backup`. OP-02: then queues its
   encrypted off-server copy (`OffsiteWorker`) when storage is configured.

@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.ChatServiceController do
   @moduledoc """
-  Idejo's chat service, as forums ask it (steward request 2026-11-10; Idejo's
+  idejo's chat service, as forums ask it (steward request 2026-11-10; idejo's
   `Idejo.Community.Chat`), with HTTP Basic: the asking forum's own client id and secret
   (hosted at `/internal/community/chats/*` on the forum network, outside forums at
   `/account/api/chats/*`):

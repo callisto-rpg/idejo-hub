@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
-# CLAUDE.md — Idejo Hub
+# CLAUDE.md — idejo Hub
 
 Read this file before every task. Update it in the same pull request whenever a change
 affects architecture, conventions, commands or milestone status (DV-01).
@@ -13,20 +13,20 @@ wins wherever the two differ.
 
 ## What the Hub is
 
-A separate control app that runs several independent Idejo forums on one server, each on its
-own subdomain, each an **unmodified** Idejo container with its own database, uploads and
+A separate control app that runs several independent idejo forums on one server, each on its
+own subdomain, each an **unmodified** idejo container with its own database, uploads and
 secrets. The Hub creates, suspends, backs up, restores, upgrades and deletes them from the
 outside, and (milestone 3) gives them one shared sign-in identity over OpenID Connect.
 Each forum is administered by its own owner inside the forum, as if standalone, and can leave
-the Hub at any time as a normal Idejo install with all its data.
+the Hub at any time as a normal idejo install with all its data.
 
 ## Specifications — the source of truth
 
 - `Idejo Hub — Spec Sheet.md` — what the Hub must do. IDs: BI, FL, ID, HN, OP, SC, HA, NF, LB.
-  Write Hub NF IDs as **"Hub NF-xx"** wherever they could be confused with Idejo's NF IDs.
+  Write Hub NF IDs as **"Hub NF-xx"** wherever they could be confused with idejo's NF IDs.
 - `Idejo Hub — Implementation Prompt.md` — the steward's decisions, ground rules and the order
   of work (Part B is for this repository; Part A is for the `idejo` repository).
-- Idejo's `CLAUDE.md` → **Running under Idejo Hub** — the only interface the Hub may use to
+- idejo's `CLAUDE.md` → **Running under idejo Hub** — the only interface the Hub may use to
   drive a forum (see The one rule).
 
 Requirement IDs are stable. Never renumber or invent them. If a task is not covered by an ID,
@@ -35,32 +35,32 @@ not edit them unless asked (LI-08).
 
 ## The one rule
 
-**The Hub talks to Idejo only through the contract in Idejo's `CLAUDE.md` → Running under
-Idejo Hub; never read or write a forum's database.** That contract is:
+**The Hub talks to idejo only through the contract in idejo's `CLAUDE.md` → Running under
+idejo Hub; never read or write a forum's database.** That contract is:
 
-- environment variables (Idejo AD-13): `PHX_HOST`, `DATABASE_URL`, `SECRET_KEY_BASE`,
+- environment variables (idejo AD-13): `PHX_HOST`, `DATABASE_URL`, `SECRET_KEY_BASE`,
   `IDEJO_UPLOADS_DIR`, `IDEJO_BACKUP_DIR`, `IDEJO_SOURCE_URL`, `IDEJO_SMTP_*`,
   `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`, `POOL_SIZE` (NF-01),
-  and since Idejo 0.2.5 `IDEJO_COMMUNITY_URL`, `IDEJO_COMMUNITY_DIRECTORY_URL` (its community
+  and since idejo 0.2.5 `IDEJO_COMMUNITY_URL`, `IDEJO_COMMUNITY_DIRECTORY_URL` (its community
   menu, below);
-- `bin/idejo-admin` (Idejo AD-09, AD-14): `setup`, `backup`, `restore FILE --yes`, `health`,
-  `stats` (JSON counts and sizes; Idejo after 0.1.0), `rotate-push-keys --yes`, with exit codes;
-- `GET /health` (Idejo AD-15): 200 or 503 with `{status, version, checks}`;
-- OpenID Connect (Idejo AC-09), with the Hub as provider;
-- Docker: the official Idejo image, one container per forum.
+- `bin/idejo-admin` (idejo AD-09, AD-14): `setup`, `backup`, `restore FILE --yes`, `health`,
+  `stats` (JSON counts and sizes; idejo after 0.1.0), `rotate-push-keys --yes`, with exit codes;
+- `GET /health` (idejo AD-15): 200 or 503 with `{status, version, checks}`;
+- OpenID Connect (idejo AC-09), with the Hub as provider;
+- Docker: the official idejo image, one container per forum.
 
 If the Hub needs something the contract does not offer (for example deleting a member for
-ID-06), **stop and ask**; the fix is a new documented interface in Idejo, never a direct
-database query, a patched image or a Hub-only code path inside Idejo. The Hub must keep
-working across Idejo minor versions without code changes, and each Hub release states the
-Idejo versions it supports (Hub NF-06).
+ID-06), **stop and ask**; the fix is a new documented interface in idejo, never a direct
+database query, a patched image or a Hub-only code path inside idejo. The Hub must keep
+working across idejo minor versions without code changes, and each Hub release states the
+idejo versions it supports (Hub NF-06).
 
-Supported Idejo versions (Hub NF-06): **0.3.6**, the default for new forums (steward
+Supported idejo versions (Hub NF-06): **0.3.6**, the default for new forums (steward
 request 2026-11-13; 0.3.5 since 2026-11-10, the members' inbox)
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
-client (AC-09), 0.2.2 the first whose stylesheet is checked (Idejo AD-11, for SC-03), 0.2.4
-the first whose image runs in interactive release mode (Idejo NF-12; Hub NF-02, below), 0.2.5
-the first with the community menu (below), 0.2.6 the first whose sign-in shows "No Idejo ID
+client (AC-09), 0.2.2 the first whose stylesheet is checked (idejo AD-11, for SC-03), 0.2.4
+the first whose image runs in interactive release mode (idejo NF-12; Hub NF-02, below), 0.2.5
+the first with the community menu (below), 0.2.6 the first whose sign-in shows "No idejo ID
 yet? Create one" (`IDEJO_OIDC_SIGN_UP_URL`, below). Forums on 0.2.5 run without that link,
 on 0.2.4 also without the menu.
 Forums on 0.2.2 and 0.2.3 run as before but idle over 200 MB (208 MiB warmed); 0.2.0 and 0.2.1 accept any
@@ -68,13 +68,13 @@ custom CSS (their content security policy still refuses outside loads); forums o
 still run, back up and upgrade, but have no `stats` and no shared sign-in. Upgrade them to
 0.2.10 (0.2.9 the first with `/logo`, the forum's logo for the directory's cards; before it,
 a card shows no logo; 0.2.10 the first that never names an account after its email and that
-takes and shares the Idejo ID profile, below; 0.2.11 the first whose community menu fills
+takes and shares the idejo ID profile, below; 0.2.11 the first whose community menu fills
 its list: before it, the menu's script got 406 from the forum's `/community`). Forums need
 0.3.4 for the chat service and "All my topics" (the members' inbox, below; before, they keep
 their own private conversations and show no topics in the inbox); the inbox needs 0.3.5
-(Idejo's inbox mode). 0.3.6 adds, in the inbox's topic cards, each forum's logo and its
+(idejo's inbox mode). 0.3.6 adds, in the inbox's topic cards, each forum's logo and its
 unread mentions and new reactions (the forums send them from 0.3.6; before, only new
-messages), and makes a forum's logo its favicon. Idejo 0.3.7 (next) takes the inbox's
+messages), and makes a forum's logo its favicon. idejo 0.3.7 (next) takes the inbox's
 "Save for all forums" (below); forums before it answer nothing there and the inbox names them.
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
@@ -82,7 +82,7 @@ messages), and makes a forum's logo its favicon. Idejo 0.3.7 (next) takes the in
 named Caddy site before the forum wildcard; `ask` allows it) lists every running forum the
 operator has not hidden (`forums.listed`, "Hide from the directory" / "Show in the
 directory" on its page, audited `forum.unlisted` / `forum.listed`); `forums` is a reserved
-subdomain (FL-03), so no forum can take it. Every forum with a client gets Idejo's
+subdomain (FL-03), so no forum can take it. Every forum with a client gets idejo's
 `IDEJO_COMMUNITY_DIRECTORY_URL` (that page) and `IDEJO_COMMUNITY_URL`
 (`http://hub:4000/internal/community`, on the forum network; Caddy refuses `/internal/*`
 from outside): `CommunityController` answers `GET ?subject=` with HTTP Basic, the asking
@@ -90,15 +90,15 @@ forum's own client id and secret, only about a person who joined that forum, wit
 running forums they joined (`identity_joins`). Forums ask it over plain http: like every `/internal`
 route it is left out of production's `force_ssl` (`config/prod.exs`; a redirect there made
 every menu silently empty; `internal_http_test.exs` checks the list). With the Hub down the menu lists nothing and
-the forum runs (Hub NF-05). The directory shows one card per forum with its logo (Idejo
+the forum runs (Hub NF-05). The directory shows one card per forum with its logo (idejo
 0.2.9's `https://<host>/logo`; the content security policy's `img-src` allows
 `https://*.<forum domain>`), a search (name or host, any case, `%` and `_` literal) at the
 top of All Forums whatever their number (steward request 2026-11-09; before, only past ten),
 and past ten listed forums pages of ten (`Community.directory_page/2`, hosted and outside
 forums together). The same search answers as JSON at `GET /api/forums?q=` on the directory's
 host (`DirectoryController.search/2`, the `:api` pipeline; steward request 2026-11-09, for
-Idejo's `!forum` plugin): `{"forums": [{"name", "url", "logo", "join"}]}`, the first five by
-name, public like the page, no counts and nobody's own forums, cached a minute. Each card has **Join** (`btn-primary`, Idejo's gold: the forum's
+idejo's `!forum` plugin): `{"forums": [{"name", "url", "logo", "join"}]}`, the first five by
+name, public like the page, no counts and nobody's own forums, cached a minute. Each card has **Join** (`btn-primary`, idejo's gold: the forum's
 `/users/oidc`) or, for a forum the visitor joined (`Community.joined_hosts/1`: hosted joins
 still `joined`, outside forums signed in to), **Open** (green); signed in with joined forums,
 the first page shows them first under "My Forums", above an "All Forums" line (steward
@@ -114,45 +114,45 @@ The directory learns who is looking from the sign-in host: "Sign in to see your 
 or through its sign-in first, `account_return`) → `/signed-in?token=` (`Phoenix.Token`, two
 minutes, naming the subject and that `state`) → its own session, twelve hours. Tests:
 `community_directory_test.exs`. **HA-10** (steward decision 2026-11-10): the same listing
-as JSON for the official Idejo app at `/api/v1/forums?q=&page=` (`DirectoryController.forums`,
+as JSON for the official idejo app at `/api/v1/forums?q=&page=` (`DirectoryController.forums`,
 the `:api` pipeline: no session or cookie; 20 a page through `directory_page/3`'s
 `per_page`; `{forums: [{name, url, host, description (null), logo_url, members}], page,
-pages, total}`; 120 a minute per address, `IdejoHub.RateLimit`; cached a minute). Idejo's
+pages, total}`; 120 a minute per address, `IdejoHub.RateLimit`; cached a minute). idejo's
 API guide tells the app to find it at `<IDEJO_COMMUNITY_DIRECTORY_URL>api/v1/forums`; no
 forum code changes for it (the one rule).
 
 **Members' inbox** (steward requests 2026-11-10; `Forums.inbox/0`, `create_inbox/2`,
 `forums.kind`, `InboxServiceController`, `ChatServiceController`, `Chats.ForumLink`,
-`Chats.Tickets`; extra review: DV-06): `https://my.<IDEJO_FORUM_DOMAIN>/` is an Idejo
+`Chats.Tickets`; extra review: DV-06): `https://my.<IDEJO_FORUM_DOMAIN>/` is an idejo
 container like any forum (`kind` `inbox`, slug `inbox`, reserved for it, FL-03, so container
 `idejo-forum-inbox`; at most one not deleted; its address `my.<forum domain>`, `Forums.host/1`
 and `for_host/1`, sent to that container by an `@inbox` handle in the wildcard Caddy site:
-two letters are below docker-guard's forum names), in Idejo's **inbox mode** (`IDEJO_INBOX=on`, Idejo 0.3.5): Idejo's own pages,
+two letters are below docker-guard's forum names), in idejo's **inbox mode** (`IDEJO_INBOX=on`, idejo 0.3.5): idejo's own pages,
 header, menus, composer and topic rows, without a sidebar, with Forums, Topics and Chats
 tabs, upgraded with the forums. The operator sets it up from Settings (`#inbox`, "Set up the
-members' inbox": "Idejo", owned by them, out of the directory, Idejo ID only, setup with
+members' inbox": "idejo", owned by them, out of the directory, idejo ID only, setup with
 `--registration open`); `ask` allows its host as any forum's. Once it
 exists, every other forum's container gets `IDEJO_CHAT_URL` (`<my>/chat`) and
 `IDEJO_TOPICS_URL` (`<my>/topics`) (outside forums `chat_url` and `topics_url` from
 `registrations/verify`): their sidebar's "All my topics" and "Private Conversations" and a
 user card's "Private Message" (`/chat/new?with=<subject>`) lead there; and
-`IDEJO_SETTINGS_URL` (`<my>/users/settings`; Idejo 0.3.7, steward request 2026-11-13): their
+`IDEJO_SETTINGS_URL` (`<my>/users/settings`; idejo 0.3.7, steward request 2026-11-13): their
 Profile and account says its settings apply only there and links to the inbox's; "Apply to all forums
 now" brings them to forums made before. The inbox is left out of joined lists
 (`Community.joined/3`, `joined_hosts/1`, `ForumLink.forums/1`). It asks the Hub on the forum
 network with its own client credentials (`Community.inbox_client?/2`):
 `/internal/community/inbox/topics?subject=` and `inbox/conversations?subject=`, which the Hub
-relays from the member's forums through Idejo's chat service interface with **tickets**
+relays from the member's forums through idejo's chat service interface with **tickets**
 (`Chats.Tickets`: random, two minutes, SHA-256 stored, bound to member, scope and forum
 client; forums check them at `/internal/community/chats/tickets` or
 `/account/api/chats/tickets`), `inbox/conversations/moved` and `inbox/settings` (`{subject, settings}`, "Save for all
 forums": `ForumLink.save_settings/2` passes the inbox's JSON as it is to each joined forum's
 `POST /community/settings` with a `settings` ticket and answers `{"forums": [{"name", "host",
-"answered", "saved", "failed"}]}`, a forum before 0.3.7 `answered: false`); it reads any Idejo ID's
+"answered", "saved", "failed"}]}`, a forum before 0.3.7 `answered: false`); it reads any idejo ID's
 profile (`/internal/community/profile`, never fills one). Forums' sidebar counts
 (`…/chats/unread?subject=`) are asked of the inbox (`ForumLink.inbox_unread/1`:
 `/community/inbox-unread`, with the inbox's client credentials). The dot on a forum's logo
-(steward request 2026-11-13; Idejo 0.3.10): `…/chats/activity?subject=` answers
+(steward request 2026-11-13; idejo 0.3.10): `…/chats/activity?subject=` answers
 `{"unread", "mentions"}`, the member's followed topics in their other forums summed
 (`ForumLink.activity/2`, the asking forum left out), counts only. `ForumLink` asks hosted
 forums at `http://idejo-forum-<slug>:4000`, outside ones at their public address only
@@ -161,8 +161,8 @@ tables from 2026-11-10 (`chats`, `chat_members`, `chat_messages`, `chat_reaction
 `chat_imports`) are no longer used, kept until checked empty. Tests: `inbox_host_test.exs`.
 
 **Outside forums** (steward decisions 2026-11-06; `Identity.OutsideForums`,
-`RegistryController`, `OutsideForumsLive`; extra review: DV-06): an Idejo server hosted
-elsewhere signs in with this Hub's Idejo ID. JSON under `/account/api` on the sign-in host
+`RegistryController`, `OutsideForumsLive`; extra review: DV-06): an idejo server hosted
+elsewhere signs in with this Hub's idejo ID. JSON under `/account/api` on the sign-in host
 (the `:api` pipeline: no session, so no CSRF token; `sc_02_csrf_test.exs` checks it):
 `POST registrations` (host, name; ten an hour per address) answers a `registration` key and
 a `proof`; the forum serves the proof at `https://<host>/.well-known/idejo-id-registration`
@@ -178,12 +178,12 @@ leaving), and Remove deletes its client. Approved ones join the directory; the p
 leads back to a registered one. Audited `identity.outside_forum.register`, `.listing`,
 `.approve`, `.refuse`, `.remove`. Tests: `outside_forums_test.exs`.
 
-**Idejo ID profile** (steward decisions 2026-11-06; `Identity.Profiles`, table
-`identity_profiles`): an Idejo ID's public username and picture, never the email (the
-provider's own username stays the email, for signing in). Sign-up asks the username (Idejo's
+**idejo ID profile** (steward decisions 2026-11-06; `Identity.Profiles`, table
+`identity_profiles`): an idejo ID's public username and picture, never the email (the
+provider's own username stays the email, for signing in). Sign-up asks the username (idejo's
 rules: letters, digits, underscores, 3 to 30; unique among IDs, any case); the member page
 (`#account-profile`) renames it and removes the picture. Pictures are WebP up to 512 KB
-(Idejo's avatars), public at `/account/pictures/<key>.webp` on the sign-in host (a new key
+(idejo's avatars), public at `/account/pictures/<key>.webp` on the sign-in host (a new key
 at each change; `nosniff`, sandboxed). Forums ask, with their client credentials, about a
 person who signed in there (`Community.member_of_client?/3`: hosted forums by
 `identity_joins`, outside ones by `outside_joins`, recorded by `Members.sync/0`; read again
@@ -192,7 +192,7 @@ once when not found): `GET`/`POST /internal/community/profile` (hosted) or
 WebP `picture` fills only what the ID lacks (`Profiles.fill/2`: a later link never
 overwrites; a taken username is skipped). Tests: `identity_profile_test.exs`.
 
-**Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): Idejo's image runs
+**Hub NF-02** (an idle forum under 200 MB; steward decision 2026-11-06): idejo's image runs
 `RELEASE_MODE=interactive` from 0.2.4 (modules load when first used), the Hub's own
 interface untouched (the one rule). `deploy/test/nf_02_idle_memory.sh` runs one forum as the
 Hub does (default version, `POOL_SIZE` 5, the default memory and CPU limits, read from the
@@ -201,17 +201,17 @@ it), idles 5 minutes and fails if a reading reaches 200 MB; nightly
 (`.github/workflows/nf-02-idle-memory.yml`). Measured on 2026-11-06, warmed and idle: 80 MiB
 (84 MB) with interactive mode; 0.2.3, in embedded mode, 208 MiB (218 MB): over.
 
-**SC-03** (custom CSS sanitised, third-party scripts forbidden) is Idejo's: a forum's
-stylesheet is its own setting, which the Hub never reads or writes. Idejo 0.2.2 checks it
+**SC-03** (custom CSS sanitised, third-party scripts forbidden) is idejo's: a forum's
+stylesheet is its own setting, which the Hub never reads or writes. idejo 0.2.2 checks it
 before saving (no `@import`, no `url()` but local paths and `data:`, nothing that ran script;
-`Idejo.Settings.Stylesheet`), and every Idejo page's content security policy refuses scripts
-and loads from other hosts (Idejo SP-04, SP-05). The Hub's part: new forums start on 0.2.2 or
+`Idejo.Settings.Stylesheet`), and every idejo page's content security policy refuses scripts
+and loads from other hosts (idejo SP-04, SP-05). The Hub's part: new forums start on 0.2.2 or
 later (`test/idejo_hub/sc_03_custom_css_test.exs`).
 
 **NF-01** (1 to 30 forums per server; steward decisions 2026-11-06): the shared PostgreSQL's
 connections are the limit (measured: an idle forum holds its pool and Oban's listener, 11 at
-Idejo's default; Zitadel 14; the Hub 11). `ForumContainer.spec/1` gives every forum
-`POOL_SIZE=5` (6 connections; a fixed variable, so the caller cannot raise it; Idejo documents
+idejo's default; Zitadel 14; the Hub 11). `ForumContainer.spec/1` gives every forum
+`POOL_SIZE=5` (6 connections; a fixed variable, so the caller cannot raise it; idejo documents
 `POOL_SIZE` in its AD-13 table), and the bundle's `db` runs with `max_connections=320`: 30
 forums, the Hub, Zitadel, 10 for backups and one-off jobs, and room for about 10 more forums.
 Past `Forums.supported_forums/0` (30) forums not deleted (`Forums.hosted_count/0`), the
@@ -244,12 +244,12 @@ PostgreSQL (`deploy/test/hn_06_databases.sh`, in CI's Compose job).
 
 ## Stack
 
-Same as Idejo, so skills, tooling and visual language are shared (HA): Elixir + Phoenix
+Same as idejo, so skills, tooling and visual language are shared (HA): Elixir + Phoenix
 LiveView, PostgreSQL (the Hub's own database, on the PostgreSQL server shared with the forums;
 HN-06, below),
 Oban for scheduled and lifecycle jobs, Caddy in front of everything (on-demand TLS, HN-02),
 shipped as Docker Compose with an install script (HN-08). Elixir and Erlang versions are the
-same as Idejo's, pinned in `.tool-versions` (DV-04).
+same as idejo's, pinned in `.tool-versions` (DV-04).
 
 As built by Foundations:
 
@@ -261,7 +261,7 @@ As built by Foundations:
 - Oban 2.24, queues `lifecycle` (FL) and `operations` (OP), Pruner plugin; jobs only run when a
   test runs them (`testing: :manual`). Migration `priv/repo/migrations/*_add_oban_jobs.exs`.
 - `IdejoHubWeb.Plugs.ContentSecurityPolicy`: strict CSP with per-request script and style
-  nonces (as Idejo); inline `<script>`/`<style>` must carry `@script_csp_nonce` /
+  nonces (as idejo); inline `<script>`/`<style>` must carry `@script_csp_nonce` /
   `@style_csp_nonce`.
 - Production refuses to start without `PHX_HOST`, `DATABASE_URL` and `SECRET_KEY_BASE`
   (`config/runtime.exs`); an empty `POOL_SIZE` means the default, 10.
@@ -269,7 +269,7 @@ As built by Foundations:
   (`copy_licence/1` in `mix.exs`); `rel/overlays/bin/{server,migrate}` from
   `mix phx.gen.release`. `Dockerfile` pins the Elixir/Erlang/Debian base images.
 - Development PostgreSQL (root `docker-compose.yml`) is published on **5433**, so it runs
-  beside Idejo's development database on 5432; `config/dev.exs`, `config/test.exs` and CI use
+  beside idejo's development database on 5432; `config/dev.exs`, `config/test.exs` and CI use
   5433.
 
 ## Architecture
@@ -338,9 +338,9 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `audit_entries` is append-only (trigger). SC-07 shows them: the operator at `/audit`
   (`AuditLive`, `Audit.list/1`: newest first, 50 a page by id, filters `forum`, `action`
   prefix, `outcome`, `actor`, in the address; linked in the header and from each forum's
-  page), and a forum's owner on their Idejo ID page (`/account/forums/<slug>/log`,
+  page), and a forum's owner on their idejo ID page (`/account/forums/<slug>/log`,
   `AccountController.log/2`, `Audit.recent_for_forum/2`: newest 200). The Hub knows an owner
-  only by `forums.owner_email`: the log shows to a member whose Idejo ID email, **verified**
+  only by `forums.owner_email`: the log shows to a member whose idejo ID email, **verified**
   by the provider (`Identity.person/1`'s `email_verified`, Zitadel's `isVerified`), is that
   address, any case (`Forums.owned_by/1`); anyone else gets 404. For owners actions read in
   words (`AccountHTML.what/1`), a member is "A member" (never `member:<subject>`; identity
@@ -384,7 +384,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `Forums.backup_forum/2` for every running forum (skipping busy ones, logged); each
   `BackupWorker` execs `idejo-admin backup` inside the running container and
   `Forums.Archives.collect/4` copies the named file into the Hub's store as kind `backup`;
-  `Archives.prune/3` keeps the newest `IDEJO_HUB_BACKUPS_KEPT` (14) per forum. Idejo's own
+  `Archives.prune/3` keeps the newest `IDEJO_HUB_BACKUPS_KEPT` (14) per forum. idejo's own
   `backup` keeps 7 in the forum volume, so the 14 live in the Hub's `exports` volume.
   Audited `forum.backup` (actor `schedule`). Exports, final exports and backups all share
   `forum_exports` and `Archives`.
@@ -421,7 +421,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   unmarks. A failure before the restore puts the forum back; after it, the forum stays
   stopped and marked as `suspended`. `Forums.restore_to_new/3` creates a forum (FL-01 via
   `create_forum/3`'s `job_args`, no headless setup, behind the page) and restores into it.
-  Idejo's secret settings are encrypted with `SECRET_KEY_BASE`: a deleted source's key moves
+  idejo's secret settings are encrypted with `SECRET_KEY_BASE`: a deleted source's key moves
   with its data; a live source's is never shared (SC-04), so the new forum gets its own and
   a one-off `rotate-push-keys --yes`, and a panel SMTP password must be entered again.
 - **Upgrade** (OP-04, `Operations.UpgradeWorker`): `Forums.upgrade_forum/3` (running, a newer
@@ -451,18 +451,18 @@ Design points (Implementation Prompt, Part B, milestone 2):
   works. "Pin to X.Y.Z" / "Unpin" on the forum's page (`#pin`), a "pinned" badge by the
   version in the list. Audited `forum.pin` / `forum.unpin` with the version.
 - **New releases** (OP-09, `Operations.Releases`, `ReleaseCheckWorker`, cron daily 06:17
-  UTC): reads Idejo's tags from `IDEJO_HUB_RELEASES_URL` (default GitHub's tag list for the
-  Idejo repository: no credentials, nothing about the Hub sent; set empty to turn it off),
+  UTC): reads idejo's tags from `IDEJO_HUB_RELEASES_URL` (default GitHub's tag list for the
+  idejo repository: no credentials, nothing about the Hub sent; set empty to turn it off),
   keeps the newest stable `vX.Y.Z` in the `settings` table (key `idejo_latest_release`, not
   one of Settings' keys); when newer than `IDEJO_DEFAULT_VERSION`, the forum list and
   `/server` show `CoreComponents.release_notice/1` (`#release-notice`) linking to
-  `IDEJO_HUB_CHANGELOG_URL` (`{from}`, `{to}`; default GitHub's compare view: Idejo publishes
+  `IDEJO_HUB_CHANGELOG_URL` (`{from}`, `{to}`; default GitHub's compare view: idejo publishes
   no release notes yet). A failed check keeps what was known. Tests stub it
   (`:releases_req_options`).
 - **Operator sign-in** (SC-08, `IdejoHub.Operators`, `IdejoHubWeb.OperatorAuth`,
   `SessionController`; extra review: DV-06): operators are made only by `bin/hub-admin
   create-operator EMAIL` (`IdejoHub.Release`; random password shown once; no sign-up page) and
-  sign in with the password (Argon2id at Idejo's cost), then a TOTP code (`nimble_totp`;
+  sign in with the password (Argon2id at idejo's cost), then a TOTP code (`nimble_totp`;
   secret encrypted, context `operator:<id>:totp`; set up at the first sign-in and confirmed
   by a code; a code's 30 s step is kept so it works once; the previous step is accepted).
   Between the two, the session holds only `pending_operator_id` for five minutes. Five
@@ -475,7 +475,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   (`:protect_from_forgery`); GET never changes anything but the audit log (archive
   downloads); LiveView's socket needs the session's token (`connect_info: [session: …]`) and
   the Hub's own origin (default `check_origin`, never set off outside development). A new
-  route is checked by `test/idejo_hub_web/sc_02_csrf_test.exs`. Forums: Idejo SP-05, SP-10.
+  route is checked by `test/idejo_hub_web/sc_02_csrf_test.exs`. Forums: idejo SP-05, SP-10.
   `bin/hub-admin reset-two-factor EMAIL`, or an owner's "Reset two-factor" on `/operators`
   (`Operators.reset_two_factor/2`: never one's own), clears the setup and ends the sessions.
   **Forgotten password** (steward request 2026-11-12; `PasswordResetController`): "Forgot
@@ -521,8 +521,8 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `Forums.subscribe/0` (`{:forum_changed, forum}`, broadcast by `update_state/2` and
   `create_forum/3`). HA-01 forum list at `/` (`ForumListLive`): filter `?status=`, sort
   `?sort=`; members and disk use (database + uploads) come from each forum's `idejo-admin stats`
-  (Idejo AD-09), kept on the forum by `Operations.StatsWorker` every 15 minutes (cron);
-  without them (Idejo before `stats`) members show "—" and the size is the latest backup's.
+  (idejo AD-09), kept on the forum by `Operations.StatsWorker` every 15 minutes (cron);
+  without them (idejo before `stats`) members show "—" and the size is the latest backup's.
   OP-07 health overview in the same list: `Operations.HealthWorker` (cron every minute,
   Oban queue `health` of its own) checks each running forum not busy with an action:
   `Hosting.Health.check/1` and `Docker.stats/1` (memory without the page cache, and the
@@ -533,9 +533,9 @@ Design points (Implementation Prompt, Part B, milestone 2):
   limit", amber past 90%), sortable (`?sort=health`: down first). Disk use stays with the
   15-minute `stats` (an `idejo-admin` run per forum each minute would cost a release boot).
   OP-08 alerts (`Operations.Alerts`), emailed to Settings' alert address through
-  `IdejoHub.Mailer` (Swoosh SMTP over `Settings.shared_smtp/0`, read at each send, as Idejo's
+  `IdejoHub.Mailer` (Swoosh SMTP over `Settings.shared_smtp/0`, read at each send, as idejo's
   port rule: `tls` on 465, else `starttls`; peer verified; from `noreply@<Hub host>`,
-  "Idejo Hub"): after each health check, a forum `down_since` 5 minutes or more
+  "idejo Hub"): after each health check, a forum `down_since` 5 minutes or more
   (`check_forums/1`) and the store's disk (`check_disk/1`: above 85%, cleared under 80%) open
   an `alerts` row (unique `key`: `forum_down:<slug>`, `disk`) and send one email, its end
   (answering again; under 80%) one more; a forum leaving `running` drops its row silently. A
@@ -567,7 +567,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
 - **Import** (FL-07, `Forums.import_forum/4`, `Forums.Import`, `ForumImportLive` at
   `/forums/import`; steward decision 2026-11-05): a standalone `idejo-admin backup` archive,
   uploaded by the operator (LiveView upload, at most `IDEJO_HUB_IMPORT_MAX_MB`, 4096), is
-  checked like Idejo's restore does (`Import.check/1`: only `manifest.json`,
+  checked like idejo's restore does (`Import.check/1`: only `manifest.json`,
   `database.dump`, `uploads/<name>`; manifest format 1 with its migration; nothing extracted
   but the manifest), then made a forum like OP-03's restore to new: `create_forum/3`'s
   `attach:` stores it in the same transaction (`Import.store/2`: `<exports dir>/<subdomain>/
@@ -578,7 +578,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   moves with the data; else a new one and `rotate-push-keys`. The form checks its fields
   and key before taking the file (`Forums.check_available/1`, `valid_import_key?/1`).
 - **Standalone key** (FL-06): `Forums.reveal_secret_key_base/2` hands the operator a forum's
-  `SECRET_KEY_BASE` for a standalone restore of its export (Idejo encrypts its secret
+  `SECRET_KEY_BASE` for a standalone restore of its export (idejo encrypts its secret
   settings with it), audited `forum.secret_key_base.reveal` each time, kept by the Hub.
   The forum list also starts OP-05 (`#upgrade-all`, `Operations.upgrade_all/2`).
 - **Command line** (HA-08, `IdejoHub.CLI`, `Release.cli/2`): `bin/hub-admin forums`,
@@ -601,7 +601,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   Zitadel's own `/assets/v1/*`) to the Hub, and the rest to Zitadel over h2c; the `ask` endpoint allows that host. Its own role and database on the
   shared PostgreSQL (`postgres-init/04-zitadel.sh`; the installer adds them to an existing
   volume), `start-from-init` with its own role as "admin" (never the superuser; its first
-  connection to its own database, as `sameuser` allows). The first start makes org "Idejo",
+  connection to its own database, as `sameuser` allows). The first start makes org "idejo",
   an `admin` (password `ZITADEL_ADMIN_PASSWORD`), a machine user `idejo-hub` (org owner)
   and the login client, and writes their tokens to the `zitadel-tokens` volume (all three
   containers run as nobody; `zitadel-tokens-init` hands the volume over). The Hub reads its
@@ -614,12 +614,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
   `Forums.ensure_identity_client/1` connects older forums on recreate,
   `rotate_identity/2` rotates the secret and recreates. `container_params/1` gives
   `IDEJO_OIDC_ISSUER` (`https://IDEJO_ID_DOMAIN`), `_CLIENT_ID`, `_CLIENT_SECRET` (stored
-  encrypted, `forum:<slug>:oidc_client_secret`), `_LABEL` ("Idejo ID") and
+  encrypted, `forum:<slug>:oidc_client_secret`), `_LABEL` ("idejo ID") and
   `IDEJO_LOCAL_ACCOUNTS` (`forums.local_accounts`, ID-07; always on without a client). New
-  forums require an Idejo ID (steward decision 2026-11-06: `Forums.defaults/0` has
+  forums require an idejo ID (steward decision 2026-11-06: `Forums.defaults/0` has
   `local_accounts: false`, the create form's "Also allow local accounts" unticked); imports
   keep local accounts on, and a restore to a new subdomain takes its source's choice;
-  owners and administrators keep a password sign-in either way (Idejo AC-09). On the
+  owners and administrators keep a password sign-in either way (idejo AC-09). On the
   forum network Caddy answers to `IDEJO_ID_DOMAIN`, so forums reach the provider inside.
 - **Sign-up** (ID-02, ID-08; steward decision 2026-11-04): members' pages are under
   `/account` on `IDEJO_ID_DOMAIN` only (`Plugs.IdentityHost`, 404 elsewhere; Caddy sends
@@ -630,17 +630,17 @@ Design points (Implementation Prompt, Part B, milestone 2):
   emails the invite (`send_invite/1`: verify, then password or passkey on its login pages);
   the Hub never sees a password. Five per address an hour (`IdejoHub.RateLimit`, ETS);
   closed while the Hub has no SMTP. Forums lead there (steward decision 2026-11-06): Zitadel's own sign-in
-  screen cannot link to it, so each forum gets Idejo's `IDEJO_OIDC_SIGN_UP_URL` (0.2.6:
-  "No Idejo ID yet? Create one" under its button), this page with `return_to` its own
+  screen cannot link to it, so each forum gets idejo's `IDEJO_OIDC_SIGN_UP_URL` (0.2.6:
+  "No idejo ID yet? Create one" under its button), this page with `return_to` its own
   `https://<host>/`; the page names that forum and, once sent, links back to its sign-in
   (`#signup-back`). Only a running forum's own `https://<host>/` is followed (no path,
   query, port or user), anything else ignored. `Identity.SetupWorker` (at boot and after an SMTP
   setting changes, retried) applies `Identity.configure/2`: Zitadel's own registration off,
   passkeys allowed, one-time codes and security keys as second factors, and the Hub's SMTP
-  as its config "Idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
+  as its config "idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
 - **Member's page** (ID-05, ID-06; `IdejoHub.Identity.Members`, `AccountController`;
   extra review: DV-06): `https://IDEJO_ID_DOMAIN/account`, signed in through Zitadel as the
-  Hub's own client ("Idejo ID account", `/account/callback`, registered by `SetupWorker`,
+  Hub's own client ("idejo ID account", `/account/callback`, registered by `SetupWorker`,
   secret in `identity_state` encrypted as `identity:account:client_secret`): code flow with
   PKCE, state and nonce (session `account_request`, ten minutes, used once); the code is
   exchanged at Zitadel's token endpoint inside the bundle (`Identity.exchange_code/5`) and
@@ -655,7 +655,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   (`delete-account`, a box ticked), through `MemberWorker` (queue `operations`): exec in a
   running forum, a one-off `-identity` container in a suspended one, snoozed while the
   forum has a `step`; exit 0 or 2 is done; "last owner" refuses, shown on the page.
-  **Delete my Idejo ID** (ID-06) needs a sign-in within five minutes (`prompt=login`) and the
+  **Delete my idejo ID** (ID-06) needs a sign-in within five minutes (`prompt=login`) and the
   email typed: `delete-account` on every forum joined, then `Identity.delete_person/1`;
   a refusal stops it with the reason (`identity_deletions.error`; asked again, it starts
   over). Audited as `member:<subject>` (`identity.forum_leave`, `identity.forum_delete`,
@@ -665,36 +665,36 @@ Design points (Implementation Prompt, Part B, milestone 2):
   page and the owner's audit log): what the operator can reach through the Hub (backups,
   their downloads, pause/restore/upgrade/export/delete, the secret key, shared SMTP, figures;
   not the live database, never owner), on the server (everything, as any hosting), and in
-  Idejo IDs (emails, names, forums joined; never passwords; lock, delete, and as the
+  idejo IDs (emails, names, forums joined; never passwords; lock, delete, and as the
   provider's administrator could change a sign-in), and what the audit log records. Every
   statement follows how the Hub works: a change to backups, downloads, secrets, identity or
   the audit log updates that page. When they would look is the operator's own text
   (`access_policy` in Settings, plain text, at most 4000 characters, blank lines part
   paragraphs); empty, the page says the operator has not said yet.
 - **Member pages' look** (steward request 2026-11-06): pages whose `Layouts.app` `title` is
-  not "Idejo Hub" (the Idejo ID site, the forums directory) sit in `.idejo-member`: Idejo's
+  not "idejo Hub" (the idejo ID site, the forums directory) sit in `.idejo-member`: idejo's
   fonts (Fraunces, Rubik; `priv/static/fonts`, OFL-1.1) and its default theme colours (gold
   on cream, `#000000` in the dark theme since 2026-11-12, before `#1d1a00`;
-  `assets/css/app.css`, Idejo's own formulas), the
-  small Idejo logo by the title and the full one above the sign-up form
+  `assets/css/app.css`, idejo's own formulas), the
+  small idejo logo by the title and the full one above the sign-up form
   (`priv/static/images/logo*.svg`, CC-BY-4.0; NOTICE, REUSE.toml). Operators' pages keep
-  the Hub's theme. A change to Idejo's default colours or fonts is copied here. Zitadel's
+  the Hub's theme. A change to idejo's default colours or fonts is copied here. Zitadel's
   sign-in screens too: `Identity.configure/2` (`SetupWorker`, at boot) sets the instance's
-  branding (label policy: Idejo's colours, light and dark, `THEME_MODE_AUTO`; the warning
+  branding (label policy: idejo's colours, light and dark, `THEME_MODE_AUTO`; the warning
   colours, login-name suffix and watermark left as they are), uploads `logo.png` /
   `logo-small.png` as its logo and icon in both themes, and activates it, only when a colour
   differs or a logo is missing (checked against Zitadel v4.20.1, 2026-11-06).
-- **Member pages' standards** (Hub NF-07): every page under `/account` passes Idejo's own
-  AX-01 audit (`IdejoHubWeb.Accessibility`, ported from Idejo's `test/support`;
+- **Member pages' standards** (Hub NF-07): every page under `/account` passes idejo's own
+  AX-01 audit (`IdejoHubWeb.Accessibility`, ported from idejo's `test/support`;
   `test/idejo_hub_web/controllers/nf_07_member_pages_test.exs` lists the pages: a new member
   page joins it). `Layouts.app` starts with a skip link to `#main`; members' pages (any
-  `title` but "Idejo Hub") end with `#member-footer` linking `/account/privacy`
+  `title` but "idejo Hub") end with `#member-footer` linking `/account/privacy`
   (`AccountController.privacy/2`): the operator's `privacy_notice` (Settings, plain text, at
-  most 50 000 characters), or "This Hub has not published a privacy notice yet", as Idejo's
+  most 50 000 characters), or "This Hub has not published a privacy notice yet", as idejo's
   AD-02; sign-up links it too (`#signup-privacy`). Zitadel's own sign-in screens are not
-  audited here; the forum's consent screen is Idejo's (AC-09).
+  audited here; the forum's consent screen is idejo's (AC-09).
 - **Identity administration** (HA-06, `Identity.Admin`, `IdentitiesLive` at `/identities`,
-  `IdentityShowLive` at `/identities/:id`; extra review: DV-06): search Idejo IDs at the
+  `IdentityShowLive` at `/identities/:id`; extra review: DV-06): search idejo IDs at the
   provider (`Identity.search_people/1`: Zitadel `POST /v2/users`, humans only, email,
   display name or username containing the text, any case, 50 at most; states `active`,
   `locked`, `inactive`, `initial`); lock one for abuse with a reason, and unlock
@@ -746,12 +746,12 @@ Design points (Implementation Prompt, Part B, milestone 2):
 - **Every Must has a test named after its ID** (milestone 4's exit check):
   `test/idejo_hub/requirements_test.exs` reads the spec's Musts and fails on one without a
   test tagged `req: "XX-NN"` (here or in `guard/test/`) or a script `deploy/test/xx_nn_*.sh`
-  / `guard/test/xx_nn_*.sh`. Its exceptions: `@elsewhere` (the BI rows, tested in Idejo
-  under Idejo's IDs), `@by_review` (LB-02, the licence after legal review), `@pending`
+  / `guard/test/xx_nn_*.sh`. Its exceptions: `@elsewhere` (the BI rows, tested in idejo
+  under idejo's IDs), `@by_review` (LB-02, the licence after legal review), `@pending`
   (remove an ID when its test lands, or the test fails). Musts built before it got their
   tests in `test/idejo_hub/earlier_musts_test.exs`.
 - Commits made with Claude Code end with the trailer `Assisted-by: Claude Code` (LI-08).
-- CLA (LI-05): `.github/workflows/cla.yml` asks every contributor to sign Idejo's CLA (same
+- CLA (LI-05): `.github/workflows/cla.yml` asks every contributor to sign idejo's CLA (same
   steward); signatures go to the `cla-signatures` branch.
 - CI (`.github/workflows/ci.yml`): REUSE lint; format, compile warnings, credo `--strict`,
   sobelow, `deps.audit`, `hex.audit`, unused deps; Dialyzer (dev env); tests against
@@ -800,14 +800,14 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 
 ## Steward decisions
 
-- 2026-11-02 — Account model: shared Idejo identity (spec §5); the Hub is the OpenID Connect
+- 2026-11-02 — Account model: shared idejo identity (spec §5); the Hub is the OpenID Connect
   provider, each forum a client.
-- 2026-11-02 — Licence: AGPL-3.0-only headers for now, same steward and CLA as Idejo.
+- 2026-11-02 — Licence: AGPL-3.0-only headers for now, same steward and CLA as idejo.
 - 2026-11-03 — OIDC provider (ID-01): **Zitadel** (AGPL-3.0) beside the Hub, at
   `id.<hub domain>` (`docs/proposals/id-01-oidc-provider.md`). Leaving a forum (ID-05): the
   person chooses to delete their account there or just leave (account and messages kept for
-  a return with the same identity); Idejo gets commands for both.
-- 2026-11-04 — Consent on first join (ID-09): shown by Idejo at a person's first sign-in with
+  a return with the same identity); idejo gets commands for both.
+- 2026-11-04 — Consent on first join (ID-09): shown by idejo at a person's first sign-in with
   the provider (Zitadel has none). Sign-up (ID-02): the Hub runs its own page (email and display
   name required; a checkbox reveals optional first and last name, otherwise Zitadel gets
   "Sennoma" and "Ulo", which it requires); Zitadel's own sign-up form is off.
@@ -832,12 +832,12 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 
 ## Milestones (Hub spec §12)
 
-- [x] **1 — Base Idejo ready** — Idejo milestone M6, built in the `idejo` repository. Done
-  2026-11-03: Idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
-  2026-11-04: Idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
-  the Hub's default version until 2026-11-06: Idejo `v0.2.2` (its stylesheet checked, SC-03)
-  since; Idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06; Idejo
-  `v0.2.5` (the community menu); Idejo `v0.2.6` ("No Idejo ID yet? Create one"); Idejo
+- [x] **1 — Base idejo ready** — idejo milestone M6, built in the `idejo` repository. Done
+  2026-11-03: idejo `v0.1.0` published as `ghcr.io/callisto-rpg/idejo:0.1.0` (and `:0.1`).
+  2026-11-04: idejo `v0.2.0` (with AC-09 for milestone 3) published as `:0.2.0` (and `:0.2`);
+  the Hub's default version until 2026-11-06: idejo `v0.2.2` (its stylesheet checked, SC-03)
+  since; idejo `v0.2.4` (interactive release mode, Hub NF-02) from 2026-11-06; idejo
+  `v0.2.5` (the community menu); idejo `v0.2.6` ("No idejo ID yet? Create one"); idejo
   `v0.2.9` (`/logo`, for the directory's cards) since.
 - [x] **Foundations** (may start now, one PR) — Phoenix LiveView app, this file completed,
   SPDX headers, NOTICE, CLA check, CI (format, credo, dialyzer, sobelow, tests, deps audit,
@@ -845,8 +845,8 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - [x] **2 — Hub alpha** — FL-01 to FL-06, OP-01 to OP-05, HA-01 to HA-05, HN-01 to HN-05, HN-07,
   SC-01, SC-04 to SC-06, SC-08, SC-09; separate accounts per forum. Exit check
   `deploy/test/m2/run.sh` passed 2026-11-03 (peak 1325 MiB of the 4 GiB budget).
-- [x] **3 — Shared identity** — ID-01 to ID-09, forums switched to Idejo's OIDC client. Exit
-  check `deploy/test/m3/run.sh` passed 2026-11-04 (with Idejo built from #268 and #269).
+- [x] **3 — Shared identity** — ID-01 to ID-09, forums switched to idejo's OIDC client. Exit
+  check `deploy/test/m3/run.sh` passed 2026-11-04 (with idejo built from #268 and #269).
 - [ ] 4 — Hub 1.0 — OP-02, OP-06 to OP-10, SC-02, SC-03, SC-07, SC-10, HA-06 to HA-09, HN-06,
   Hub NF-01 to NF-07, LB-01, LB-04, operator docs.
 - Later, do not start: FL-08 to FL-10, HN-03 (FL-07 built ahead: steward decision 2026-11-05).

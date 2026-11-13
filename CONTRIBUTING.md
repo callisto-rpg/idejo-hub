@@ -3,15 +3,15 @@ SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
-# Contributing to Idejo Hub
+# Contributing to idejo Hub
 
-Thank you for helping. Idejo Hub is licensed AGPL-3.0-only for now (see `LICENSE` and
+Thank you for helping. idejo Hub is licensed AGPL-3.0-only for now (see `LICENSE` and
 `NOTICE`; the final licence is chosen after legal review, spec LB-02).
 
 ## 1. Sign the CLA once
 
 Before your first pull request can be merged, you sign the Contributor Licence Agreement
-(LI-05). The Hub uses [Idejo's CLA](https://github.com/callisto-rpg/Idejo/blob/main/docs/legal/CLA.md)
+(LI-05). The Hub uses [idejo's CLA](https://github.com/callisto-rpg/Idejo/blob/main/docs/legal/CLA.md)
 (same steward). A bot comments on your PR with a link; reply with the sentence it gives you.
 You keep your copyright and grant the project steward a perpetual, worldwide, royalty-free
 copyright and patent licence, including the right to relicense. A DCO sign-off alone is not
@@ -30,10 +30,10 @@ Each PR implements one requirement ID from `Idejo Hub — Spec Sheet.md`, or fix
   ```
 - If a change needs behaviour the spec doesn't describe, open an issue first.
 
-## 3. The Hub drives Idejo only from the outside
+## 3. The Hub drives idejo only from the outside
 
-The Hub talks to a forum only through the contract in Idejo's `CLAUDE.md` → Running under
-Idejo Hub (environment variables, `bin/idejo-admin`, `GET /health`, OpenID Connect, the
+The Hub talks to a forum only through the contract in idejo's `CLAUDE.md` → Running under
+idejo Hub (environment variables, `bin/idejo-admin`, `GET /health`, OpenID Connect, the
 official Docker image). It never reads or writes a forum's database. See `CLAUDE.md`.
 
 ## 4. Every file gets an SPDX header

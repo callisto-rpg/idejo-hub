@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# CLA check on every pull request (LI-05). The Hub uses Idejo's CLA (same steward).
+# CLA check on every pull request (LI-05). The Hub uses idejo's CLA (same steward).
 # Signatures are stored in the `cla-signatures` branch of this repository.
 
 name: CLA

@@ -10,7 +10,7 @@
 - [ ] `mix precommit` and `reuse lint` pass locally
 - [ ] SPDX header on every new file (LI-01)
 - [ ] CLAUDE.md updated if architecture, conventions or commands changed (DV-01)
-- [ ] Talks to forums only through Idejo's documented contract (CLAUDE.md → The one rule)
+- [ ] Talks to forums only through idejo's documented contract (CLAUDE.md → The one rule)
 - [ ] New dependency? Licence named here (LI-06)
 - [ ] Touches identity, secrets, Docker access or sign-in → needs careful human review (DV-06)
 - [ ] AI-assisted commits carry `Assisted-by: Claude Code` (LI-08)

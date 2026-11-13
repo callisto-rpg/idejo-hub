@@ -3,13 +3,13 @@
 
 defmodule IdejoHub.Operations.Releases do
   @moduledoc """
-  OP-09: notice of new Idejo releases, with a link to the changelog.
+  OP-09: notice of new idejo releases, with a link to the changelog.
 
-  Once a day (`ReleaseCheckWorker`) the Hub reads Idejo's published tags (`url`, by default
-  GitHub's tag list of the Idejo repository: no credentials, nothing about this Hub sent) and
+  Once a day (`ReleaseCheckWorker`) the Hub reads idejo's published tags (`url`, by default
+  GitHub's tag list of the idejo repository: no credentials, nothing about this Hub sent) and
   keeps the newest stable version (`vX.Y.Z`, no pre-release). When it is newer than the
   version new forums start on (`IDEJO_DEFAULT_VERSION`), the operator's forum list and
-  server page show it, linking to `changelog` with `{from}` and `{to}` filled in. Idejo
+  server page show it, linking to `changelog` with `{from}` and `{to}` filled in. idejo
   publishes no release notes yet: by default the link is GitHub's comparison of the two
   tags, which lists every change merged between them.
 

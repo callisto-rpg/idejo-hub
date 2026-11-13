@@ -76,10 +76,10 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
 
       assert_email_sent(fn email ->
         assert email.to == [{"", @to}]
-        assert email.subject == "[Idejo Hub] alert-a.idejo.test is down"
+        assert email.subject == "[idejo Hub] alert-a.idejo.test is down"
         assert email.text_body =~ "has not answered its health check since"
         assert email.text_body =~ "/forums/#{forum.id}"
-        assert email.from == {"Idejo Hub", Mailer.from_address()}
+        assert email.from == {"idejo Hub", Mailer.from_address()}
       end)
 
       # Still down a minute later: no second email.
@@ -88,7 +88,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
 
       health(200)
       :ok = perform_job(HealthWorker, %{})
-      assert_email_sent(subject: "[Idejo Hub] alert-a.idejo.test is back up")
+      assert_email_sent(subject: "[idejo Hub] alert-a.idejo.test is back up")
       assert Alerts.list_open() == []
 
       assert Enum.count(
@@ -102,7 +102,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
       health(503)
       {:ok, forum} = Forums.update_state(forum, %{health: "down", down_since: minutes_ago(6)})
       :ok = Alerts.check_forums()
-      assert_email_sent(subject: "[Idejo Hub] alert-a.idejo.test is down")
+      assert_email_sent(subject: "[idejo Hub] alert-a.idejo.test is down")
 
       {:ok, _} = Forums.update_state(forum, %{status: "suspended"})
       :ok = Alerts.check_forums()
@@ -115,7 +115,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
     test "OP-08 above 85% sends one email; under 80% the all clear" do
       gib = 1_073_741_824
       :ok = Alerts.check_disk(%{used: 86 * gib, available: 14 * gib})
-      assert_email_sent(subject: "[Idejo Hub] The server's disk is 86% full")
+      assert_email_sent(subject: "[idejo Hub] The server's disk is 86% full")
 
       # Still high, then between 80% and 85%: nothing new.
       :ok = Alerts.check_disk(%{used: 90 * gib, available: 10 * gib})
@@ -124,7 +124,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
       assert [%{key: "disk"}] = Alerts.list_open()
 
       :ok = Alerts.check_disk(%{used: 79 * gib, available: 21 * gib})
-      assert_email_sent(subject: "[Idejo Hub] The server's disk is below 80% again")
+      assert_email_sent(subject: "[idejo Hub] The server's disk is below 80% again")
       assert Alerts.list_open() == []
 
       # A reading that fails changes nothing.
@@ -146,7 +146,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
                perform_job(BackupWorker, %{"forum_id" => forum.id, "actor" => "schedule"})
 
       assert_email_sent(fn email ->
-        assert email.subject == "[Idejo Hub] Backup failed: alert-a.idejo.test"
+        assert email.subject == "[idejo Hub] Backup failed: alert-a.idejo.test"
         assert email.text_body =~ "failed at"
       end)
     end
@@ -155,7 +155,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
       :ok = Alerts.backup_failed("the Hub", nil, "pg_dump: connection refused")
 
       assert_email_sent(fn email ->
-        assert email.subject == "[Idejo Hub] Backup failed: the Hub"
+        assert email.subject == "[idejo Hub] Backup failed: the Hub"
         assert email.text_body =~ "pg_dump: connection refused"
         assert email.text_body =~ "/server"
       end)
@@ -174,7 +174,7 @@ defmodule IdejoHub.Operations.OP08AlertsTest do
   end
 
   describe "the SMTP connection" do
-    test "OP-08 follows the shared SMTP settings, as Idejo does (465 is TLS, else STARTTLS)" do
+    test "OP-08 follows the shared SMTP settings, as idejo does (465 is TLS, else STARTTLS)" do
       starttls =
         Mailer.gen_smtp(%{host: "smtp.hub.test", port: nil, username: "u", password: "p"})
 

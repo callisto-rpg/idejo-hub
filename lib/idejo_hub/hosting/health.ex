@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Hosting.Health do
   @moduledoc """
-  Asks a forum's `GET /health` (Idejo AD-15) on the forum network, over plain http (Idejo
+  Asks a forum's `GET /health` (idejo AD-15) on the forum network, over plain http (idejo
   answers it without TLS for exactly this). 200 means database reachable and migrations
   applied; anything else, including a refused connection while it starts, means not yet.
   """

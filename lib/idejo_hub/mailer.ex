@@ -5,7 +5,7 @@ defmodule IdejoHub.Mailer do
   @moduledoc """
   The Hub's own email (OP-08's alerts), sent through the shared SMTP server the Hub gives
   forums (`Settings.shared_smtp/0`: Settings, else `HUB_SMTP_*`), read at each send, from
-  the Hub's sender (`Settings.sender/0`) as "Idejo Hub". Tests use Swoosh's test adapter.
+  the Hub's sender (`Settings.sender/0`) as "idejo Hub". Tests use Swoosh's test adapter.
   """
   use Swoosh.Mailer, otp_app: :idejo_hub
 
@@ -17,7 +17,7 @@ defmodule IdejoHub.Mailer do
     with {:ok, config} <- smtp_config() do
       new()
       |> to(to)
-      |> from({"Idejo Hub", from_address()})
+      |> from({"idejo Hub", from_address()})
       |> subject(subject)
       |> text_body(body)
       |> deliver(config)
@@ -43,7 +43,7 @@ defmodule IdejoHub.Mailer do
     end
   end
 
-  # Idejo's rule for the port (AD-13): `tls` on 465 by default, else `starttls` on 587.
+  # idejo's rule for the port (AD-13): `tls` on 465 by default, else `starttls` on 587.
   @doc false
   # The gen_smtp options for the shared SMTP settings (public for its test).
   def gen_smtp(%{host: host} = smtp) do

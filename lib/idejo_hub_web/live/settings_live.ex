@@ -44,7 +44,7 @@ defmodule IdejoHubWeb.SettingsLive do
     {:noreply, put_flash(socket, :info, message)}
   end
 
-  # The members' inbox (steward request 2026-11-10): Idejo in inbox mode at my.<forum
+  # The members' inbox (steward request 2026-11-10): idejo in inbox mode at my.<forum
   # domain>, owned by the operator who sets it up.
   def handle_event("create_inbox", _params, socket) do
     email = socket.assigns.current_operator.email
@@ -188,7 +188,7 @@ defmodule IdejoHubWeb.SettingsLive do
             errors={@errors}
           />
           <p class="text-sm">
-            The Hub's alerts and Idejo ID's emails send from it, and new forums get it as theirs:
+            The Hub's alerts and idejo ID's emails send from it, and new forums get it as theirs:
             they send exactly as the Hub does, under their own name.
           </p>
         </section>
@@ -244,12 +244,12 @@ defmodule IdejoHubWeb.SettingsLive do
           </label>
         </section>
 
-        <%!-- Hub NF-07: members' privacy notice, as a standalone Idejo's (AD-02). --%>
+        <%!-- Hub NF-07: members' privacy notice, as a standalone idejo's (AD-02). --%>
         <section id="privacy" class="space-y-2">
           <h2 class="text-xl font-semibold">Privacy notice for members</h2>
           <p class="text-sm">
             Shown to members at <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>the sign-in address's privacy page</a>,
-            linked from every member page: who runs this Hub, what Idejo IDs keep (email,
+            linked from every member page: who runs this Hub, what idejo IDs keep (email,
             names, the forums signed in to) and why, how long, and how to reach you. Plain
             text; a blank line starts a new paragraph.
           </p>
@@ -273,8 +273,8 @@ defmodule IdejoHubWeb.SettingsLive do
       <section id="inbox" class="space-y-2">
         <h2 class="text-xl font-semibold">Members' inbox</h2>
         <p class="text-sm">
-          Idejo in inbox mode at <code>{IdejoHub.Community.my_host()}</code>: each member's forums,
-          the topics they follow and their private conversations (Idejo 0.3.5 or later).
+          idejo in inbox mode at <code>{IdejoHub.Community.my_host()}</code>: each member's forums,
+          the topics they follow and their private conversations (idejo 0.3.5 or later).
           Forums lead there once their containers are made again.
         </p>
         <p :if={@inbox} id="inbox-status">

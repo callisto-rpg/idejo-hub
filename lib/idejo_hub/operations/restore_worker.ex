@@ -8,7 +8,7 @@ defmodule IdejoHub.Operations.RestoreWorker do
   1. The host shows the maintenance page (FL-04's mark) and the container stops.
   2. The file goes into the forum's backups volume (`Docker.copy_to/3`).
   3. A one-off container with the forum's environment and volumes runs
-     `idejo-admin restore FILE --yes` (Idejo AD-09: it keeps a backup of what was there).
+     `idejo-admin restore FILE --yes` (idejo AD-09: it keeps a backup of what was there).
   4. When the forum has a new `SECRET_KEY_BASE` (restored to a new subdomain from a forum
      still alive), `idejo-admin rotate-push-keys --yes` makes push keys it can read.
   5. The container starts, `/health` must answer 200, and the mark is removed: `running`.

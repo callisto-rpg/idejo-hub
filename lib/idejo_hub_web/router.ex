@@ -41,11 +41,11 @@ defmodule IdejoHubWeb.Router do
     post "/sign-out", DirectoryController, :sign_out
   end
 
-  # The directory's search for Idejo's !forum plugin (steward request 2026-11-09): JSON, public.
+  # The directory's search for idejo's !forum plugin (steward request 2026-11-09): JSON, public.
   scope "/api", IdejoHubWeb, host: "forums." do
     pipe_through [:directory_host, :api]
     get "/forums", DirectoryController, :search
-    # HA-10 (steward decision 2026-11-10): the directory for the official Idejo app.
+    # HA-10 (steward decision 2026-11-10): the directory for the official idejo app.
     get "/v1/forums", DirectoryController, :forums
   end
 
@@ -54,7 +54,7 @@ defmodule IdejoHubWeb.Router do
     plug IdejoHubWeb.Plugs.IdentityHost
   end
 
-  # Idejo servers not hosted here (steward decisions 2026-11-06): JSON, no session, so no
+  # idejo servers not hosted here (steward decisions 2026-11-06): JSON, no session, so no
   # CSRF token; a registration key or client credentials are the authority.
   scope "/account/api", IdejoHubWeb do
     pipe_through [:identity_host, :api]
@@ -65,13 +65,13 @@ defmodule IdejoHubWeb.Router do
     put "/listing", RegistryController, :update_listing
     get "/profile", CommunityController, :profile
     post "/profile", CommunityController, :fill_profile
-    # Idejo's chat service (steward request 2026-11-10).
+    # idejo's chat service (steward request 2026-11-10).
     post "/chats/tickets", ChatServiceController, :ticket
     get "/chats/unread", ChatServiceController, :unread
     get "/chats/activity", ChatServiceController, :activity
   end
 
-  # An Idejo ID's picture, public (steward decisions 2026-11-06).
+  # An idejo ID's picture, public (steward decisions 2026-11-06).
   scope "/account/pictures", IdejoHubWeb do
     pipe_through [:identity_host]
 
@@ -165,15 +165,15 @@ defmodule IdejoHubWeb.Router do
   scope "/internal", IdejoHubWeb do
     get "/caddy/ask", CaddyController, :ask
     get "/forum-unavailable", CaddyController, :forum_unavailable
-    # Idejo's community menu, asked by forums on the forum network (steward decision 2026-11-06).
+    # idejo's community menu, asked by forums on the forum network (steward decision 2026-11-06).
     get "/community", CommunityController, :index
     get "/community/profile", CommunityController, :profile
     post "/community/profile", CommunityController, :fill_profile
-    # Idejo's chat service, asked by hosted forums (steward request 2026-11-10).
+    # idejo's chat service, asked by hosted forums (steward request 2026-11-10).
     post "/community/chats/tickets", ChatServiceController, :ticket
     get "/community/chats/unread", ChatServiceController, :unread
     get "/community/chats/activity", ChatServiceController, :activity
-    # The members' inbox (Idejo's inbox mode), with its own client credentials.
+    # The members' inbox (idejo's inbox mode), with its own client credentials.
     get "/community/inbox/topics", InboxServiceController, :topics
     get "/community/inbox/conversations", InboxServiceController, :conversations
     post "/community/inbox/conversations/moved", InboxServiceController, :moved

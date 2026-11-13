@@ -4,7 +4,7 @@
 defmodule IdejoHub.Operations.BackupScheduler do
   @moduledoc """
   OP-01: run by Oban's cron (`IDEJO_HUB_BACKUP_CRON`, default daily at 02:00 UTC, an hour
-  before Idejo's own 03:00 backup). Queues a backup for every running forum that is not busy
+  before idejo's own 03:00 backup). Queues a backup for every running forum that is not busy
   with another action; a busy one is skipped until the next run and the skip is logged.
   OP-10: also queues the backup of the Hub's own database and the identity provider's
   (`HubBackupWorker`), on the same schedule.

@@ -4,8 +4,8 @@
 defmodule IdejoHub.Repo.Migrations.CreateOutsideForums do
   use Ecto.Migration
 
-  # Outside forums (steward decisions 2026-11-06): Idejo servers not hosted here that sign in
-  # with this Hub's Idejo ID, and may ask to be listed in the directory.
+  # Outside forums (steward decisions 2026-11-06): idejo servers not hosted here that sign in
+  # with this Hub's idejo ID, and may ask to be listed in the directory.
   def change do
     create table(:outside_forums) do
       add :host, :string, null: false

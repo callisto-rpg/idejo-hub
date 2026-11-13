@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Identity.ID05MembersTest do
   @moduledoc """
-  ID-05: the forums an Idejo ID has joined (from the provider's sign-ins, never a forum's
+  ID-05: the forums an idejo ID has joined (from the provider's sign-ins, never a forum's
   database), and leaving one: keeping the account (`idejo-admin leave`) or deleting it
   (`delete-account`). ID-06: deleting the identity deletes every forum account, then the
   person at the provider; a forum's last owner stops it.

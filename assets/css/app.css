@@ -109,11 +109,11 @@
 
 /* This file is for your main application CSS */
 
-/* Members' pages (the Idejo ID site, the forums directory) in Idejo's own look (steward
-   request, 2026-11-06): Idejo's fonts (Fraunces for titles, Rubik for text; the
-   @font-face rules copied from Idejo's app.css, files in priv/static/fonts, OFL-1.1) and its
-   default theme colours (Idejo's Admin → Settings defaults: gold #daa304, #f2c94c, #b8860b
-   on cream #fdfcf6, or on #000000 in the dark theme), with the formulas Idejo's
+/* Members' pages (the idejo ID site, the forums directory) in idejo's own look (steward
+   request, 2026-11-06): idejo's fonts (Fraunces for titles, Rubik for text; the
+   @font-face rules copied from idejo's app.css, files in priv/static/fonts, OFL-1.1) and its
+   default theme colours (idejo's Admin → Settings defaults: gold #daa304, #f2c94c, #b8860b
+   on cream #fdfcf6, or on #000000 in the dark theme), with the formulas idejo's
    Layouts.theme_rules/1 uses. Scoped to `.idejo-member` (Layouts.app on members' pages):
    operators' pages keep the Hub's own theme. */
 @font-face {
@@ -264,7 +264,7 @@
   --color-base-300: color-mix(in oklab, #000000 82%, #fff);
   --color-base-content: color-mix(in oklab, #fdfcf6 92%, #000000);
 }
-/* The Idejo logos: the small one by the title, the full one above the sign-up form. */
+/* The idejo logos: the small one by the title, the full one above the sign-up form. */
 .idejo-member .member-mark { width: 2rem; height: 2rem; border-radius: 0.5rem; }
 .idejo-member .member-logo { display: block; width: 10rem; height: auto; margin: 0 auto 1.5rem; }
 
@@ -328,7 +328,7 @@
 @container (min-width: 27rem) {
   .directory-grid.is-compact > li { grid-column: span 2; }
 }
-/* Signing in shows the visitor's own forums first: in Idejo's gold, full size. */
+/* Signing in shows the visitor's own forums first: in idejo's gold, full size. */
 .directory-sign-in { gap: 0.5rem; }
 /* "All forums": a title on a line across the page, under the visitor's own forums. */
 .directory-divider {

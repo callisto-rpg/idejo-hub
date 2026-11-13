@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.CommunityController do
   @moduledoc """
-  Idejo's community menu (steward decision 2026-11-06): `GET /internal/community?subject=`,
+  idejo's community menu (steward decision 2026-11-06): `GET /internal/community?subject=`,
   asked by a forum on the forum network (Caddy refuses `/internal/*` from outside), with
   HTTP Basic: its OpenID Connect client id and secret. Answers
   `{"communities": [{"name", "url"}]}`, the other running forums that person joined
@@ -25,9 +25,9 @@ defmodule IdejoHubWeb.CommunityController do
   def index(conn, _params), do: unauthorized(conn)
 
   @doc """
-  An Idejo ID's public profile (steward decisions 2026-11-06), for a forum the person signed
+  An idejo ID's public profile (steward decisions 2026-11-06), for a forum the person signed
   in to: `GET …/profile?subject=` → `{"username", "picture"}` (the picture's address);
-  `POST …/profile` `{"subject", "username", "picture"}` (Base64 WebP) fills what the Idejo ID
+  `POST …/profile` `{"subject", "username", "picture"}` (Base64 WebP) fills what the idejo ID
   lacks and answers the same. Hosted forums at `/internal/community/profile`, outside forums
   at `/account/api/profile`, both with their client credentials.
   """
@@ -57,7 +57,7 @@ defmodule IdejoHubWeb.CommunityController do
     end
   end
 
-  # The members' inbox (steward request 2026-11-10) reads anyone's Idejo ID profile (never
+  # The members' inbox (steward request 2026-11-10) reads anyone's idejo ID profile (never
   # fills it), to make the account a forum's "Private Message" names before they came.
   defp inbox_reads?(conn, subject) when is_binary(subject) and subject != "" do
     case Plug.BasicAuth.parse_basic_auth(conn) do

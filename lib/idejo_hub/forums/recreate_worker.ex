@@ -4,7 +4,7 @@
 defmodule IdejoHub.Forums.RecreateWorker do
   @moduledoc """
   HA-05 / HN-07: remakes a forum's container from the current settings (its environment
-  is fixed when a container is made: a new shared SMTP server, for one), on the same Idejo
+  is fixed when a container is made: a new shared SMTP server, for one), on the same idejo
   version, keeping its volumes and database (`ForumContainer.recreate/1`).
 
   A running forum shows the maintenance page meanwhile, is started again and must answer

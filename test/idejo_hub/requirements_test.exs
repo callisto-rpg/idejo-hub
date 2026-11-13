@@ -9,7 +9,7 @@ defmodule IdejoHub.RequirementsTest do
   `guard/test/`. The exceptions are listed here with their reason:
 
     * `@elsewhere`: the base-Idejo rows (BI), built and tested in the `idejo` repository
-      under Idejo's own IDs (the spec's last column);
+      under idejo's own IDs (the spec's last column);
     * `@by_review`: Musts met by a process, not code;
     * `@pending`: Musts whose test is still to come (an open pull request or a steward
       decision). Remove an ID from it when its test lands, or this test fails.
@@ -19,19 +19,19 @@ defmodule IdejoHub.RequirementsTest do
   @root Path.expand("../..", __DIR__)
 
   @elsewhere %{
-    "BI-01" => "Idejo AD-13",
-    "BI-02" => "Idejo AD-14",
-    "BI-03" => "Idejo AD-15",
-    "BI-04" => "Idejo AD-09",
-    "BI-05" => "Idejo AD-16",
-    "BI-06" => "Idejo AC-09",
-    "BI-07" => "Idejo SP-10"
+    "BI-01" => "idejo AD-13",
+    "BI-02" => "idejo AD-14",
+    "BI-03" => "idejo AD-15",
+    "BI-04" => "idejo AD-09",
+    "BI-05" => "idejo AD-16",
+    "BI-06" => "idejo AC-09",
+    "BI-07" => "idejo SP-10"
   }
 
   # LB-02: the licence is the steward's choice after legal review (AGPL-3.0-only for now).
   @by_review ~w(LB-02)
 
-  # LB-04: Idejo's trademark policy (LI-07) is not written yet (steward decision 2026-11-06:
+  # LB-04: idejo's trademark policy (LI-07) is not written yet (steward decision 2026-11-06:
   # wait for it).
   @pending ~w(LB-04)
 

@@ -93,7 +93,7 @@ defmodule IdejoHub.MixProject do
       {:swoosh, "~> 1.19"},
       {:gen_smtp, "~> 1.3"},
       {:req, "~> 0.5"},
-      # SC-08: operator passwords (Argon2id, as Idejo) and two-factor codes (TOTP).
+      # SC-08: operator passwords (Argon2id, as idejo) and two-factor codes (TOTP).
       # Apache-2.0 both (LI-06).
       {:argon2_elixir, "~> 4.1"},
       {:nimble_totp, "~> 1.0"},

@@ -7,12 +7,12 @@
 # other, then deletes their identity and is removed from both following each forum's rules.
 #
 # Needs Docker. Run from the repository root:  deploy/test/m3/run.sh
-# IDEJO_BASE_IMAGE: an Idejo image with the AC-09 consent and `leave`/`delete-account`
+# IDEJO_BASE_IMAGE: an idejo image with the AC-09 consent and `leave`/`delete-account`
 # commands (default ghcr.io/callisto-rpg/idejo:0.2.0). It removes everything it made, pass
 # or fail, and exits non-zero on any failure.
 #
 # How: the real bundle (deploy/docker-compose.yml: Hub, Zitadel, its login screen, Caddy
-# with its local CA) plus Mailpit for email. The forums run that Idejo image with Caddy's
+# with its local CA) plus Mailpit for email. The forums run that idejo image with Caddy's
 # root added to its CA list (a local registry serves it). A browser (browser/check.mjs)
 # does everything the person does, on the real pages: the Hub's sign-up, Zitadel's invite
 # and sign-in screens, each forum's consent, the Hub's member page. The roles and the ban
@@ -96,7 +96,7 @@ YML
 compose up -d --build --wait >/dev/null
 echo "  running: $(compose ps --format '{{.Service}}' | tr '\n' ' ')"
 
-step "2. Idejo for the forums, trusting Caddy's local CA, in a local registry"
+step "2. idejo for the forums, trusting Caddy's local CA, in a local registry"
 docker run -d --name "$registry" -p 127.0.0.1:5000:5000 registry:2.8.3 >/dev/null
 for _ in $(seq 1 30); do
   compose cp caddy:/data/caddy/pki/authorities/local/root.crt "$work/root.crt" >/dev/null 2>&1 && break
@@ -191,7 +191,7 @@ done
 [ "$(hub_rpc 'IO.write(:up)' || true)" = "up" ] || { echo "the Hub did not come back"; exit 1; }
 ok "the Hub is back"
 
-step "7. In a browser: roles differ, the ban holds on bravo only; then the member deletes their Idejo ID"
+step "7. In a browser: roles differ, the ban holds on bravo only; then the member deletes their idejo ID"
 browse delete
 
 step "8. The deletion reaches both forums, then Zitadel"
@@ -214,7 +214,7 @@ for f in alpha bravo; do
     linked = Idejo.Repo.aggregate(Idejo.Accounts.UserIdentity, :count)
     IO.write(\"#{u.status}|#{u.display_name}|#{u.email == \"$email\"}|#{linked}\")")
   [ "$row" = "deleted|Deleted user|false|0" ] || { echo "$f: $row"; exit 1; }
-  ok "$f: the account is anonymised as Idejo's own deletion does (\"Deleted user\", no email, no link)"
+  ok "$f: the account is anonymised as idejo's own deletion does (\"Deleted user\", no email, no link)"
 done
 gone=$(hub_rpc "IO.write(inspect(IdejoHub.Identity.person(\"$subject\")))")
 [ "$gone" = "{:error, :not_found}" ] || { echo "Zitadel still has the person: $gone"; exit 1; }

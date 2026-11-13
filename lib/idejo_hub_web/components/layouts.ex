@@ -41,15 +41,15 @@ defmodule IdejoHubWeb.Layouts do
   attr :wide, :boolean, default: false, doc: "a wide column, for tables"
 
   attr :title, :string,
-    default: "Idejo Hub",
-    doc: "the header's name (\"Idejo ID\" on members' pages)"
+    default: "idejo Hub",
+    doc: "the header's name (\"idejo ID\" on members' pages)"
 
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <div class={@title != "Idejo Hub" && "idejo-member min-h-screen"}>
-      <%!-- Hub NF-07 (as Idejo's AX-01): the keyboard's first stop leads past the header. --%>
+    <div class={@title != "idejo Hub" && "idejo-member min-h-screen"}>
+      <%!-- Hub NF-07 (as idejo's AX-01): the keyboard's first stop leads past the header. --%>
       <a
         href="#main"
         id="skip-link"
@@ -59,8 +59,8 @@ defmodule IdejoHubWeb.Layouts do
       </a>
       <header class="navbar px-4 sm:px-6 lg:px-8">
         <div class="flex-1 flex items-center gap-4">
-          <a :if={@title == "Idejo Hub"} href={~p"/"} class="text-lg font-semibold">Idejo Hub</a>
-          <span :if={@title != "Idejo Hub"} class="flex items-center gap-2 text-lg font-semibold">
+          <a :if={@title == "idejo Hub"} href={~p"/"} class="text-lg font-semibold">idejo Hub</a>
+          <span :if={@title != "idejo Hub"} class="flex items-center gap-2 text-lg font-semibold">
             <img src={~p"/images/logo-small.svg"} alt="" class="member-mark" width="32" height="32" />
             {@title}
           </span>
@@ -68,7 +68,7 @@ defmodule IdejoHubWeb.Layouts do
             <.link navigate={~p"/"}>Forums</.link>
             <.link navigate={~p"/server"}>Server</.link>
             <.link navigate={~p"/settings"}>Settings</.link>
-            <.link navigate={~p"/identities"}>Idejo IDs</.link>
+            <.link navigate={~p"/identities"}>idejo IDs</.link>
             <.link navigate={~p"/outside-forums"}>Outside forums</.link>
             <.link navigate={~p"/audit"}>Audit log</.link>
             <.link :if={IdejoHub.Operators.owner?(@current_operator)} navigate={~p"/operators"}>
@@ -99,8 +99,8 @@ defmodule IdejoHubWeb.Layouts do
         </div>
       </main>
 
-      <%!-- Hub NF-07: members' pages link the privacy notice, as Idejo's footer does (AD-02). --%>
-      <footer :if={@title != "Idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
+      <%!-- Hub NF-07: members' pages link the privacy notice, as idejo's footer does (AD-02). --%>
+      <footer :if={@title != "idejo Hub"} id="member-footer" class="px-4 pb-8 sm:px-6 lg:px-8 text-sm">
         <div class="mx-auto max-w-2xl">
           <%!-- Absolute: the directory (forums.<forum domain>) shows this footer too. --%>
           <a href={IdejoHub.Identity.issuer() <> "/account/privacy"}>Privacy</a>

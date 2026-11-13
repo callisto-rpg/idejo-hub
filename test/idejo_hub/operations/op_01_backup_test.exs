@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Operations.OP01BackupTest do
-  @moduledoc "OP-01: scheduled backups per forum (daily, 14 kept), through Idejo's CLI backup."
+  @moduledoc "OP-01: scheduled backups per forum (daily, 14 kept), through idejo's CLI backup."
   use IdejoHub.DataCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
 
@@ -38,7 +38,7 @@ defmodule IdejoHub.Operations.OP01BackupTest do
     Forums.get_forum!(forum.id)
   end
 
-  # Each backup writes a new file, as Idejo does.
+  # Each backup writes a new file, as idejo does.
   defp backup_writes(n) do
     path = "/data/backups/idejo-20261103-#{String.pad_leading("#{n}", 6, "0")}.tar"
     Fake.exec_result(@backup, {:ok, %{exit_code: 0, output: "Backup written to #{path}\n"}})

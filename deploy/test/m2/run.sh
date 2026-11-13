@@ -5,16 +5,16 @@
 # Hub milestone 2 exit check (Implementation Prompt, Part B): from the Hub's web interface,
 # create four forums, suspend and resume one, back up and restore one, upgrade all four with
 # one deliberately failing (it must roll back alone), export one and restore that export on a
-# standalone Idejo install, delete one. All within 4 GB. Step 4b also checks Hub NF-04:
+# standalone idejo install, delete one. All within 4 GB. Step 4b also checks Hub NF-04:
 # each forum created in under 2 minutes, each upgrade under 1 minute of downtime.
 #
 # Needs Docker. Run from the repository root:  deploy/test/m2/run.sh
 # It removes everything it made, pass or fail, and exits non-zero on any failure.
 #
 # How: the real bundle (deploy/docker-compose.yml) with Caddy's local CA; a local registry
-# holds Idejo 0.1.0 and an "0.1.1" whose server refuses to start for delta.* (broken/); a
+# holds idejo 0.1.0 and an "0.1.1" whose server refuses to start for delta.* (broken/); a
 # browser (browser/check.mjs) drives the Hub's pages; then the downloaded export is restored
-# on a plain `docker run` Idejo. Memory of the Hub's containers and the forums is sampled
+# on a plain `docker run` idejo. Memory of the Hub's containers and the forums is sampled
 # all along; the peak must stay under 4 GiB.
 
 set -euo pipefail
@@ -53,7 +53,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-step "1. Idejo 0.1.0 and a deliberately failing 0.1.1 in a local registry"
+step "1. idejo 0.1.0 and a deliberately failing 0.1.1 in a local registry"
 docker pull -q "$base_image" >/dev/null
 docker run -d --name "$registry" -p 127.0.0.1:5000:5000 registry:2.8.3 >/dev/null
 sleep 2
@@ -164,7 +164,7 @@ if [ "$creates" -lt 4 ] || [ "$upgrades" -lt 3 ]; then
   echo "timings missing: $creates creations, $upgrades upgrades ($timings)"; exit 1
 fi
 
-step "5. charlie's export, restored on a standalone Idejo (no Hub)"
+step "5. charlie's export, restored on a standalone idejo (no Hub)"
 docker network create "$standalone" >/dev/null
 docker volume create "$standalone-backups" >/dev/null
 docker run -d --name "$standalone-db" --network "$standalone" -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=idejo postgres:18-alpine >/dev/null
@@ -183,7 +183,7 @@ docker run -d --name "$standalone" --network "$standalone" "${env_sa[@]}" -v "$s
   "$base_image" sh -c "/app/bin/migrate && /app/bin/server" >/dev/null
 sleep 20
 # `health` exits non-zero when any check fails: the push keys cannot be read on an install
-# with another SECRET_KEY_BASE (Idejo encrypts them with it), which is expected here.
+# with another SECRET_KEY_BASE (idejo encrypts them with it), which is expected here.
 health=$(docker exec "$standalone" /app/bin/idejo-admin health 2>/dev/null || true)
 server_name=$(docker exec "$standalone-db" psql -U postgres -d idejo -tAc "select value from settings where key='server_name'")
 echo "$health" | grep -E "database|migrations|owner|push keys" | sed 's/^/  /'

@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Identity.OutsideForums do
   @moduledoc """
-  Idejo servers not hosted here that sign in with this Hub's Idejo ID (steward decisions
+  idejo servers not hosted here that sign in with this Hub's idejo ID (steward decisions
   2026-11-06; extra review: DV-06).
 
   Registration, from the forum's admin panel, in two calls to the sign-in host's JSON API
@@ -29,7 +29,7 @@ defmodule IdejoHub.Identity.OutsideForums do
   alias IdejoHub.Identity.{OutsideForum, Proof}
 
   @challenge_seconds 600
-  @label "Idejo ID"
+  @label "idejo ID"
 
   @doc "How long a forum has to serve its proof, in seconds."
   def challenge_seconds, do: @challenge_seconds
@@ -110,7 +110,7 @@ defmodule IdejoHub.Identity.OutsideForums do
          label: @label,
          sign_up_url: Identity.issuer() <> "/account/sign-up",
          directory_url: Community.directory_url(),
-         # Idejo's chat service (steward request 2026-11-10).
+         # idejo's chat service (steward request 2026-11-10).
          chat_url: Community.chat_url(),
          topics_url: Community.topics_url()
        }}

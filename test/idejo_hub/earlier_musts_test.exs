@@ -5,7 +5,7 @@ defmodule IdejoHub.EarlierMustsTest do
   @moduledoc """
   Hub milestone 4's exit check asks a passing test named after every Must. These Musts were
   built in milestones 2 and 3 without a test of their own name; each test here checks the
-  Hub's part, and names where the rest is proved (Idejo's own tests, the exit checks).
+  Hub's part, and names where the rest is proved (idejo's own tests, the exit checks).
   """
   use IdejoHub.DataCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
@@ -47,16 +47,16 @@ defmodule IdejoHub.EarlierMustsTest do
   end
 
   @tag req: "ID-03"
-  test "ID-03 a forum signs people in with their Idejo ID, and its own settings decide who joins" do
+  test "ID-03 a forum signs people in with their idejo ID, and its own settings decide who joins" do
     env = forum_with_client("id03-club") |> env()
 
-    # Idejo's OpenID Connect client (AC-09) makes the local member at the first sign-in.
+    # idejo's OpenID Connect client (AC-09) makes the local member at the first sign-in.
     assert env["IDEJO_OIDC_ISSUER"] == IdejoHub.Identity.issuer()
     assert env["IDEJO_OIDC_CLIENT_ID"] && env["IDEJO_OIDC_CLIENT_SECRET"]
     # Approval and invitations stay the forum's own (its registration mode, Admin → Settings):
     # the Hub sets nothing about who may join.
     refute Enum.any?(Map.keys(env), &(&1 =~ ~r/REGISTRATION|INVITE|APPROV/))
-    # deploy/test/m3/run.sh step 5: a first visit makes the account, after Idejo's consent.
+    # deploy/test/m3/run.sh step 5: a first visit makes the account, after idejo's consent.
     assert read("deploy/test/m3/run.sh") =~ "join both forums"
   end
 
@@ -89,7 +89,7 @@ defmodule IdejoHub.EarlierMustsTest do
     signup = read("lib/idejo_hub_web/controllers/signup_html/new.html.heex")
     refute signup =~ ~s(type="password")
     # A forum is a confidential client with the code flow: it gets an ID token (subject,
-    # email, display name), never credentials. Consent at the first join is Idejo's (AC-09).
+    # email, display name), never credentials. Consent at the first join is idejo's (AC-09).
     zitadel = read("lib/idejo_hub/identity/zitadel.ex")
     assert zitadel =~ "OIDC_GRANT_TYPE_AUTHORIZATION_CODE"
     refute zitadel =~ "OIDC_GRANT_TYPE_PASSWORD"
@@ -133,7 +133,7 @@ defmodule IdejoHub.EarlierMustsTest do
   end
 
   @tag req: "NF-06"
-  test "NF-06 the Hub release states the Idejo versions it supports, its default among them" do
+  test "NF-06 the Hub release states the idejo versions it supports, its default among them" do
     default = Application.fetch_env!(:idejo_hub, Forums)[:default_version]
     # The test config starts forums on 0.1.0; production's default is runtime.exs'.
     [_, production] =
@@ -142,23 +142,23 @@ defmodule IdejoHub.EarlierMustsTest do
     assert default
 
     for doc <- ["README.md", "docs/deploying.md"] do
-      assert read(doc) =~ "## Supported Idejo versions", doc
-      assert read(doc) =~ "**Idejo #{production}**", doc
+      assert read(doc) =~ "## Supported idejo versions", doc
+      assert read(doc) =~ "**idejo #{production}**", doc
     end
   end
 
   @tag req: "LB-01"
-  test "LB-01 the Hub is its own repository and release, apart from Idejo" do
+  test "LB-01 the Hub is its own repository and release, apart from idejo" do
     mix = read("mix.exs")
     assert mix =~ "app: :idejo_hub"
     assert [_, _version] = Regex.run(~r/version: "([0-9.]+)"/, mix)
-    # It depends on no Idejo code: Idejo is only an image, driven through its contract.
+    # It depends on no idejo code: idejo is only an image, driven through its contract.
     refute mix =~ ~r/\{:idejo,/
     assert File.exists?(Path.join(@root, "LICENSE"))
   end
 
   @tag req: "LB-03"
-  test "LB-03 every forum's Source code link points to the exact Idejo version it runs" do
+  test "LB-03 every forum's Source code link points to the exact idejo version it runs" do
     forum = running_forum("lb03-club")
     assert env(forum)["IDEJO_SOURCE_URL"] == "https://github.com/callisto-rpg/Idejo/tree/v0.1.0"
 

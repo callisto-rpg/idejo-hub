@@ -117,7 +117,7 @@ defmodule IdejoHub.Identity do
 
   @doc "The sign-in button's words on every forum."
   @spec label() :: String.t()
-  def label, do: config(:label) || "Idejo ID"
+  def label, do: config(:label) || "idejo ID"
 
   @doc false
   def config(key), do: Application.fetch_env!(:idejo_hub, __MODULE__)[key]

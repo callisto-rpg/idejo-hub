@@ -4,8 +4,8 @@
 defmodule IdejoHub.Chats.ForumLink do
   @moduledoc """
   What the Hub asks the forums a member joined for the members' inbox (steward request
-  2026-11-10; Idejo's inbox mode, `IdejoHubWeb.InboxServiceController`), through Idejo's
-  chat service interface (Idejo's CLAUDE.md, Running under Idejo Hub → Chat service), never
+  2026-11-10; idejo's inbox mode, `IdejoHubWeb.InboxServiceController`), through idejo's
+  chat service interface (idejo's CLAUDE.md, Running under idejo Hub → Chat service), never
   their databases:
 
     * `forums/1`: the running hosted forums they joined (`identity_joins`; the inbox itself
@@ -14,12 +14,12 @@ defmodule IdejoHub.Chats.ForumLink do
       `activity/2`, their sums in all but the asking forum (the forum logo's dot);
     * `conversations/1`: each one's `GET /community/conversations?ticket=` (their private
       conversations the inbox copies), and `moved/3`, `POST /community/conversations/moved`;
-    * `save_settings/2`: each one's `POST /community/settings` (Idejo 0.3.7; steward request
+    * `save_settings/2`: each one's `POST /community/settings` (idejo 0.3.7; steward request
       2026-11-13), the member's Profile and account sections saved for all forums.
 
   Hosted forums are asked on the forum network (`http://idejo-forum-<slug>:4000`), outside
   ones at their public address only. Each forum gets four seconds; a forum that does not
-  answer, or runs an Idejo without the interface (404), adds nothing.
+  answer, or runs an idejo without the interface (404), adds nothing.
   """
 
   import Ecto.Query
@@ -167,7 +167,7 @@ defmodule IdejoHub.Chats.ForumLink do
   @doc """
   Saves `settings` (the inbox's JSON, passed on as it is) on every forum `subject` joined,
   each with a ticket of scope `settings`: one entry per forum, `%{name:, host:, answered:,
-  saved:, failed:}`, `answered` false for a forum that did not answer or runs an Idejo
+  saved:, failed:}`, `answered` false for a forum that did not answer or runs an idejo
   without the interface (before 0.3.7).
   """
   @spec save_settings(String.t(), map()) :: [map()]

@@ -3,10 +3,10 @@
 
 defmodule IdejoHubWeb.OutsideForumsLive do
   @moduledoc """
-  Outside forums (steward decisions 2026-11-06): Idejo servers not hosted here that sign in
-  with this Hub's Idejo ID (`IdejoHub.Identity.OutsideForums`). Listing requests first:
+  Outside forums (steward decisions 2026-11-06): idejo servers not hosted here that sign in
+  with this Hub's idejo ID (`IdejoHub.Identity.OutsideForums`). Listing requests first:
   Approve puts the forum in the directory, Refuse keeps it out; Remove deletes its client,
-  so its sign-in with Idejo ID stops. Every decision is audited.
+  so its sign-in with idejo ID stops. Every decision is audited.
   """
   use IdejoHubWeb, :live_view
 
@@ -31,7 +31,7 @@ defmodule IdejoHubWeb.OutsideForumsLive do
   def handle_event("remove", %{"id" => id}, socket) do
     socket =
       case OutsideForums.remove(id, socket.assigns.current_operator.email) do
-        :ok -> put_flash(socket, :info, "Removed: its sign-in with Idejo ID has stopped.")
+        :ok -> put_flash(socket, :info, "Removed: its sign-in with idejo ID has stopped.")
         {:error, _} -> put_flash(socket, :error, "The provider could not be reached: try again.")
       end
 
@@ -51,7 +51,7 @@ defmodule IdejoHubWeb.OutsideForumsLive do
     <Layouts.app flash={@flash} current_operator={@current_operator} wide>
       <h1 class="text-2xl font-semibold">Outside forums</h1>
       <p>
-        Idejo servers hosted elsewhere that sign in with this Hub's Idejo ID. They appear in
+        idejo servers hosted elsewhere that sign in with this Hub's idejo ID. They appear in
         the forums directory once you approve their request.
       </p>
       <p :if={@forums == []} id="no-outside-forums">No outside forum has registered yet.</p>
@@ -95,7 +95,7 @@ defmodule IdejoHubWeb.OutsideForumsLive do
                 class="btn btn-sm btn-error"
                 phx-click="remove"
                 phx-value-id={f.id}
-                data-confirm={"Remove #{f.host}? Its members can no longer sign in there with Idejo ID until it registers again."}
+                data-confirm={"Remove #{f.host}? Its members can no longer sign in there with idejo ID until it registers again."}
               >
                 Remove
               </button>

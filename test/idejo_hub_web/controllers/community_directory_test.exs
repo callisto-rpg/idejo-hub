@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.CommunityDirectoryTest do
   @moduledoc """
-  The forums directory at forums.<forum domain>, and the answers to Idejo's community menu
+  The forums directory at forums.<forum domain>, and the answers to idejo's community menu
   (steward decisions 2026-11-06).
   """
   use IdejoHubWeb.ConnCase, async: false
@@ -198,12 +198,12 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
              "https://dir-card.idejo.test/"
            ]
 
-    # Not signed in: every forum offers Join, its sign-in with Idejo ID.
+    # Not signed in: every forum offers Join, its sign-in with idejo ID.
     assert LazyHTML.attribute(LazyHTML.query(card, "a.directory-join"), "href") == [
              "https://dir-card.idejo.test/users/oidc"
            ]
 
-    # Idejo's fixed logo address (0.2.9), allowed by the page's policy.
+    # idejo's fixed logo address (0.2.9), allowed by the page's policy.
     assert LazyHTML.attribute(LazyHTML.query(card, "img.directory-logo"), "src") == [
              "https://dir-card.idejo.test/logo"
            ]
@@ -378,7 +378,7 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
       assert Enum.count(mine) == 1
       assert LazyHTML.text(mine) =~ "Chess"
 
-      # My Forums (steward request 2026-11-07): compact, no address, Open in Idejo's gold.
+      # My Forums (steward request 2026-11-07): compact, no address, Open in idejo's gold.
       assert LazyHTML.attribute(LazyHTML.query(mine, "a.directory-open.btn-primary"), "href") ==
                ["https://dj-chess.idejo.test/"]
 

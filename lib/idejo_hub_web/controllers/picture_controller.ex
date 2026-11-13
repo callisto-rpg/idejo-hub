@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.PictureController do
   @moduledoc """
-  An Idejo ID's picture (steward decisions 2026-11-06; `IdejoHub.Identity.Profiles`):
+  An idejo ID's picture (steward decisions 2026-11-06; `IdejoHub.Identity.Profiles`):
   `GET /account/pictures/<key>.webp` on the sign-in host, public, no session. A new key at
   each change, so it is cached for good; served as WebP only, `nosniff`, in a sandbox.
   """

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# CI (DV-02, DV-03, DV-06, LI-01), as in Idejo. Every job must pass before a merge.
+# CI (DV-02, DV-03, DV-06, LI-01), as in idejo. Every job must pass before a merge.
 
 name: CI
 

@@ -13,7 +13,7 @@ defmodule IdejoHubWeb.ForumListLive do
   (`Operations.HealthWorker`); sorted by health, forums that are down come first.
 
   Members and disk use come from the forum itself (`idejo-admin stats`, kept by
-  `Operations.StatsWorker` every 15 minutes), never its database. Without them (an Idejo
+  `Operations.StatsWorker` every 15 minutes), never its database. Without them (an idejo
   before `stats`), members show "—" and the size is the latest backup's.
   """
   use IdejoHubWeb, :live_view
@@ -165,7 +165,7 @@ defmodule IdejoHubWeb.ForumListLive do
 
   defp members_title(_forum),
     do:
-      "not reported yet (needs an Idejo with idejo-admin stats; the Hub never reads a forum's database)"
+      "not reported yet (needs an idejo with idejo-admin stats; the Hub never reads a forum's database)"
 
   defp size(nil), do: "—"
   defp size(bytes) when bytes < 1_048_576, do: "#{max(div(bytes, 1024), 1)} KB"

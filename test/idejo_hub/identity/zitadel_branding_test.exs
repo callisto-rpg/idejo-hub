@@ -3,8 +3,8 @@
 
 defmodule IdejoHub.Identity.ZitadelBrandingTest do
   @moduledoc """
-  Zitadel's sign-in screens in Idejo's look (steward request 2026-11-06): the Hub sets the
-  instance's branding (colours, the Idejo logo) when it configures Zitadel, only when it
+  Zitadel's sign-in screens in idejo's look (steward request 2026-11-06): the Hub sets the
+  instance's branding (colours, the idejo logo) when it configures Zitadel, only when it
   differs. Checked here against Zitadel's API shape; against Zitadel v4.20.1 itself by hand
   (the PR has the screenshots).
   """
@@ -87,7 +87,7 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
     end
   end
 
-  test "Zitadel's default branding becomes Idejo's colours and logo, then is activated" do
+  test "Zitadel's default branding becomes idejo's colours and logo, then is activated" do
     zitadel(%{
       "primaryColor" => "#5469d4",
       "warnColor" => "#cd3d56",
@@ -124,7 +124,7 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
              Enum.find_index(paths, &(&1 == "/assets/v1/instance/policy/label/icon/dark"))
   end
 
-  test "already in Idejo's look, nothing is sent" do
+  test "already in idejo's look, nothing is sent" do
     zitadel(%{
       "primaryColor" => "#daa304",
       "backgroundColor" => "#fdfcf6",

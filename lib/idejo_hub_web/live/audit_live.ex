@@ -7,7 +7,7 @@ defmodule IdejoHubWeb.AuditLive do
   and how it ended, newest first, 50 a page. Filters by forum, action (its start, such as
   `forum.` or `identity.`), outcome and actor, kept in the address (`?forum=&action=&outcome=&actor=`,
   `&before=` for older pages), so a view can be bookmarked. Entries never hold secrets
-  (`IdejoHub.Audit.record/5`). A forum's owner sees their forum's part on their Idejo ID page
+  (`IdejoHub.Audit.record/5`). A forum's owner sees their forum's part on their idejo ID page
   (`AccountController.log/2`).
   """
   use IdejoHubWeb, :live_view
@@ -68,7 +68,7 @@ defmodule IdejoHubWeb.AuditLive do
       <h1 class="text-2xl font-semibold">Audit log</h1>
       <p class="text-sm">
         Who did what to which forum, and when; newest first. A forum's owner sees its part
-        on their Idejo ID page.
+        on their idejo ID page.
       </p>
 
       <.form for={@form} id="audit-filter" phx-submit="filter" class="flex flex-wrap items-end gap-2">

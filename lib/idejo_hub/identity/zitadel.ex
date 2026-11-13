@@ -9,8 +9,8 @@ defmodule IdejoHub.Identity.Zitadel do
   (`:domain`) in `Host`, as Zitadel routes by host.
 
   Forums are OIDC "web" apps in one project, "Idejo forums": code flow only, client secret
-  sent with HTTP Basic, the callback Idejo uses (`/users/oidc/callback`), and the user's
-  email and name in the ID token (`idTokenUserinfoAssertion`), which is what Idejo reads
+  sent with HTTP Basic, the callback idejo uses (`/users/oidc/callback`), and the user's
+  email and name in the ID token (`idTokenUserinfoAssertion`), which is what idejo reads
   (AC-09).
   """
   @behaviour IdejoHub.Identity
@@ -24,7 +24,7 @@ defmodule IdejoHub.Identity.Zitadel do
 
   # ID-05: the Hub's members' pages sign in like a forum, at their own callback.
   @impl true
-  def create_account_client(host), do: create_app("Idejo ID account", host, "/account/callback")
+  def create_account_client(host), do: create_app("idejo ID account", host, "/account/callback")
 
   defp create_app(name, host, callback) do
     body = %{
@@ -118,9 +118,9 @@ defmodule IdejoHub.Identity.Zitadel do
     with :ok <- login_policy(), :ok <- branding(), do: smtp(smtp, sender)
   end
 
-  # Zitadel's sign-in screens in Idejo's look (steward request 2026-11-06), like the Hub's
-  # members' pages: Idejo's default colours (gold on cream, or on #000000 in the dark theme;
-  # its warning red kept) and the Idejo logo, as the instance's branding (label policy).
+  # Zitadel's sign-in screens in idejo's look (steward request 2026-11-06), like the Hub's
+  # members' pages: idejo's default colours (gold on cream, or on #000000 in the dark theme;
+  # its warning red kept) and the idejo logo, as the instance's branding (label policy).
   # Applied when the colours differ or a logo is missing, then activated; else nothing.
   @branding %{
     "primaryColor" => "#daa304",
@@ -245,7 +245,7 @@ defmodule IdejoHub.Identity.Zitadel do
   @description "Idejo Hub"
 
   # Zitadel sends invites through the Hub's SMTP (Settings or HUB_SMTP_*): its configuration
-  # named "Idejo Hub" is replaced when it differs, and removed when the Hub has none.
+  # named "idejo Hub" is replaced when it differs, and removed when the Hub has none.
   defp smtp(smtp, sender) do
     with {:ok, existing} <- request(:post, "/admin/v1/smtp/_search", %{}) do
       ours = for c <- existing["result"] || [], c["description"] == @description, do: c

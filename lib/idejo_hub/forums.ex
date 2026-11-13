@@ -32,7 +32,7 @@ defmodule IdejoHub.Forums do
   }
 
   @doc """
-  Defaults for a new forum's form: the configured Idejo version and limits, and Idejo ID
+  Defaults for a new forum's form: the configured idejo version and limits, and idejo ID
   required (ID-07: local accounts only when the operator allows them; steward decision
   2026-11-06).
   """
@@ -60,7 +60,7 @@ defmodule IdejoHub.Forums do
   def inbox_subdomain, do: @inbox
 
   @doc """
-  The members' inbox (steward request 2026-11-10), not deleted, or nil: an Idejo container in
+  The members' inbox (steward request 2026-11-10), not deleted, or nil: an idejo container in
   inbox mode (`IDEJO_INBOX=on`) at `my.<forum domain>`, run like any forum.
   """
   @spec inbox() :: Forum.t() | nil
@@ -73,8 +73,8 @@ defmodule IdejoHub.Forums do
 
   @doc """
   Sets up the members' inbox, as `actor` (the operator), owned by `owner_email`: a forum of
-  kind `inbox`, "Idejo", slug `inbox` at `my.<forum domain>`, kept out of the directory,
-  Idejo ID sign-in only. Then
+  kind `inbox`, "idejo", slug `inbox` at `my.<forum domain>`, kept out of the directory,
+  idejo ID sign-in only. Then
   "Apply to all forums now" gives the forums its addresses. `{:error, :exists}` with one.
   """
   @spec create_inbox(String.t(), String.t()) ::
@@ -83,7 +83,7 @@ defmodule IdejoHub.Forums do
     if inbox() do
       {:error, :exists}
     else
-      attrs = %{"subdomain" => @inbox, "display_name" => "Idejo", "owner_email" => owner_email}
+      attrs = %{"subdomain" => @inbox, "display_name" => "idejo", "owner_email" => owner_email}
 
       changeset =
         Forum
@@ -193,7 +193,7 @@ defmodule IdejoHub.Forums do
     do: start_action(forum, actor, "running", "suspending", "forum.suspend", SuspendWorker)
 
   @doc """
-  FL-06: exports a running or suspended forum as a standard Idejo backup, kept by the Hub.
+  FL-06: exports a running or suspended forum as a standard idejo backup, kept by the Hub.
   Queues `ExportWorker` (queue `operations`).
   """
   @spec export_forum(Forum.t(), String.t()) :: {:ok, Forum.t()} | {:error, :invalid_state}
@@ -246,7 +246,7 @@ defmodule IdejoHub.Forums do
   OP-03: restores an archive to a new subdomain. The new forum is created (FL-01) without
   headless setup, behind the maintenance page, then restored from the archive.
 
-  Its display name, owner email and Idejo version default to the source forum's. Idejo
+  Its display name, owner email and idejo version default to the source forum's. idejo
   encrypts its secret settings with `SECRET_KEY_BASE`: when the source forum is deleted, its
   key moves with its data (no forum shares it); when it is still alive, the new forum gets
   its own key (SC-04) and new push keys, and an SMTP password set in the forum's own
@@ -308,14 +308,14 @@ defmodule IdejoHub.Forums do
   def change_import(attrs \\ %{}), do: change_new_forum(imported(attrs))
 
   @doc """
-  FL-07: imports a standalone Idejo backup (the file at `path`, an `idejo-admin backup`
+  FL-07: imports a standalone idejo backup (the file at `path`, an `idejo-admin backup`
   archive) as a new forum. The archive is checked first (`Forums.Import.check/1`), then the
   forum is created (FL-01) like a restore to a new subdomain (OP-03): behind the maintenance
   page, without headless setup (the archive brings its owner, members and settings), then
   restored from the archive, kept in the forum's archives as kind `import`.
 
   Local accounts stay on (ID-07): the members' passwords come with the archive, and none of
-  them has an Idejo ID link yet. Idejo encrypts its secret settings with `SECRET_KEY_BASE`:
+  them has an idejo ID link yet. idejo encrypts its secret settings with `SECRET_KEY_BASE`:
   given the standalone install's (`secret_key_base:`), they keep working (it then belongs
   to this forum only, SC-04: the standalone install should stop); without it the forum gets
   its own key and new push keys, and an SMTP password set in the forum's Admin → Email must
@@ -367,7 +367,7 @@ defmodule IdejoHub.Forums do
   end
 
   @doc """
-  OP-04: upgrades a running forum to a newer exact Idejo version, rolling back to its
+  OP-04: upgrades a running forum to a newer exact idejo version, rolling back to its
   current version and a pre-upgrade backup if the new one is not healthy in time. Queues
   `Operations.UpgradeWorker`.
   """
@@ -441,7 +441,7 @@ defmodule IdejoHub.Forums do
   end
 
   @doc """
-  ID-07: whether the forum also allows local accounts (people without an Idejo identity).
+  ID-07: whether the forum also allows local accounts (people without an idejo identity).
   Takes effect when its container is made again, which this queues.
   """
   @spec set_local_accounts(Forum.t(), boolean(), String.t()) ::
@@ -471,7 +471,7 @@ defmodule IdejoHub.Forums do
 
   @doc """
   FL-06: a forum's `SECRET_KEY_BASE`, for the operator restoring its export on a standalone
-  Idejo: Idejo encrypts its secret settings (push keys, a panel SMTP password) with it, so
+  idejo: idejo encrypts its secret settings (push keys, a panel SMTP password) with it, so
   without it they are lost. Audited each time (`forum.secret_key_base.reveal`, SC-06); kept
   by the Hub (the forum still needs it), deleted forums included (their final export).
   """
@@ -688,7 +688,7 @@ defmodule IdejoHub.Forums do
     do: Secrets.decrypt(stored, context(forum.subdomain, field))
 
   @doc """
-  What the forum's container is made from (HN-04): its image version, limits and Idejo
+  What the forum's container is made from (HN-04): its image version, limits and idejo
   environment (AD-13), secrets decrypted (SC-04), email (HN-07). Used for the forum's own
   container and for one-off containers on its volumes (exports, FL-06).
   """
@@ -719,7 +719,7 @@ defmodule IdejoHub.Forums do
     end
   end
 
-  # ID-01, ID-07 (Idejo AC-09): the identity provider as the forum's sign-in, when the forum
+  # ID-01, ID-07 (idejo AC-09): the identity provider as the forum's sign-in, when the forum
   # has a client there; local accounts as the forum is set.
   defp identity_env(%Forum{oidc_client_id: nil} = forum),
     do: %{"IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum)}
@@ -732,13 +732,13 @@ defmodule IdejoHub.Forums do
       "IDEJO_OIDC_CLIENT_ID" => forum.oidc_client_id,
       "IDEJO_OIDC_CLIENT_SECRET" => secret,
       "IDEJO_OIDC_LABEL" => IdejoHub.Identity.label(),
-      # Idejo 0.2.6 (steward decision 2026-11-06): "No Idejo ID yet? Create one" under the
+      # idejo 0.2.6 (steward decision 2026-11-06): "No idejo ID yet? Create one" under the
       # button leads to the Hub's sign-up page, which then leads back to this forum.
       "IDEJO_OIDC_SIGN_UP_URL" =>
         IdejoHub.Identity.issuer() <>
           "/account/sign-up?" <> URI.encode_query(%{"return_to" => "https://#{host(forum)}/"}),
       "IDEJO_LOCAL_ACCOUNTS" => local_accounts(forum),
-      # Idejo's community menu (Idejo 0.2.5; steward decision 2026-11-06): the member's other
+      # idejo's community menu (idejo 0.2.5; steward decision 2026-11-06): the member's other
       # forums, asked of the Hub with this client's credentials, and the directory.
       "IDEJO_COMMUNITY_URL" => IdejoHub.Community.community_url(),
       "IDEJO_COMMUNITY_DIRECTORY_URL" => IdejoHub.Community.directory_url()
@@ -746,8 +746,8 @@ defmodule IdejoHub.Forums do
     |> Map.merge(inbox_env(forum))
   end
 
-  # The members' inbox (steward request 2026-11-10): itself in Idejo's inbox mode (0.3.5);
-  # every other forum, once there is one, sends its members there: Idejo's chat service
+  # The members' inbox (steward request 2026-11-10): itself in idejo's inbox mode (0.3.5);
+  # every other forum, once there is one, sends its members there: idejo's chat service
   # (`IDEJO_CHAT_URL`, private conversations; 0.3.4), "All my topics" (`IDEJO_TOPICS_URL`)
   # and the inbox's Profile and account, saving for all forums (`IDEJO_SETTINGS_URL`;
   # 0.3.7). Forums before them ignore the variables.
@@ -865,7 +865,7 @@ defmodule IdejoHub.Forums do
     ]
   end
 
-  @doc "LB-03: the source of the exact Idejo release a forum runs (`IDEJO_SOURCE_URL`)."
+  @doc "LB-03: the source of the exact idejo release a forum runs (`IDEJO_SOURCE_URL`)."
   @spec source_url(Forum.t()) :: String.t()
   def source_url(%Forum{idejo_version: version}) do
     Application.fetch_env!(:idejo_hub, __MODULE__)[:source_url_base] <> version

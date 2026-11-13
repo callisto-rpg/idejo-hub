@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       idejo_image:
-        description: Idejo image (default the version new forums start on)
+        description: idejo image (default the version new forums start on)
         default: ""
 
 permissions:

@@ -65,7 +65,7 @@ defmodule IdejoHub.Operations.HA01StatsTest do
     _ = forum
   end
 
-  test "an Idejo without the command keeps no figures; the list shows a dash", %{
+  test "an idejo without the command keeps no figures; the list shows a dash", %{
     conn: conn,
     forum: forum
   } do

@@ -2,15 +2,15 @@
 SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 --%>
-<Layouts.app flash={@flash} title="Idejo ID">
-  <img src={~p"/images/logo.svg"} alt="Idejo" class="member-logo" width="160" height="160" />
-  <h1 class="text-2xl font-semibold">Create your Idejo ID</h1>
+<Layouts.app flash={@flash} title="idejo ID">
+  <img src={~p"/images/logo.svg"} alt="idejo" class="member-logo" width="160" height="160" />
+  <h1 class="text-2xl font-semibold">Create your idejo ID</h1>
   <p :if={@back} id="signup-from" class="text-sm">
     Afterwards, you go back to <a href={@back.sign_in}>{@back.name}</a> to sign in.
   </p>
   <p>One sign-in for every forum on this server. Each forum keeps its own profile and roles.</p>
   <p id="signup-privacy" class="text-sm">
-    What your Idejo ID keeps, and why: <a href={~p"/account/privacy"}>Privacy</a>.
+    What your idejo ID keeps, and why: <a href={~p"/account/privacy"}>Privacy</a>.
   </p>
 
   <p :if={!@open?} id="signup-closed">
@@ -109,6 +109,6 @@ SPDX-License-Identifier: AGPL-3.0-only
     <p class="text-sm">
       We email you a link to confirm the address and choose a password or a passkey.
     </p>
-    <button class="btn btn-primary">Create my Idejo ID</button>
+    <button class="btn btn-primary">Create my idejo ID</button>
   </form>
 </Layouts.app>

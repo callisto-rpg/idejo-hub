@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.ForumImportLive do
   @moduledoc """
-  FL-07: imports a standalone Idejo backup (`bin/idejo-admin backup`'s
+  FL-07: imports a standalone idejo backup (`bin/idejo-admin backup`'s
   `idejo-YYYYMMDD-HHMMSS.tar`) as a new forum. The form has the create form's fields (HA-02,
   the subdomain checked while typing) plus the file and, optionally, the standalone
   install's `SECRET_KEY_BASE`. The fields are checked before the file is taken, so a typo
@@ -89,7 +89,7 @@ defmodule IdejoHubWeb.ForumImportLive do
 
   defp message(:not_a_backup),
     do:
-      "Not imported: that file is not a standalone Idejo backup (an idejo-….tar made by bin/idejo-admin backup)."
+      "Not imported: that file is not a standalone idejo backup (an idejo-….tar made by bin/idejo-admin backup)."
 
   defp message(:invalid_key),
     do:
@@ -126,10 +126,10 @@ defmodule IdejoHubWeb.ForumImportLive do
       <h1 class="text-2xl font-semibold">Import a standalone backup</h1>
       <.forum_limit_notice id="forum-limit" hosted={@hosted} />
       <p>
-        Makes a new forum from a standalone Idejo install's backup: on that server, run <code>bin/idejo-admin backup</code>, then choose the
+        Makes a new forum from a standalone idejo install's backup: on that server, run <code>bin/idejo-admin backup</code>, then choose the
         <code>idejo-….tar</code>
         it wrote. Members, messages, uploads and settings come with it; members keep signing in
-        with their passwords (local accounts stay allowed) and can link an Idejo ID from their
+        with their passwords (local accounts stay allowed) and can link an idejo ID from their
         profile.
       </p>
 
@@ -183,7 +183,7 @@ defmodule IdejoHubWeb.ForumImportLive do
         />
         <.input
           field={@form[:idejo_version]}
-          label="Idejo version (the standalone's, or newer)"
+          label="idejo version (the standalone's, or newer)"
           required
         />
         <.input field={@form[:memory_mb]} type="number" label="Memory (MB)" required />

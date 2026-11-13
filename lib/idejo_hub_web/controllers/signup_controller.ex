@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.SignupController do
   @moduledoc """
-  ID-02: sign up for an Idejo ID on the Hub's own page, at `https://id.<hub domain>/account/sign-up`
+  ID-02: sign up for an idejo ID on the Hub's own page, at `https://id.<hub domain>/account/sign-up`
   (steward decision 2026-11-04). Email and display name are required; a checkbox reveals first
   and last name, optional (Zitadel requires them: "Sennoma" and "Ulo" stand in). The Hub makes
   the person at the provider, which then emails a link to verify the address and choose a
@@ -43,13 +43,13 @@ defmodule IdejoHubWeb.SignupController do
         conn |> put_status(422) |> render(:new, form: form(params), errors: errors, open?: true)
 
       {:error, :taken} ->
-        errors = %{"username" => "Another Idejo ID already has that username."}
+        errors = %{"username" => "Another idejo ID already has that username."}
         conn |> put_status(422) |> render(:new, form: form(params), errors: errors, open?: true)
 
       {:error, :exists} ->
         errors = %{
           "email" =>
-            "An Idejo ID already uses this email: sign in instead, or reset its password there."
+            "An idejo ID already uses this email: sign in instead, or reset its password there."
         }
 
         conn |> put_status(422) |> render(:new, form: form(params), errors: errors, open?: true)
@@ -71,13 +71,13 @@ defmodule IdejoHubWeb.SignupController do
         |> put_status(503)
         |> render(:new,
           form: form(params),
-          errors: %{"form" => "Idejo ID could not be reached: try again in a moment."},
+          errors: %{"form" => "idejo ID could not be reached: try again in a moment."},
           open?: true
         )
     end
   end
 
-  # Arriving from a forum (its "No Idejo ID yet? Create one", Idejo's IDEJO_OIDC_SIGN_UP_URL;
+  # Arriving from a forum (its "No idejo ID yet? Create one", idejo's IDEJO_OIDC_SIGN_UP_URL;
   # steward decision 2026-11-06): `return_to` is that forum's address. Only a running forum's
   # own `https://<host>/` counts, so the page never sends anyone elsewhere; the forum's name
   # and sign-in then show on the page and after sending.
@@ -124,7 +124,7 @@ defmodule IdejoHubWeb.SignupController do
       |> check(
         "username",
         params["username"] == "" or Profiles.available?(params["username"]),
-        "Another Idejo ID already has that username."
+        "Another idejo ID already has that username."
       )
       |> check(
         "display_name",

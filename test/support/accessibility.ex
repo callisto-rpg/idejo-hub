@@ -3,11 +3,11 @@
 
 defmodule IdejoHubWeb.Accessibility do
   @moduledoc """
-  Hub NF-07: checks a member page for what Idejo's AX-01 asks of every page: keyboard operation, landmarks
+  Hub NF-07: checks a member page for what idejo's AX-01 asks of every page: keyboard operation, landmarks
   and headings, and names for what can be focused. It reads the HTML only, so colour
   contrast, the visible focus ring and the real focus order are checked by hand (see
-  Idejo's `docs/accessibility.md`). Ported from Idejo's `test/support/accessibility.ex`, so
-  member pages meet the same standard as Idejo's own (Hub NF-07).
+  idejo's `docs/accessibility.md`). Ported from idejo's `test/support/accessibility.ex`, so
+  member pages meet the same standard as idejo's own (Hub NF-07).
 
   `audit/2` returns a list of problems, empty when the page passes.
   """

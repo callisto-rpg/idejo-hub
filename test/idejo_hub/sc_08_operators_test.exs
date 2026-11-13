@@ -50,7 +50,7 @@ defmodule IdejoHub.SC08OperatorsTest do
 
     {:ok, %{secret: secret, uri: uri}} = Operators.begin_two_factor(operator)
     assert uri =~ "otpauth://totp/"
-    assert uri =~ "issuer=Idejo"
+    assert uri =~ "issuer=idejo"
     stored = Operators.get_operator!(operator.id)
     refute stored.totp_secret_enc =~ Base.decode32!(secret, padding: false)
 

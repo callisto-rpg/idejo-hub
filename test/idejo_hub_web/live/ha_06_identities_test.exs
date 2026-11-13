@@ -100,7 +100,7 @@ defmodule IdejoHubWeb.HA06IdentitiesTest do
       |> form("#delete-form", email: "bob@x.test", reason: "email from Ada, 2026-11-06")
       |> render_submit()
 
-    assert html =~ "not this Idejo ID"
+    assert html =~ "not this idejo ID"
     assert Repo.get(Deletion, ada) == nil
 
     assert view |> form("#delete-form", email: "ADA@x.test", reason: " ") |> render_submit() =~
@@ -156,7 +156,7 @@ defmodule IdejoHubWeb.HA06IdentitiesTest do
 
   test "HA-06 linked in the header; without a provider, says so", %{conn: conn} do
     {:ok, view, _} = live(conn, ~p"/")
-    assert has_element?(view, ~s(a[href="/identities"]), "Idejo IDs")
+    assert has_element?(view, ~s(a[href="/identities"]), "idejo IDs")
 
     Application.put_env(
       :idejo_hub,

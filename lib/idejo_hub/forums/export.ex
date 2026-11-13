@@ -3,10 +3,10 @@
 
 defmodule IdejoHub.Forums.Export do
   @moduledoc """
-  An export the Hub keeps (FL-06): a standard Idejo backup (`idejo-YYYYMMDD-HHMMSS.tar`),
+  An export the Hub keeps (FL-06): a standard idejo backup (`idejo-YYYYMMDD-HHMMSS.tar`),
   stored under `<exports dir>/<subdomain>/`. `kind` is `export` (asked for), `final`
   (made before a deletion, FL-05), `backup` (scheduled, OP-01; pruned to the newest 14) or
-  `upgrade` (made before an upgrade, OP-04; never pruned) or `import` (a standalone Idejo
+  `upgrade` (made before an upgrade, OP-04; never pruned) or `import` (a standalone idejo
   backup the forum was imported from, FL-07; never pruned).
   """
   use Ecto.Schema

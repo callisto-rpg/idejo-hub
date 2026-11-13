@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Operations.ReleaseCheckWorker do
-  @moduledoc "OP-09: the daily check for new Idejo releases (`Operations.Releases`)."
+  @moduledoc "OP-09: the daily check for new idejo releases (`Operations.Releases`)."
   use Oban.Worker, queue: :operations, max_attempts: 3, unique: [period: 3600]
 
   require Logger
@@ -19,7 +19,7 @@ defmodule IdejoHub.Operations.ReleaseCheckWorker do
         :ok
 
       {:error, reason} ->
-        Logger.warning("OP-09: could not read Idejo's releases: #{inspect(reason)}")
+        Logger.warning("OP-09: could not read idejo's releases: #{inspect(reason)}")
         {:error, reason}
     end
   end

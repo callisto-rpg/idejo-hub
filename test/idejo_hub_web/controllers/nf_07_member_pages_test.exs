@@ -3,13 +3,13 @@
 
 defmodule IdejoHubWeb.NF07MemberPagesTest do
   @moduledoc """
-  Hub NF-07: every page a member sees meets base Idejo's standards. Accessibility: Idejo's
-  own AX-01 audit (`IdejoHubWeb.Accessibility`, ported from Idejo) on each member page: a
+  Hub NF-07: every page a member sees meets base idejo's standards. Accessibility: idejo's
+  own AX-01 audit (`IdejoHubWeb.Accessibility`, ported from idejo) on each member page: a
   skip link to <main> first, one <h1>, no skipped heading level, named landmarks, a name for
   everything that can be focused, labels on every field, nothing clickable the keyboard
-  cannot reach. Privacy: as Idejo's AD-02, a privacy notice written by the operator, linked
+  cannot reach. Privacy: as idejo's AD-02, a privacy notice written by the operator, linked
   from every member page and from sign-up, no outside scripts, and the forum's consent
-  screen is Idejo's own (AC-09). Contrast and focus rings are checked by hand.
+  screen is idejo's own (AC-09). Contrast and focus rings are checked by hand.
   """
   use IdejoHubWeb.ConnCase, async: false
 
@@ -76,7 +76,7 @@ defmodule IdejoHubWeb.NF07MemberPagesTest do
     |> recycle()
   end
 
-  test "NF-07 every member page passes Idejo's accessibility audit", %{conn: conn} = ctx do
+  test "NF-07 every member page passes idejo's accessibility audit", %{conn: conn} = ctx do
     # Sign-up, closed (no SMTP) and open, and its confirmation.
     assert_accessible(conn |> get(~p"/account/sign-up") |> html_response(200), "sign-up, closed")
 
@@ -138,7 +138,7 @@ defmodule IdejoHubWeb.NF07MemberPagesTest do
 
     {operator_conn, _operator, _} = sign_in(build_conn())
     {:ok, view, _} = live(operator_conn, ~p"/settings")
-    notice = "Run by Example Ltd.\n\nWe keep your email <and> names while your Idejo ID exists."
+    notice = "Run by Example Ltd.\n\nWe keep your email <and> names while your idejo ID exists."
     view |> form("#settings", settings: %{privacy_notice: notice}) |> render_submit()
 
     html = conn |> get(~p"/account/privacy") |> html_response(200)
