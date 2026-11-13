@@ -21,6 +21,9 @@ defmodule IdejoHub.Operators.Operator do
     # SC-08: the pending password-reset link (its SHA-256) and when it was sent.
     field :reset_token_hash, :binary, redact: true
     field :reset_sent_at, :utc_datetime
+    # SC-08 (steward request 2026-11-13): the pending two-factor reset link, the same way.
+    field :two_factor_reset_hash, :binary, redact: true
+    field :two_factor_reset_sent_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end

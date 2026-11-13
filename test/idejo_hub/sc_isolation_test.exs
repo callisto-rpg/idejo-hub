@@ -77,6 +77,10 @@ defmodule IdejoHub.SCIsolationTest do
       # sc_08_password_reset_test.exs).
       "/sign-in/reset",
       "/sign-in/reset/:token",
+      # SC-08: a lost two-factor app, with the password and an emailed link (tested in
+      # sc_08_two_factor_reset_test.exs).
+      "/sign-in/two-factor-reset",
+      "/sign-in/two-factor-reset/:token",
       "/internal/caddy/ask",
       "/internal/forum-unavailable",
       # Idejo's community menu: a forum's client credentials, not a sign-in (tested in

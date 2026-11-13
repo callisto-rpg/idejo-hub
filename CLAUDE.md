@@ -484,13 +484,25 @@ Design points (Implementation Prompt, Part B, milestone 2):
   once, a new request replaces it); the new password (12 to 200 characters) ends every
   session, lifts no lock, and two factor is still asked. The answer never says whether an
   email is an operator's; five requests an hour per address, three per email (`RateLimit`);
-  without SMTP the page says to ask an owner. Every operator page goes through the router's
+  without SMTP the page says to ask an owner. **Lost two-factor app** (steward request
+  2026-11-13; `TwoFactorResetController`; extra review: DV-06): "Lost your two-factor app?"
+  on `/sign-in` → `/sign-in/two-factor-reset` asks email **and password**
+  (`Operators.request_two_factor_reset/3`, through `check_password/2`: a wrong one counts
+  toward the lock, a locked account gets nothing); when both are right it emails a link
+  `/sign-in/two-factor-reset/<token>` (random, SHA-256 in `operators.two_factor_reset_hash`,
+  apart from the password reset's so neither link does the other's work; 30 minutes, once).
+  Its page only asks to confirm (a mail scanner opening it changes nothing); the POST
+  (`reset_two_factor_by_token/1`) clears the setup and ends every session, and the next
+  sign-in sets it up again. Same answer whatever was wrong; the password reset's limits
+  (five an hour per address, three per email). So removing two factor takes the password
+  and the mailbox. Every operator page goes through the router's
   `:operator` pipeline; pass
   `current_operator={@current_operator}` to `Layouts.app` (email and Sign out). Audited
   `operator.create`, `operator.sign_in` (ok/failed with the factor, never a password or
-  code), `operator.two_factor_reset` (by the command line or the owner),
+  code), `operator.two_factor_reset` (by the command line or the owner; by the operator
+  themselves, `requested` then `ok`, from the emailed link),
   `operator.password_reset` (`requested`/`failed` when the email is sent, `ok` when used;
-  never the token). Tests: `sc_08_password_reset_test.exs`.
+  never the token). Tests: `sc_08_password_reset_test.exs`, `sc_08_two_factor_reset_test.exs`.
 - **Operator roles** (HA-07, `operators.role`, `Operators.owner?/1`, `set_role/3`,
   `remove_operator/2`; extra review: DV-06): `owner` or `operator`. Owners also manage
   operator accounts at `/operators` (`OperatorsLive`, `live_session :owner`,

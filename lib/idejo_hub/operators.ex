@@ -293,6 +293,115 @@ defmodule IdejoHub.Operators do
     end)
   end
 
+  ## Two-factor reset by email (steward request 2026-11-13)
+
+  @doc """
+  SC-08: an operator who lost their two-factor app gives their email and password; when both
+  are right, a link that removes their two-factor setup is emailed to them (`link.(token)`,
+  #{@reset_minutes} minutes, once; only its SHA-256 kept, apart from the password reset's).
+  So it takes both the password and the mailbox. A wrong password counts as a failed sign-in
+  (`check_password/2`: five lock the account); a locked account gets nothing. Answers `:ok`
+  either way, so the page never says whether the email or password was right;
+  `{:error, :no_smtp}` only when the Hub has no email server. Audited
+  `operator.two_factor_reset` `requested` (never the token).
+  """
+  @spec request_two_factor_reset(String.t(), String.t(), (String.t() -> String.t())) ::
+          :ok | {:error, :no_smtp}
+  def request_two_factor_reset(email, password, link)
+      when is_binary(email) and is_binary(password) and is_function(link, 1) do
+    if IdejoHub.Mailer.configured?() do
+      case check_password(email, password) do
+        {:ok, operator} -> send_two_factor_reset(operator, link)
+        {:error, _invalid_or_locked} -> :ok
+      end
+    else
+      {:error, :no_smtp}
+    end
+  end
+
+  defp send_two_factor_reset(operator, link) do
+    token = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
+
+    operator
+    |> Ecto.Changeset.change(two_factor_reset_hash: hash(token), two_factor_reset_sent_at: now())
+    |> Repo.update!()
+
+    body = """
+    Someone signed in with the password of the Idejo Hub operator account #{operator.email}
+    and asked to remove its two-factor setup (a lost or new phone).
+
+    To remove it, open this link within #{@reset_minutes} minutes and confirm:
+
+    #{link.(token)}
+
+    The link works once. You then sign in with your password and set up two-factor again
+    with your authenticator app.
+
+    If you did not ask for this, someone knows your password: ignore this email, so your
+    two-factor setup stays, and change your password.
+    """
+
+    subject = "[Idejo Hub] Remove your two-factor setup"
+
+    outcome =
+      case IdejoHub.Mailer.send_text(operator.email, subject, body) do
+        {:ok, _} -> "requested"
+        {:error, _} -> "failed"
+      end
+
+    {:ok, _} = Audit.record(operator.email, "operator.two_factor_reset", outcome, nil)
+    :ok
+  end
+
+  @doc "SC-08: the operator a two-factor reset token belongs to, while it still works, or nil."
+  @spec get_operator_by_two_factor_token(String.t()) :: Operator.t() | nil
+  def get_operator_by_two_factor_token(token) when is_binary(token) and token != "",
+    do: Repo.one(two_factor_reset_query(token))
+
+  def get_operator_by_two_factor_token(_token), do: nil
+
+  defp two_factor_reset_query(token) do
+    since = DateTime.add(DateTime.utc_now(), -@reset_minutes, :minute)
+
+    from o in Operator,
+      where: o.two_factor_reset_hash == ^hash(token) and o.two_factor_reset_sent_at > ^since
+  end
+
+  @doc """
+  SC-08: removes the two-factor setup with a two-factor reset token, which is used up; every
+  session ends (as `reset_two_factor/1`). The operator sets it up again at their next
+  sign-in. Audited `operator.two_factor_reset` `ok`.
+  """
+  @spec reset_two_factor_by_token(String.t()) :: :ok | {:error, :expired}
+  def reset_two_factor_by_token(token) when is_binary(token) do
+    Repo.transaction(fn ->
+      # Locked: a second use of the same link waits, then finds the token gone.
+      case Repo.one(token |> two_factor_reset_query() |> lock("FOR UPDATE")) do
+        nil ->
+          Repo.rollback(:expired)
+
+        operator ->
+          operator
+          |> Ecto.Changeset.change(
+            totp_secret_enc: nil,
+            totp_enabled_at: nil,
+            totp_last_step: nil,
+            two_factor_reset_hash: nil,
+            two_factor_reset_sent_at: nil
+          )
+          |> Repo.update!()
+
+          end_sessions(operator)
+          {:ok, _} = Audit.record(operator.email, "operator.two_factor_reset", "ok", nil)
+          :ok
+      end
+    end)
+    |> case do
+      {:ok, :ok} -> :ok
+      {:error, :expired} -> {:error, :expired}
+    end
+  end
+
   defp now, do: DateTime.utc_now(:second)
 
   ## Sign-in, first factor
