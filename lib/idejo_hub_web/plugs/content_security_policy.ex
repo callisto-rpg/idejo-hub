@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.Plugs.ContentSecurityPolicy do
   @moduledoc """
-  Sets a strict `content-security-policy` header on browser responses, as Idejo does.
+  Sets a strict `content-security-policy` header on browser responses, as idejo does.
 
   Everything is served from the Hub itself, so only `'self'` is allowed. Inline `<script>`
   and `<style>` elements are refused unless they carry the per-request nonce stored in

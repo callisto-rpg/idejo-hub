@@ -4,7 +4,7 @@
 defmodule IdejoHub.Repo.Migrations.CreateIdentityProfiles do
   use Ecto.Migration
 
-  # An Idejo ID's public username and picture (steward decisions 2026-11-06), and the outside
+  # An idejo ID's public username and picture (steward decisions 2026-11-06), and the outside
   # forums a person signed in to (so they may read and fill that profile).
   def change do
     create table(:identity_profiles, primary_key: false) do

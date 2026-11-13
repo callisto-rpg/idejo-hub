@@ -3,7 +3,7 @@
 #
 # Local development services. Start with: docker compose up -d
 # The Hub itself runs on your machine with `mix phx.server`.
-# PostgreSQL is published on 5433, so it can run beside Idejo's development database (5432).
+# PostgreSQL is published on 5433, so it can run beside idejo's development database (5432).
 # The production bundle (Hub + PostgreSQL + Caddy, HN-08) lives in deploy/.
 
 name: idejo-hub-dev

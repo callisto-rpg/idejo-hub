@@ -12,7 +12,7 @@ defmodule IdejoHubWeb.AccountController do
 
   The page lists the forums joined, each with "Leave" (account and messages kept) or
   "Delete my account there" (as the forum's rules say: messages show "Deleted user";
-  confirmed by a checkbox), and "Delete my Idejo ID", which needs a sign-in within five
+  confirmed by a checkbox), and "Delete my idejo ID", which needs a sign-in within five
   minutes and the email typed. Plain HTML, no JavaScript.
   """
   use IdejoHubWeb, :controller
@@ -53,7 +53,7 @@ defmodule IdejoHubWeb.AccountController do
 
   @doc """
   SC-07: the audit log of a forum the signed-in member owns (its `owner_email` is their
-  verified Idejo ID address), newest 200 entries. Anyone else: not found, whether or not the
+  verified idejo ID address), newest 200 entries. Anyone else: not found, whether or not the
   forum exists. Members who acted show as "a member", never by their identity.
   """
   def log(conn, %{"subdomain" => subdomain}) do
@@ -73,7 +73,7 @@ defmodule IdejoHubWeb.AccountController do
 
   @doc """
   Hub NF-07: the privacy notice for members (`privacy_notice`, written by the operator in
-  Settings), as a standalone Idejo's `/privacy` (AD-02). Public; empty, it says so.
+  Settings), as a standalone idejo's `/privacy` (AD-02). Public; empty, it says so.
   """
   def privacy(conn, _params) do
     notice = IdejoHub.Settings.get("privacy_notice")
@@ -100,7 +100,7 @@ defmodule IdejoHubWeb.AccountController do
 
       {:error, :not_ready} ->
         conn
-        |> put_flash(:error, "Idejo ID is still starting: try again in a minute.")
+        |> put_flash(:error, "idejo ID is still starting: try again in a minute.")
         |> redirect(to: ~p"/account")
     end
   end
@@ -186,7 +186,7 @@ defmodule IdejoHubWeb.AccountController do
     else
       :signed_out -> redirect(conn, to: ~p"/account")
       {:error, :confirm} -> back(conn, "Tick the box to confirm deleting your account there.")
-      {:error, :deleting} -> back(conn, "Your Idejo ID is being deleted.")
+      {:error, :deleting} -> back(conn, "Your idejo ID is being deleted.")
       {:error, :busy} -> back(conn, "That forum is already being left.")
       _other -> back(conn, "That forum is not one you have joined.")
     end
@@ -201,7 +201,7 @@ defmodule IdejoHubWeb.AccountController do
 
       not fresh?(member) ->
         conn
-        |> put_flash(:info, "Sign in again to confirm deleting your Idejo ID.")
+        |> put_flash(:info, "Sign in again to confirm deleting your idejo ID.")
         |> redirect(to: ~p"/account/sign-in?fresh=1")
 
       not email_matches?(member["sub"], params["email"]) ->
@@ -213,18 +213,18 @@ defmodule IdejoHubWeb.AccountController do
             conn
             |> put_flash(
               :info,
-              "Deleting your Idejo ID: your forum accounts first, then the ID itself."
+              "Deleting your idejo ID: your forum accounts first, then the ID itself."
             )
             |> redirect(to: ~p"/account")
 
           {:error, :deleting} ->
-            back(conn, "Your Idejo ID is already being deleted.")
+            back(conn, "Your idejo ID is already being deleted.")
         end
     end
   end
 
   @doc """
-  The Idejo ID's public profile (steward decisions 2026-11-06): change the username, or
+  The idejo ID's public profile (steward decisions 2026-11-06): change the username, or
   remove the picture (a forum fills it again when an account there is linked).
   """
   def update_profile(conn, %{"profile" => %{"username" => username}}) do
@@ -235,7 +235,7 @@ defmodule IdejoHubWeb.AccountController do
       |> redirect(to: ~p"/account")
     else
       :signed_out -> redirect(conn, to: ~p"/account")
-      {:error, :taken} -> back(conn, "Another Idejo ID already has that username.")
+      {:error, :taken} -> back(conn, "Another idejo ID already has that username.")
       {:error, :invalid} -> back(conn, "A username has 3 to 30 letters, digits or underscores.")
     end
   end

@@ -154,7 +154,7 @@ defmodule IdejoHubWeb.ID05AccountTest do
     assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Type your email"
 
     conn = post(recycle(conn), ~p"/account/delete", %{"email" => " ADA@x.test "})
-    assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Deleting your Idejo ID"
+    assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Deleting your idejo ID"
     assert Members.deleting?(ctx.ada)
     assert html_response(get(recycle(conn), ~p"/account"), 200) =~ "is being deleted"
   end

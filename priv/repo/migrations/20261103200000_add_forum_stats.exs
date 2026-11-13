@@ -5,7 +5,7 @@ defmodule IdejoHub.Repo.Migrations.AddForumStats do
   use Ecto.Migration
 
   def change do
-    # HA-01: the forum's own figures, from `idejo-admin stats` (Idejo AD-09), never its database.
+    # HA-01: the forum's own figures, from `idejo-admin stats` (idejo AD-09), never its database.
     alter table(:forums) do
       add :members, :integer
       add :topics, :integer

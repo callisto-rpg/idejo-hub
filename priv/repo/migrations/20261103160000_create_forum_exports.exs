@@ -5,7 +5,7 @@ defmodule IdejoHub.Repo.Migrations.CreateForumExports do
   use Ecto.Migration
 
   def change do
-    # FL-06: exports kept by the Hub (standard Idejo backups). Kept after the forum is deleted
+    # FL-06: exports kept by the Hub (standard idejo backups). Kept after the forum is deleted
     # (FL-05's final export), so no foreign key.
     create table(:forum_exports) do
       add :forum_id, :bigint, null: false

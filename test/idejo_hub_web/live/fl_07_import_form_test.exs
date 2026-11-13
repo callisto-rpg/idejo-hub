@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHubWeb.FL07ImportFormTest do
-  @moduledoc "FL-07: the operator imports a standalone Idejo backup from the web interface."
+  @moduledoc "FL-07: the operator imports a standalone idejo backup from the web interface."
   use IdejoHubWeb.ConnCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
 
@@ -114,7 +114,7 @@ defmodule IdejoHubWeb.FL07ImportFormTest do
     assert Forums.get_by_subdomain("fl07-form") == nil
   end
 
-  test "FL-07 a file that is not an Idejo backup is refused", %{conn: conn} do
+  test "FL-07 a file that is not an idejo backup is refused", %{conn: conn} do
     {:ok, view, _} = live(conn, ~p"/forums/import")
     choose(view, tar([{"notes.txt", "hello"}]))
 
@@ -123,7 +123,7 @@ defmodule IdejoHubWeb.FL07ImportFormTest do
       |> form("#import-forum", forum: fields("fl07-form"), secret_key_base: "")
       |> render_submit()
 
-    assert html =~ "not a standalone Idejo backup"
+    assert html =~ "not a standalone idejo backup"
     assert Forums.get_by_subdomain("fl07-form") == nil
   end
 

@@ -106,7 +106,7 @@ defmodule IdejoHubWeb.NF01SupportedSizeTest do
   test "NF-01 importing, or restoring to a new subdomain, past 30 warns too", %{conn: conn} do
     [forum | _] = forums!(30)
     {:ok, view, _} = live(conn, ~p"/forums/import")
-    assert has_element?(view, "#forum-limit", "Idejo Hub supports up to 30 per server")
+    assert has_element?(view, "#forum-limit", "idejo Hub supports up to 30 per server")
 
     File.rm_rf!(Export.dir())
     on_exit(fn -> File.rm_rf!(Export.dir()) end)

@@ -18,7 +18,7 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
     rewrite_on: [:x_forwarded_proto],
     exclude: [
       # Called over plain http on the internal networks (the Caddyfile refuses /internal/*
-      # from outside): HN-02's by Caddy; Idejo's community menu by forums, on the forum
+      # from outside): HN-02's by Caddy; idejo's community menu by forums, on the forum
       # network (steward decisions 2026-11-06). Every /internal route is listed here
       # (test/idejo_hub/internal_http_test.exs).
       paths: [

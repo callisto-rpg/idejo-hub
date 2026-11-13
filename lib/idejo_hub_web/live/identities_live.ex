@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.IdentitiesLive do
   @moduledoc """
-  HA-06: the Idejo IDs, at `/identities`. Search by email, name or username (`?q=`, kept in
+  HA-06: the idejo IDs, at `/identities`. Search by email, name or username (`?q=`, kept in
   the address), each result linking to its page (lock, unlock, delete on request); and the
   deletion requests: under way, stopped (with why, and Retry), and the latest finished.
   """
@@ -14,7 +14,7 @@ defmodule IdejoHubWeb.IdentitiesLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, page_title: "Idejo IDs", enabled?: Identity.enabled?())}
+    {:ok, assign(socket, page_title: "idejo IDs", enabled?: Identity.enabled?())}
   end
 
   @impl true
@@ -69,7 +69,7 @@ defmodule IdejoHubWeb.IdentitiesLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_operator={@current_operator} wide>
-      <h1 class="text-2xl font-semibold">Idejo IDs</h1>
+      <h1 class="text-2xl font-semibold">idejo IDs</h1>
 
       <p :if={!@enabled?} id="identities-disabled">
         This Hub has no identity provider: its forums use local accounts only.
@@ -83,7 +83,7 @@ defmodule IdejoHubWeb.IdentitiesLive do
             <.button class="btn btn-sm">Search</.button>
           </.form>
           <p :if={@error} class="text-error">{@error}</p>
-          <p :if={@results == []} id="identities-none">No Idejo ID matches.</p>
+          <p :if={@results == []} id="identities-none">No idejo ID matches.</p>
           <table :if={@results not in [nil, []]} id="identities" class="table table-sm">
             <thead>
               <tr>
@@ -113,7 +113,7 @@ defmodule IdejoHubWeb.IdentitiesLive do
         <section aria-labelledby="deletions-title" class="space-y-2">
           <h2 id="deletions-title" class="text-xl font-semibold">Deletion requests</h2>
           <p class="text-sm">
-            Members delete their Idejo ID themselves from their page; a request made to you
+            Members delete their idejo ID themselves from their page; a request made to you
             (by email, by letter) is handled from the ID's page here. Each deletes the
             person's account on every forum they joined, as that forum's rules say, then the ID.
           </p>
@@ -121,7 +121,7 @@ defmodule IdejoHubWeb.IdentitiesLive do
           <table :if={@deletions != []} id="deletions" class="table table-sm">
             <thead>
               <tr>
-                <th>Idejo ID</th><th>Asked (UTC)</th><th>State</th><th></th>
+                <th>idejo ID</th><th>Asked (UTC)</th><th>State</th><th></th>
               </tr>
             </thead>
             <tbody>

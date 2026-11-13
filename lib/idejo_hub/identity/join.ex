@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Identity.Join do
-  @moduledoc "ID-05: one Idejo ID on one forum (the provider's subject, never an email)."
+  @moduledoc "ID-05: one idejo ID on one forum (the provider's subject, never an email)."
   use Ecto.Schema
   import Ecto.Changeset
 

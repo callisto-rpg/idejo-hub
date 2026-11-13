@@ -65,7 +65,7 @@ services:
       IDEJO_HUB_UPGRADE_HEALTH_SECONDS: ${IDEJO_HUB_UPGRADE_HEALTH_SECONDS:-300}
       # FL-07: the largest standalone backup the import form takes, in MB.
       IDEJO_HUB_IMPORT_MAX_MB: ${IDEJO_HUB_IMPORT_MAX_MB:-4096}
-      # OP-09: Idejo's releases (`-`, not `:-`: set but empty turns the check off).
+      # OP-09: idejo's releases (`-`, not `:-`: set but empty turns the check off).
       IDEJO_HUB_RELEASES_URL: ${IDEJO_HUB_RELEASES_URL-https://api.github.com/repos/callisto-rpg/Idejo/tags}
       IDEJO_HUB_CHANGELOG_URL: ${IDEJO_HUB_CHANGELOG_URL:-}
       # HN-07: optional SMTP shared by every forum.
@@ -83,7 +83,7 @@ services:
     volumes:
       # FL-04: markers of suspended forums, read by Caddy.
       - forum-state:/data/forum-state
-      # FL-06: forum exports (standard Idejo backups). Back this volume up off the server.
+      # FL-06: forum exports (standard idejo backups). Back this volume up off the server.
       - exports:/data/exports
       # ID-01: the Hub's token for Zitadel's API (written by Zitadel's first start).
       - zitadel-tokens:/zitadel-tokens:ro
@@ -155,7 +155,7 @@ services:
 
   # ID-01: the identity provider (Zitadel, AGPL-3.0; steward decision 2026-11-03), at
   # IDEJO_ID_DOMAIN behind Caddy. Its own role and database on the shared PostgreSQL
-  # (postgres-init/04-zitadel.sh). Its first start makes the instance (org "Idejo", an admin
+  # (postgres-init/04-zitadel.sh). Its first start makes the instance (org "idejo", an admin
   # whose password is in deploy/.env, a machine user for the Hub and one for the login
   # screen) and writes those two tokens into the zitadel-tokens volume. Everything runs as
   # nobody, so the login screen and the Hub can read them.
@@ -191,14 +191,14 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
       # Its first connection goes to its own database: pg_hba lets a role open only its own.
       ZITADEL_DATABASE_POSTGRES_ADMIN_EXISTINGDATABASE: zitadel
-      ZITADEL_FIRSTINSTANCE_ORG_NAME: Idejo
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: idejo
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ACME_EMAIL}
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_VERIFIED: "true"
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD}
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
       ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: idejo-hub
-      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Idejo Hub
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: idejo Hub
       ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: "2099-01-01T00:00:00Z"
       ZITADEL_FIRSTINSTANCE_PATPATH: /tokens/hub.pat
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
@@ -266,7 +266,7 @@ services:
       - docker-proxy-socket:/run/socket-proxy
 
   # HN-04: checks every request body (no privileged container, no host namespace, only the
-  # Idejo image, only forum containers and volumes) before it reaches socket-proxy. Built
+  # idejo image, only forum containers and volumes) before it reaches socket-proxy. Built
   # from guard/ in this repository; runs as nobody, like the proxy's socket.
   docker-guard:
     build:

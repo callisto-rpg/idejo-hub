@@ -4,11 +4,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 --%>
 <%!-- SC-10: for forum owners. What the Hub lets its operator do is fact, from how the Hub
      works; when they would is theirs (Settings → access_policy). --%>
-<Layouts.app flash={@flash} title="Idejo ID">
-  <p><a href={~p"/account"}>← Your Idejo ID</a></p>
+<Layouts.app flash={@flash} title="idejo ID">
+  <p><a href={~p"/account"}>← Your idejo ID</a></p>
   <h1 class="text-2xl font-semibold">What the Hub operator can access</h1>
   <p>
-    Your forum runs on a server shared with other forums, run by the operator of this Idejo Hub.
+    Your forum runs on a server shared with other forums, run by the operator of this idejo Hub.
     You administer your forum inside it, as on a server of your own. This page says what the
     operator can technically reach, and when they say they would.
   </p>
@@ -56,11 +56,11 @@ SPDX-License-Identifier: AGPL-3.0-only
   </section>
 
   <section id="access-identity" aria-labelledby="access-identity-heading" class="space-y-2">
-    <h2 id="access-identity-heading" class="text-xl font-semibold">Members' Idejo IDs</h2>
+    <h2 id="access-identity-heading" class="text-xl font-semibold">Members' idejo IDs</h2>
     <p>
-      The shared sign-in (Idejo ID) keeps each person's email address and names, and which
+      The shared sign-in (idejo ID) keeps each person's email address and names, and which
       forums they signed in to. Their passwords are never shown to the Hub or the operator.
-      The operator can lock an Idejo ID for abuse, which stops its sign-ins everywhere, and
+      The operator can lock an idejo ID for abuse, which stops its sign-ins everywhere, and
       delete one when asked. As the sign-in service's administrator, the operator could
       technically change how a person signs in, and so sign in to forums as them.
     </p>
@@ -71,7 +71,7 @@ SPDX-License-Identifier: AGPL-3.0-only
     <p>
       Everything the Hub does to your forum, and every backup the operator downloads or secret
       key they reveal, is recorded in your forum's audit log, which you can read from
-      <a href={~p"/account"}>your Idejo ID</a>
+      <a href={~p"/account"}>your idejo ID</a>
       (Forums you own → Audit log). What someone does on the server outside the Hub is not.
     </p>
   </section>

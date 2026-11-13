@@ -4,9 +4,9 @@
 defmodule IdejoHub.Operations.StatsWorker do
   @moduledoc """
   HA-01: every 15 minutes (Oban cron), asks each running forum for its figures with
-  `idejo-admin stats` (Idejo AD-09: one line of JSON, counts and sizes only) inside its
+  `idejo-admin stats` (idejo AD-09: one line of JSON, counts and sizes only) inside its
   container, and keeps them on the forum: members, topics, messages, database and uploads
-  sizes, and when. A forum busy with an action is skipped this time. A forum on an Idejo
+  sizes, and when. A forum busy with an action is skipped this time. A forum on an idejo
   without the command (0.1.0) keeps no figures; the list shows "—".
   """
   use Oban.Worker, queue: :operations, max_attempts: 1

@@ -3,8 +3,8 @@
 
 defmodule IdejoHub.SC03CustomCSSTest do
   @moduledoc """
-  SC-03: custom CSS (Idejo AD-11) is sanitised, and third-party scripts stay forbidden. A
-  forum's stylesheet is its own setting, never read or written by the Hub; Idejo checks it
+  SC-03: custom CSS (idejo AD-11) is sanitised, and third-party scripts stay forbidden. A
+  forum's stylesheet is its own setting, never read or written by the Hub; idejo checks it
   from 0.2.2 on. The Hub's part: new forums start on 0.2.2 or later, wherever the default is
   set.
   """
@@ -14,7 +14,7 @@ defmodule IdejoHub.SC03CustomCSSTest do
 
   @first "0.2.2"
 
-  test "SC-03 new forums start on an Idejo that checks its stylesheet" do
+  test "SC-03 new forums start on an idejo that checks its stylesheet" do
     config = Config.Reader.read!("config/config.exs", env: :prod)
     defaults = [config[:idejo_hub][IdejoHub.Forums][:default_version]]
 

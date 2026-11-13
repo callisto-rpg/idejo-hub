@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.RegistryController do
   @moduledoc """
-  The sign-in host's JSON API for Idejo servers not hosted here (steward decisions
+  The sign-in host's JSON API for idejo servers not hosted here (steward decisions
   2026-11-06; `IdejoHub.Identity.OutsideForums`; extra review: DV-06). Under `/account/api`
   on `IDEJO_ID_DOMAIN` (Caddy already sends `/account*` there to the Hub), outside the
   browser pipeline: no session, no cookie, so no CSRF token; the registration key or the
@@ -94,7 +94,7 @@ defmodule IdejoHubWeb.RegistryController do
     do: error(conn, 422, "invalid_request", "The request is missing a field.")
 
   defp fail(conn, {:error, :unavailable}),
-    do: error(conn, 503, "unavailable", "Idejo ID is not set up on this Hub.")
+    do: error(conn, 503, "unavailable", "idejo ID is not set up on this Hub.")
 
   defp fail(conn, {:error, :unknown}),
     do: error(conn, 404, "unknown", "No registration with that key: start again.")

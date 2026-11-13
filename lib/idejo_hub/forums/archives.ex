@@ -3,12 +3,12 @@
 
 defmodule IdejoHub.Forums.Archives do
   @moduledoc """
-  Idejo backups the Hub keeps (`forum_exports` rows, files under the exports volume):
+  idejo backups the Hub keeps (`forum_exports` rows, files under the exports volume):
   exports (FL-06, kind `export`), final exports (FL-05, `final`), scheduled backups
   (OP-01, `backup`, the newest 14 kept per forum) and imported standalone backups (FL-07,
   `import`, from `Forums.Import`).
 
-  Each comes from `idejo-admin backup` (Idejo AD-09) run in the forum's container or a
+  Each comes from `idejo-admin backup` (idejo AD-09) run in the forum's container or a
   one-off one: only a file named `/data/backups/idejo-YYYYMMDD-HHMMSS.tar` in its output is
   copied out (`Docker.copy_from/3` checks the archive) and recorded with size and SHA-256.
   """

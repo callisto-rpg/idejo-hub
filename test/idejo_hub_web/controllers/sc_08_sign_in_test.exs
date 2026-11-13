@@ -36,7 +36,7 @@ defmodule IdejoHubWeb.SC08SignInTest do
       |> post(~p"/sign-in/two-factor", %{"two_factor" => %{"code" => totp_code(operator)}})
 
     assert redirected_to(signed_in) == ~p"/"
-    assert html_response(signed_in |> recycle() |> get(~p"/"), 200) =~ "Idejo Hub"
+    assert html_response(signed_in |> recycle() |> get(~p"/"), 200) =~ "idejo Hub"
   end
 
   test "later sign-ins ask for the code without showing a secret; sign-out ends the session",

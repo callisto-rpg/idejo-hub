@@ -3,12 +3,12 @@
 
 defmodule IdejoHub.Identity.Profiles do
   @moduledoc """
-  An Idejo ID's public username and picture (steward decisions 2026-11-06). Never the email:
+  An idejo ID's public username and picture (steward decisions 2026-11-06). Never the email:
   the username is chosen at sign-up (or later on the member's page), the picture comes from a
   forum. Forums read them for a new member and fill what is missing when a member links an
   existing account (`fill/2`: a later link never overwrites); the member changes them on
-  their Idejo ID page. Usernames follow Idejo's rules (letters, digits, underscores, 3 to 30)
-  and are unique among Idejo IDs, any case. Pictures are WebP up to 512 KB (Idejo's avatars
+  their idejo ID page. Usernames follow idejo's rules (letters, digits, underscores, 3 to 30)
+  and are unique among idejo IDs, any case. Pictures are WebP up to 512 KB (idejo's avatars
   are 256 px WebP without metadata), served at `/account/pictures/<key>.webp` on the sign-in
   host with a new key at each change.
   """
@@ -63,8 +63,8 @@ defmodule IdejoHub.Identity.Profiles do
   def remove_picture(subject), do: save(get(subject), picture: nil, picture_key: nil)
 
   @doc """
-  A forum shares a linked account's username and picture: each is kept only when the Idejo
-  ID has none yet (a username already taken by another Idejo ID is skipped). Returns the
+  A forum shares a linked account's username and picture: each is kept only when the idejo
+  ID has none yet (a username already taken by another idejo ID is skipped). Returns the
   profile as it then is.
   """
   @spec fill(String.t(), map()) :: {:ok, Profile.t()}
@@ -98,7 +98,7 @@ defmodule IdejoHub.Identity.Profiles do
   @spec available?(String.t(), String.t() | nil) :: boolean()
   def available?(username, subject \\ nil), do: free(username, subject) == :ok
 
-  @doc "Checks a username against Idejo's rules."
+  @doc "Checks a username against idejo's rules."
   @spec check_username(term()) :: {:ok, String.t()} | {:error, :invalid}
   def check_username(username) when is_binary(username) do
     username = String.trim(username)

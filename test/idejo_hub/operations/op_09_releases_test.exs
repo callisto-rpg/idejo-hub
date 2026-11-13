@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Operations.OP09ReleasesTest do
-  @moduledoc "OP-09: notice of new Idejo releases, with a link to the changelog."
+  @moduledoc "OP-09: notice of new idejo releases, with a link to the changelog."
   use IdejoHubWeb.ConnCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
 
@@ -47,7 +47,7 @@ defmodule IdejoHub.Operations.OP09ReleasesTest do
     for path <- [~p"/", ~p"/server"] do
       {:ok, view, _} = live(conn, path)
       notice = view |> element("#release-notice[role=status]") |> render()
-      assert notice =~ "Idejo 0.2.3 is out; new forums start on 0.1.0."
+      assert notice =~ "idejo 0.2.3 is out; new forums start on 0.1.0."
       assert notice =~ ~s(href="https://github.com/callisto-rpg/Idejo/compare/v0.1.0...v0.2.3")
     end
   end
@@ -70,7 +70,7 @@ defmodule IdejoHub.Operations.OP09ReleasesTest do
 
     assert capture_log(fn ->
              assert {:error, {:status, 503}} = perform_job(ReleaseCheckWorker, %{})
-           end) =~ "could not read Idejo's releases"
+           end) =~ "could not read idejo's releases"
 
     assert Releases.latest().version == "0.2.3"
 

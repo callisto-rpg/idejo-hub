@@ -83,7 +83,7 @@ defmodule IdejoHubWeb.ForumNewLive do
         </p>
         <.input field={@form[:display_name]} label="Name" required />
         <.input field={@form[:owner_email]} type="email" label="Owner's email" required />
-        <.input field={@form[:idejo_version]} label="Idejo version" required />
+        <.input field={@form[:idejo_version]} label="idejo version" required />
         <.input field={@form[:memory_mb]} type="number" label="Memory (MB)" required />
         <.input field={@form[:cpus]} type="number" step="0.1" label="CPUs" required />
         <.input
@@ -94,7 +94,7 @@ defmodule IdejoHubWeb.ForumNewLive do
         <.input
           field={@form[:local_accounts]}
           type="checkbox"
-          label="Also allow local accounts (people without an Idejo ID)"
+          label="Also allow local accounts (people without an idejo ID)"
         />
         <.button phx-disable-with="Creating…">Create forum</.button>
         <.link navigate={~p"/"} class="btn btn-ghost">Cancel</.link>

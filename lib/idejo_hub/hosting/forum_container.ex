@@ -3,12 +3,12 @@
 
 defmodule IdejoHub.Hosting.ForumContainer do
   @moduledoc """
-  HN-04: each forum runs as its own container from the official Idejo image, with its own
+  HN-04: each forum runs as its own container from the official idejo image, with its own
   environment, upload volume and memory limit (and a CPU limit, SC-05).
 
   Names are fixed so docker-guard can check them: the container is `idejo-forum-<slug>`, its
   volumes `idejo-forum-<slug>-uploads` and `idejo-forum-<slug>-backups`, and all of them carry
-  the `org.idejo.hub.forum=<slug>` label. The environment is Idejo's contract (Idejo AD-13);
+  the `org.idejo.hub.forum=<slug>` label. The environment is idejo's contract (idejo AD-13);
   the caller supplies the per-forum values (`PHX_HOST`, `DATABASE_URL`, `SECRET_KEY_BASE`,
   `IDEJO_SOURCE_URL`, SMTP) and they are never logged. `POOL_SIZE` is the Hub's: 5 connections
   (NF-01).
@@ -40,7 +40,7 @@ defmodule IdejoHub.Hosting.ForumContainer do
   @spec volumes(String.t()) :: %{uploads: String.t(), backups: String.t()}
   def volumes(slug), do: %{uploads: name(slug) <> "-uploads", backups: name(slug) <> "-backups"}
 
-  @doc "The image reference for an Idejo version, for example `0.1.0`."
+  @doc "The image reference for an idejo version, for example `0.1.0`."
   @spec image(String.t()) :: String.t()
   def image(version), do: Docker.config(:forum_image) <> ":" <> version
 
@@ -57,7 +57,7 @@ defmodule IdejoHub.Hosting.ForumContainer do
       "PHX_SERVER" => "true",
       "PORT" => "4000",
       # NF-01 (steward decision 2026-11-06): 6 database connections a forum (its pool and
-      # Oban's listener) instead of Idejo's 11, so 30 forums fit the shared PostgreSQL.
+      # Oban's listener) instead of idejo's 11, so 30 forums fit the shared PostgreSQL.
       "POOL_SIZE" => @pool_size,
       "IDEJO_UPLOADS_DIR" => @uploads_dir,
       "IDEJO_BACKUP_DIR" => @backups_dir
@@ -166,7 +166,7 @@ defmodule IdejoHub.Hosting.ForumContainer do
     end
   end
 
-  @doc "Pulls the image of an Idejo version (a missing version says so)."
+  @doc "Pulls the image of an idejo version (a missing version says so)."
   @spec pull_version(String.t()) :: :ok | {:error, term()}
   def pull_version(version), do: pull(image(version))
 

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# M2 exit check only: "0.1.1", Idejo 0.1.0 whose server refuses to start for one forum
+# M2 exit check only: "0.1.1", idejo 0.1.0 whose server refuses to start for one forum
 # (delta.*), so an upgrade of all four fails on that one alone and must roll back.
 ARG BASE
 FROM ${BASE}

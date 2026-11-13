@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.IdentityProfileTest do
   @moduledoc """
-  An Idejo ID's public username and picture (steward decisions 2026-11-06): forums the person
+  An idejo ID's public username and picture (steward decisions 2026-11-06): forums the person
   signed in to read them and fill what is missing; the member changes them on their page.
   """
   use IdejoHubWeb.ConnCase, async: false
@@ -12,7 +12,7 @@ defmodule IdejoHubWeb.IdentityProfileTest do
   alias IdejoHub.Forums.Forum
   alias IdejoHub.Identity.{Fake, Join, OutsideForum, Profiles}
 
-  # A tiny WebP: the RIFF header Idejo's avatars start with.
+  # A tiny WebP: the RIFF header idejo's avatars start with.
   @webp <<"RIFF", 30::little-32, "WEBPVP8L", 17::little-32, 0::size(17 * 8), 0>>
 
   setup do
@@ -63,7 +63,7 @@ defmodule IdejoHubWeb.IdentityProfileTest do
     end
   end
 
-  test "a forum fills only what the Idejo ID lacks, and reads it back" do
+  test "a forum fills only what the idejo ID lacks, and reads it back" do
     assert json_response(hosted(:get, %{"subject" => "ada"}), 200) ==
              %{"username" => nil, "picture" => nil}
 

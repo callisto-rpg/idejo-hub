@@ -4,7 +4,7 @@
 defmodule IdejoHubWeb.SC07OwnerLogTest do
   @moduledoc """
   SC-07: a forum's owner sees the part of the Hub's audit log about their forum, on their
-  Idejo ID page, once their Idejo ID's email (verified) is the forum's owner email.
+  idejo ID page, once their idejo ID's email (verified) is the forum's owner email.
   """
   use IdejoHubWeb.ConnCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
@@ -111,7 +111,7 @@ defmodule IdejoHubWeb.SC07OwnerLogTest do
     assert log =~ "Operator op@hub.test"
     assert log =~ "The Hub (scheduled)"
     assert log =~ "file: idejo-1.tar"
-    assert log =~ "A member left through Idejo ID"
+    assert log =~ "A member left through idejo ID"
     assert log =~ "A member"
     refute log =~ "user-77"
     refute log =~ "s3/key"

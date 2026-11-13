@@ -331,7 +331,7 @@ defmodule IdejoHubWeb.CoreComponents do
     <div :if={@hosted >= @supported} id={@id} role="status" class="alert alert-warning text-sm">
       <.icon name="hero-exclamation-triangle" class="size-5 shrink-0" />
       <span>
-        This server hosts {@hosted} forums. Idejo Hub supports up to {@supported} per server:
+        This server hosts {@hosted} forums. idejo Hub supports up to {@supported} per server:
         another forum may leave it short of memory or database connections. You can still add one.
       </span>
     </div>
@@ -339,7 +339,7 @@ defmodule IdejoHubWeb.CoreComponents do
   end
 
   @doc """
-  OP-09: a newer Idejo release than the version new forums start on, with what changed.
+  OP-09: a newer idejo release than the version new forums start on, with what changed.
   `release` is `IdejoHub.Operations.Releases.notice/0`; nothing shows when it is nil.
   """
   attr :release, :map, default: nil
@@ -349,7 +349,7 @@ defmodule IdejoHubWeb.CoreComponents do
     <div :if={@release} id="release-notice" role="status" class="alert alert-info text-sm">
       <.icon name="hero-sparkles" class="size-5 shrink-0" />
       <span>
-        Idejo {@release.version} is out; new forums start on {@release.current}. <a
+        idejo {@release.version} is out; new forums start on {@release.current}. <a
           href={@release.changelog}
           class="link"
           rel="noopener noreferrer"

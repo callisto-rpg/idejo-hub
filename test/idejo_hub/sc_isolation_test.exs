@@ -25,7 +25,7 @@ defmodule IdejoHub.SCIsolationTest do
     conn = get(conn, ~p"/sign-in")
     cookie = conn.resp_cookies["_idejo_hub_key"]
     refute Map.has_key?(cookie, :domain)
-    # Forums' cookies are Idejo's SP-10 (host-only, guarded by Idejo's own test); the Hub
+    # Forums' cookies are idejo's SP-10 (host-only, guarded by idejo's own test); the Hub
     # sets no variable that could change it.
     refute Enum.any?(ForumContainer.spec(@params)["Env"], &(&1 =~ ~r/COOKIE|DOMAIN/i))
   end
@@ -42,7 +42,7 @@ defmodule IdejoHub.SCIsolationTest do
   end
 
   @tag req: "SC-06"
-  test "SC-06 the Hub runs only Idejo's documented commands, never a way into a forum" do
+  test "SC-06 the Hub runs only idejo's documented commands, never a way into a forum" do
     source =
       Path.wildcard(Path.expand("../../lib/**/*.ex", __DIR__))
       |> Enum.map_join("\n", &File.read!/1)
@@ -83,14 +83,14 @@ defmodule IdejoHub.SCIsolationTest do
       "/sign-in/two-factor-reset/:token",
       "/internal/caddy/ask",
       "/internal/forum-unavailable",
-      # Idejo's community menu: a forum's client credentials, not a sign-in (tested in
+      # idejo's community menu: a forum's client credentials, not a sign-in (tested in
       # community_directory_test.exs).
       "/internal/community",
       # The forums directory's sign-in hand-off: a token signed by the Hub, not an operator
       # page (tested in community_directory_test.exs).
       "/signed-in",
       "/internal/community/profile",
-      # Idejo's chat service and the members' inbox: a forum's (or the inbox's) client
+      # idejo's chat service and the members' inbox: a forum's (or the inbox's) client
       # credentials, not a sign-in (tested in inbox_host_test.exs).
       "/internal/community/chats/unread",
       "/internal/community/chats/activity",
@@ -114,7 +114,7 @@ defmodule IdejoHub.SCIsolationTest do
       # Outside forums' listing: their client credentials, not a sign-in (tested in
       # outside_forums_test.exs).
       "/account/api/listing",
-      # Idejo ID profiles: forums' client credentials; pictures are public (tested in
+      # idejo ID profiles: forums' client credentials; pictures are public (tested in
       # identity_profile_test.exs).
       "/account/api/profile",
       # The forums directory's hand-off: who is signed in here (community_directory_test.exs).
@@ -123,10 +123,10 @@ defmodule IdejoHub.SCIsolationTest do
       # The forums directory's search as JSON, public like the page, only on the directory's
       # host (tested in community_directory_test.exs).
       "/api/forums",
-      # HA-10: the same directory as JSON for the official Idejo app, public (tested in
+      # HA-10: the same directory as JSON for the official idejo app, public (tested in
       # community_directory_test.exs).
       "/api/v1/forums",
-      # Idejo's chat service, for outside forums (tested in inbox_host_test.exs).
+      # idejo's chat service, for outside forums (tested in inbox_host_test.exs).
       "/account/api/chats/unread",
       "/account/api/chats/activity"
     ]

@@ -51,8 +51,8 @@ defmodule IdejoHubWeb.AccountHTML do
     "forum.secret_key_base.reveal" => "SECRET_KEY_BASE shown to the operator",
     "forum.archive.download" => "Archive downloaded",
     "forum.import" => "Imported from a standalone backup",
-    "identity.forum_leave" => "A member left through Idejo ID",
-    "identity.forum_delete" => "A member deleted their account through Idejo ID",
+    "identity.forum_leave" => "A member left through idejo ID",
+    "identity.forum_delete" => "A member deleted their account through idejo ID",
     "alert.email" => "Alert emailed to the operator"
   }
 

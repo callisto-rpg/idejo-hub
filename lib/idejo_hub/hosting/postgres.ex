@@ -14,7 +14,7 @@ defmodule IdejoHub.Hosting.Postgres do
   `sameuser` lets each role open only the database of its own name
   (`deploy/postgres-init/02-forum-isolation.sh`).
 
-  The Hub never connects to a forum's database (CLAUDE.md, The one rule): Idejo creates its
+  The Hub never connects to a forum's database (CLAUDE.md, The one rule): idejo creates its
   own tables (and the trusted `citext` extension) with its migrations, as the database owner.
 
   DDL cannot run in a transaction, so each call opens its own short connection instead of
@@ -97,7 +97,7 @@ defmodule IdejoHub.Hosting.Postgres do
   end
 
   @doc """
-  The `DATABASE_URL` a forum container gets (Idejo AD-13). `host` is the database server's
+  The `DATABASE_URL` a forum container gets (idejo AD-13). `host` is the database server's
   name on the forum network.
   """
   @spec database_url(credentials(), String.t()) :: String.t()

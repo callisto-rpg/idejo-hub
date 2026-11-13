@@ -1,5 +1,5 @@
 version = 1
-SPDX-PackageName = "Idejo Hub"
+SPDX-PackageName = "idejo Hub"
 SPDX-PackageSupplier = "Mariano Pictet"
 SPDX-PackageDownloadLocation = "https://idejo.org"
 
@@ -36,7 +36,7 @@ precedence = "override"
 SPDX-FileCopyrightText = "2014 Chris McCord"
 SPDX-License-Identifier = "MIT"
 
-# Idejo's logos and fonts, for members' pages (copied from Idejo).
+# idejo's logos and fonts, for members' pages (copied from idejo).
 [[annotations]]
 path = ["priv/static/images/logo.svg", "priv/static/images/logo-small.svg", "priv/static/images/logo.png", "priv/static/images/logo-small.png"]
 precedence = "override"

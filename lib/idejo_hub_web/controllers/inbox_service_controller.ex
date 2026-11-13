@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.InboxServiceController do
   @moduledoc """
-  The members' inbox asks here (steward request 2026-11-10; Idejo's inbox mode at
+  The members' inbox asks here (steward request 2026-11-10; idejo's inbox mode at
   `my.<forum domain>`, `IdejoHub.Forums.inbox/0`), on the forum network at
   `/internal/community/inbox/*`, with HTTP Basic: the inbox's own client id and secret
   (`IdejoHub.Community.inbox_client?/2`); 401 for anyone else. The Hub relays to the forums

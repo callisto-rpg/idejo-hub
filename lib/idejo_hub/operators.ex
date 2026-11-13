@@ -7,7 +7,7 @@ defmodule IdejoHub.Operators do
 
   - Accounts are made from the command line only (`bin/hub-admin create-operator EMAIL`,
     `IdejoHub.Release`), with a random password shown once. There is no sign-up page.
-  - Passwords: Argon2id (`argon2_elixir`, Idejo's pinned cost).
+  - Passwords: Argon2id (`argon2_elixir`, idejo's pinned cost).
   - Two factor: TOTP (RFC 6238, 30 s, 6 digits, `nimble_totp`). The secret is stored
     encrypted (SC-04, context `"operator:<id>:totp"`). An operator without it must set it
     up, confirmed with a code, before reaching anything. A code's time step is remembered,
@@ -29,7 +29,7 @@ defmodule IdejoHub.Operators do
   @max_failures 5
   @lock_minutes 15
   @session_hours 12
-  @issuer "Idejo Hub"
+  @issuer "idejo Hub"
 
   ## Accounts
 
@@ -219,7 +219,7 @@ defmodule IdejoHub.Operators do
     |> Repo.update!()
 
     body = """
-    Someone asked to reset the password of the Idejo Hub operator account #{operator.email}.
+    Someone asked to reset the password of the idejo Hub operator account #{operator.email}.
 
     To choose a new password, open this link within #{@reset_minutes} minutes:
 
@@ -231,7 +231,7 @@ defmodule IdejoHub.Operators do
     """
 
     outcome =
-      case IdejoHub.Mailer.send_text(operator.email, "[Idejo Hub] Reset your password", body) do
+      case IdejoHub.Mailer.send_text(operator.email, "[idejo Hub] Reset your password", body) do
         {:ok, _} -> "requested"
         {:error, _} -> "failed"
       end
@@ -327,7 +327,7 @@ defmodule IdejoHub.Operators do
     |> Repo.update!()
 
     body = """
-    Someone signed in with the password of the Idejo Hub operator account #{operator.email}
+    Someone signed in with the password of the idejo Hub operator account #{operator.email}
     and asked to remove its two-factor setup (a lost or new phone).
 
     To remove it, open this link within #{@reset_minutes} minutes and confirm:
@@ -341,7 +341,7 @@ defmodule IdejoHub.Operators do
     two-factor setup stays, and change your password.
     """
 
-    subject = "[Idejo Hub] Remove your two-factor setup"
+    subject = "[idejo Hub] Remove your two-factor setup"
 
     outcome =
       case IdejoHub.Mailer.send_text(operator.email, subject, body) do

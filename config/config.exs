@@ -32,12 +32,12 @@ config :idejo_hub, Oban,
        {"* * * * *", IdejoHub.Operations.HealthWorker},
        # ID-05: sign-ins to forums, read from the identity provider.
        {"*/5 * * * *", IdejoHub.Identity.SyncWorker},
-       # OP-09: new Idejo releases, once a day.
+       # OP-09: new idejo releases, once a day.
        {"17 6 * * *", IdejoHub.Operations.ReleaseCheckWorker}
      ]}
   ]
 
-# OP-09: where the Hub reads Idejo's releases (empty: off), and its changelog link.
+# OP-09: where the Hub reads idejo's releases (empty: off), and its changelog link.
 config :idejo_hub, IdejoHub.Operations.Releases,
   url: "https://api.github.com/repos/callisto-rpg/Idejo/tags",
   changelog: "https://github.com/callisto-rpg/Idejo/compare/v{from}...v{to}"
@@ -87,7 +87,7 @@ config :idejo_hub, IdejoHub.Identity,
   domain: "id.idejo.test",
   api_url: "http://zitadel:8080",
   token_file: nil,
-  label: "Idejo ID"
+  label: "idejo ID"
 
 # FL-06: where the Hub keeps forum exports (a volume in deploy/).
 config :idejo_hub, IdejoHub.Forums.Export, dir: Path.expand("../tmp/exports", __DIR__)
@@ -99,7 +99,7 @@ config :idejo_hub, IdejoHub.Forums.Import, max_bytes: 4096 * 1_048_576
 config :idejo_hub, IdejoHub.Hosting.Maintenance,
   dir: Path.expand("../tmp/forum-state/suspended", __DIR__)
 
-# SC-08: operator passwords, Argon2id at Idejo's pinned cost (3 passes, 64 MiB).
+# SC-08: operator passwords, Argon2id at idejo's pinned cost (3 passes, 64 MiB).
 config :argon2_elixir, argon2_type: 2, t_cost: 3, m_cost: 16, parallelism: 4
 
 # Configure the endpoint

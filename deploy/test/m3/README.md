@@ -12,7 +12,7 @@ their identity and is removed from both following each forum's rules.**
 
 1. The real bundle (`deploy/docker-compose.yml`: Hub, docker-guard, Zitadel and its login
    screen, PostgreSQL, Caddy with its local CA) plus Mailpit for email (`HUB_SMTP_*`).
-2. The forums' Idejo image (`IDEJO_BASE_IMAGE`, default `ghcr.io/callisto-rpg/idejo:0.2.0`:
+2. The forums' idejo image (`IDEJO_BASE_IMAGE`, default `ghcr.io/callisto-rpg/idejo:0.2.0`:
    it needs AC-09's consent page and `idejo-admin leave` / `delete-account`) with Caddy's
    root added to its CA list, served by a local registry.
 3. The Hub configures Zitadel by itself (its own sign-up off, passkeys and second factors,
@@ -20,7 +20,7 @@ their identity and is removed from both following each forum's rules.**
 4. Two forums, alpha and bravo, made by the Hub, each registered as an OpenID Connect client.
 5. In a browser (Playwright 1.49.1, Apache-2.0), as the person: sign up on the Hub's page
    with email and display name only; open Zitadel's invite from the email and choose a
-   password; sign in to alpha and bravo with "Idejo ID", each asking first what it will
+   password; sign in to alpha and bravo with "idejo ID", each asking first what it will
    receive (email and display name), then joined.
 6. Each forum's owner acts there (`bin/idejo rpc`): moderator on alpha, banned on bravo.
    Then (Hub NF-05) the Hub is stopped: its own page answers 502, yet alpha serves its
@@ -28,8 +28,8 @@ their identity and is removed from both following each forum's rules.**
    the Hub is started again.
 7. In the browser: alpha shows the moderator role; bravo refuses the same identity, banned;
    alpha still works. The member's page (`https://id.idejo.test/account`) lists both
-   forums; the member deletes their Idejo ID (signed in within five minutes, email typed).
-8. Both forums' accounts are anonymised by Idejo's own deletion ("Deleted user", no email,
+   forums; the member deletes their idejo ID (signed in within five minutes, email typed).
+8. Both forums' accounts are anonymised by idejo's own deletion ("Deleted user", no email,
    no identity link); Zitadel no longer has the person; the Hub's audit log has it, under
    the provider's subject.
 

@@ -7,7 +7,7 @@ defmodule IdejoHubWeb.SC02CSRFTest do
   forum's pages; a CSRF token is required on every state-changing request. For the Hub: every
   route but GET refuses a request without the session's token, signed in or not; LiveView's
   socket needs the token and the Hub's own origin; and the session cookie cannot be set by a
-  subdomain. (Forums: Idejo SP-05 and SP-10.)
+  subdomain. (Forums: idejo SP-05 and SP-10.)
   """
   use IdejoHubWeb.ConnCase, async: true
 
@@ -40,7 +40,7 @@ defmodule IdejoHubWeb.SC02CSRFTest do
       for %{path: "/account/api/" <> _ = path, verb: verb} <- IdejoHubWeb.Router.__routes__(),
           do: {verb, path}
 
-    # Since Idejo's chat service (steward request 2026-11-10): tickets and unread counts;
+    # Since idejo's chat service (steward request 2026-11-10): tickets and unread counts;
     # since 2026-11-13, what is new in the member's other forums.
     assert length(api) == 9
     # Only the API's controller, through the :api pipeline (no :fetch_session, no forgery

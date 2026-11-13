@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Identity.Members do
   @moduledoc """
-  ID-05, ID-06: what an Idejo ID has joined, and leaving or deleting.
+  ID-05, ID-06: what an idejo ID has joined, and leaving or deleting.
 
   Which forums: every sign-in to a forum's client is an event at the provider
   (`Identity.sign_ins_since/1`), read into `identity_joins` by `sync/0` (at each visit to
@@ -11,7 +11,7 @@ defmodule IdejoHub.Identity.Members do
   leaving makes the forum "joined" again.
 
   Leaving a forum (steward decision 2026-11-03) is the person's choice: `:leave` keeps their
-  account and messages there for a return with the same identity (Idejo's `idejo-admin
+  account and messages there for a return with the same identity (idejo's `idejo-admin
   leave --oidc-subject`), `:delete` deletes their account there as the forum's own rules do
   (`delete-account`: anonymised, messages shown as "Deleted user"). Deleting the identity
   (ID-06) deletes the account on every forum joined, then the person at the provider; a
@@ -43,7 +43,7 @@ defmodule IdejoHub.Identity.Members do
       for s <- sign_ins, forum_id = forums[s.client_id], do: record(s.user_id, forum_id, s.at)
 
       # Outside forums (steward decisions 2026-11-06): who signed in there, so the forum
-      # may read and fill that person's Idejo ID profile.
+      # may read and fill that person's idejo ID profile.
       for s <- sign_ins, outside_id = outside[s.client_id] do
         Repo.insert_all(
           "outside_joins",
@@ -193,7 +193,7 @@ defmodule IdejoHub.Identity.Members do
     {:error, reason}
   end
 
-  # Idejo's AC-09 commands, by the provider's subject (exit 0 done, 2 no such account).
+  # idejo's AC-09 commands, by the provider's subject (exit 0 done, 2 no such account).
   defp command(:leave, subject), do: [@admin, "leave", "--oidc-subject", subject]
   defp command(:delete, subject), do: [@admin, "delete-account", "--oidc-subject", subject]
 

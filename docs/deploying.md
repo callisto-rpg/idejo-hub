@@ -3,28 +3,28 @@ SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
-# Deploying Idejo Hub
+# Deploying idejo Hub
 
-Idejo Hub runs several Idejo forums on one server, each on its own subdomain. This page
+idejo Hub runs several idejo forums on one server, each on its own subdomain. This page
 installs it (HN-08) and lists the commands an operator needs.
 
-## Supported Idejo versions
+## Supported idejo versions
 
-This Hub release supports **Idejo 0.3.6**, the version new forums start on
+This Hub release supports **idejo 0.3.6**, the version new forums start on
 (`IDEJO_DEFAULT_VERSION`, below); see the [README](../README.md#supported-idejo-versions) for
-older versions (Hub NF-06). Before upgrading forums to a newer Idejo, check that your Hub
+older versions (Hub NF-06). Before upgrading forums to a newer idejo, check that your Hub
 release supports it.
 
 ## What you need
 
-- A server running **Debian 13 (trixie)** (the same as Idejo). **Recommended (Hub NF-03): 4 GB
+- A server running **Debian 13 (trixie)** (the same as idejo). **Recommended (Hub NF-03): 4 GB
   of memory and 2 vCPU for up to 8 small forums; 8 GB for up to 20.** Measured on
-  2026-11-06 with 8 idle forums on Idejo 0.2.3: the forums use about 190 MiB each (1.5 GiB
+  2026-11-06 with 8 idle forums on idejo 0.2.3: the forums use about 190 MiB each (1.5 GiB
   in all; each may use up to its limit, 384 MB by default, when busy), the Hub, its
   database, Zitadel, Caddy and docker-guard about 0.9 GiB: 2.4 GiB in all, leaving room for
   the system and busy moments. CPU was not measured under load.
 - **1 to 30 forums** per server (NF-01). The database is sized for 30 and some more; past 30
-  the Hub warns when you add a forum, and lets you. A server set up before Idejo Hub made
+  the Hub warns when you add a forum, and lets you. A server set up before idejo Hub made
   room for 30 gets it when you run `sudo deploy/install.sh` again (the database restarts, so
   every forum pauses for a few seconds); forums made before then use fewer connections once
   recreated (**Apply to all forums now** in **Settings**).
@@ -98,7 +98,7 @@ forums' database passwords and keys are stored encrypted with it.
 
 Open `https://hub.example.org`, sign in with the operator's email and password, and set up
 two-factor sign-in with an authenticator app (SC-08). Then create forums from the Forums
-page. A new forum requires an Idejo ID to sign in (its owner and administrators keep a
+page. A new forum requires an idejo ID to sign in (its owner and administrators keep a
 password too); tick **Also allow local accounts** when creating it, or use **Allow local
 accounts** on its page later, for people without one.
 
@@ -111,7 +111,7 @@ owner, and the command line below can make another at any time.
 
 Everything below is on the Hub's pages (`https://hub.example.org`); most of it also on the
 command line (Commands, below). Every action is recorded in the **Audit log**, and the
-forum's owner sees the part about their forum from their Idejo ID page.
+forum's owner sees the part about their forum from their idejo ID page.
 
 - **Create a forum**: **Forums** → **New forum**: its subdomain (checked while you type),
   its name and its owner's email. It is ready in about a minute; the owner is emailed a link
@@ -131,17 +131,17 @@ forum's owner sees the part about their forum from their Idejo ID page.
   after another, from **Forums** → "Upgrade all running forums to" a version → **Upgrade
   all** (it stops at the first failure). Each is backed up first, and rolled back by itself
   if the new version does not start. Before upgrading, check that your Hub release supports
-  that version (Supported Idejo versions, above).
+  that version (Supported idejo versions, above).
 - **Pin a forum to its version**: its page → **Pin to X.Y.Z**: upgrades of all forums leave
   it out, an upgrade from its own page still works (OP-06); **Unpin** to include it again.
 - **Delete a forum**: its page → **Delete (30-day grace)**: a final export is made and kept,
   the forum stops, and it is purged after 30 days (**Cancel deletion** until then);
   **Delete now** asks you to type its subdomain.
-- **Members' Idejo IDs**: **Idejo IDs** (below) to find one, lock it for abuse or handle a
+- **Members' idejo IDs**: **idejo IDs** (below) to find one, lock it for abuse or handle a
   deletion request.
 - **The forums directory**: `https://forums.<forum domain>/` lists every running forum (the
   wildcard DNS record covers it), and each forum's icon opens a menu of the other forums the
-  member joined with **Find more forums** leading there (Idejo 0.2.5). A forum's page →
+  member joined with **Find more forums** leading there (idejo 0.2.5). A forum's page →
   **Hide from the directory** keeps it out (**Show in the directory** to list it again).
 
 ## When something goes wrong
@@ -155,7 +155,7 @@ forum's owner sees the part about their forum from their Idejo ID page.
 - **An operator lost their authenticator**: `bin/hub-admin reset-two-factor EMAIL`
   (Commands); they set it up again at their next sign-in.
 - **The Hub itself is down**: forums keep running and members stay signed in (Hub NF-05);
-  only new Idejo ID sign-ups, the members' page and the Hub's own pages wait. Look at
+  only new idejo ID sign-ups, the members' page and the Hub's own pages wait. Look at
   `$H logs hub` and start it again with `$H up -d`.
 - **Updating the Hub**: in the repository's directory, `git pull`, then
   `sudo deploy/install.sh` again: it keeps `deploy/.env`, rebuilds and restarts what
@@ -163,7 +163,7 @@ forum's owner sees the part about their forum from their Idejo ID page.
   seconds): Caddy mounts that one file, and `git pull` replaces it, which a running Caddy does
   not see, even reloaded. Forums get new
   settings the Hub gives them when their containers are made again: **Upgrade all** to a new
-  Idejo version, or **Apply to all forums now** in **Settings**. Forums keep running while the Hub restarts; when Caddy itself is updated, they
+  idejo version, or **Apply to all forums now** in **Settings**. Forums keep running while the Hub restarts; when Caddy itself is updated, they
   are unreachable for a few seconds.
 - **The disk fills up**: an alert comes above 85%. Old backups beyond the newest 14 per forum
   are removed by themselves; exports, final exports and pre-upgrade backups stay in the
@@ -171,18 +171,18 @@ forum's owner sees the part about their forum from their Idejo ID page.
 - **The whole server is lost**: what you need from away from the server is your copy of
   `deploy/.env` (its `HUB_SECRETS_KEY` and `ZITADEL_MASTERKEY` above all), your age key, and
   the off-server copies (OP-02). On a new server: install with that `deploy/.env` in place
-  (step 2), put back the identity provider's dump so members keep their Idejo IDs (Backups of
+  (step 2), put back the identity provider's dump so members keep their idejo IDs (Backups of
   the Hub and the identity provider, below), then bring each forum back from its decrypted
   copy with **Import a standalone backup** (below), under its old subdomain. This path has
   not been rehearsed end to end yet: try it on a spare server before you need it.
 
 ## Outside forums
 
-Idejo servers hosted elsewhere can sign in with this Hub's Idejo ID: their administrator
-connects them from Idejo's admin panel, which proves the server controls its address. When
+idejo servers hosted elsewhere can sign in with this Hub's idejo ID: their administrator
+connects them from idejo's admin panel, which proves the server controls its address. When
 one asks to be listed in the forums directory, it waits under **Outside forums** in the
 Hub's header: **Approve** lists it, **Refuse** keeps it out, **Remove** ends its sign-in
-with Idejo ID. Nothing to set up: the sign-in host already sends `/account*` to the Hub.
+with idejo ID. Nothing to set up: the sign-in host already sends `/account*` to the Hub.
 
 ## Commands
 
@@ -218,15 +218,15 @@ for an unknown forum, so scripts can rely on them. They are recorded in the audi
 | `IDEJO_FORUM_DOMAIN` | Forums are `<name>.IDEJO_FORUM_DOMAIN` |
 | `ACME_EMAIL` | Let's Encrypt notices |
 | `SECRET_KEY_BASE`, `HUB_SECRETS_KEY`, `POSTGRES_PASSWORD`, `HUB_DB_PASSWORD` | Generated by the installer; never change them once forums exist |
-| `IDEJO_ID_DOMAIN` | The members' sign-in address (Zitadel), `id.<IDEJO_HUB_DOMAIN>` by default. People create their Idejo ID at `https://IDEJO_ID_DOMAIN/account/sign-up`, open once the Hub has SMTP (Settings or `HUB_SMTP_*`): Zitadel sends the confirmation emails through it. At `https://IDEJO_ID_DOMAIN/account` members see the forums they joined, leave one (keeping or deleting their account there) or delete their Idejo ID |
+| `IDEJO_ID_DOMAIN` | The members' sign-in address (Zitadel), `id.<IDEJO_HUB_DOMAIN>` by default. People create their idejo ID at `https://IDEJO_ID_DOMAIN/account/sign-up`, open once the Hub has SMTP (Settings or `HUB_SMTP_*`): Zitadel sends the confirmation emails through it. At `https://IDEJO_ID_DOMAIN/account` members see the forums they joined, leave one (keeping or deleting their account there) or delete their idejo ID |
 | `ZITADEL_MASTERKEY`, `ZITADEL_DB_PASSWORD`, `ZITADEL_ADMIN_PASSWORD` | Generated by the installer. The master key encrypts Zitadel's data: never change it. The admin password signs in to Zitadel's console (`https://IDEJO_ID_DOMAIN/ui/console`, user `admin`) |
 | `DOCKER_GID` | The group of the Docker socket (filled in by the installer) |
-| `IDEJO_DEFAULT_VERSION` | The Idejo version new forums get (default 0.3.6: shared sign-in since 0.2.0, the stylesheet checked since 0.2.2, an idle forum well under 200 MB since 0.2.4, the community menu since 0.2.5, "No Idejo ID yet? Create one" on its sign-in since 0.2.6, its logo at `/logo` for the forums directory since 0.2.9, the chat service and "All my topics" since 0.3.4, inbox mode for the members' inbox since 0.3.5, the inbox's topic cards' mention and reaction counts and the forum's logo as its favicon since 0.3.6) |
-| `HUB_SMTP_*` | SMTP for the Hub and the forums; Settings in the Hub can set it instead. `HUB_SMTP_FROM` (Settings: **Sender address**) is the one sender: the Hub's alerts, Idejo ID's emails and new forums all send from it (empty: `noreply@<IDEJO_HUB_DOMAIN>`); a forum sends under its own name |
+| `IDEJO_DEFAULT_VERSION` | The idejo version new forums get (default 0.3.6: shared sign-in since 0.2.0, the stylesheet checked since 0.2.2, an idle forum well under 200 MB since 0.2.4, the community menu since 0.2.5, "No idejo ID yet? Create one" on its sign-in since 0.2.6, its logo at `/logo` for the forums directory since 0.2.9, the chat service and "All my topics" since 0.3.4, inbox mode for the members' inbox since 0.3.5, the inbox's topic cards' mention and reaction counts and the forum's logo as its favicon since 0.3.6) |
+| `HUB_SMTP_*` | SMTP for the Hub and the forums; Settings in the Hub can set it instead. `HUB_SMTP_FROM` (Settings: **Sender address**) is the one sender: the Hub's alerts, idejo ID's emails and new forums all send from it (empty: `noreply@<IDEJO_HUB_DOMAIN>`); a forum sends under its own name |
 | `IDEJO_HUB_BACKUP_CRON`, `IDEJO_HUB_BACKUPS_KEPT` | Backups of forums, the Hub's database and Zitadel's: when (default daily 02:00 UTC) and how many of each (14) |
 | `IDEJO_HUB_S3_*`, `IDEJO_HUB_BACKUP_AGE_RECIPIENT` | Off-server copies of every backup (OP-02), below |
 | `IDEJO_HUB_UPGRADE_HEALTH_SECONDS` | How long an upgraded forum has to become healthy before it is rolled back (300) |
-| `IDEJO_HUB_RELEASES_URL`, `IDEJO_HUB_CHANGELOG_URL` | New Idejo releases (OP-09): read once a day from GitHub's list of Idejo's tags; the forum list and Server page then show a newer version than `IDEJO_DEFAULT_VERSION`, linked to what changed. Set the first, empty, to turn it off |
+| `IDEJO_HUB_RELEASES_URL`, `IDEJO_HUB_CHANGELOG_URL` | New idejo releases (OP-09): read once a day from GitHub's list of idejo's tags; the forum list and Server page then show a newer version than `IDEJO_DEFAULT_VERSION`, linked to what changed. Set the first, empty, to turn it off |
 
 `deploy/.env.example` explains each one.
 
@@ -253,16 +253,16 @@ change that does not carry the token of a page it served itself, and its session
 (`__Host-idejo_hub`) cannot be set or replaced from a forum's address. After the update that
 brought this name, operators sign in again once.
 
-## Idejo IDs (HA-06)
+## idejo IDs (HA-06)
 
-**Idejo IDs**, in the header, is where you look after the shared sign-in:
+**idejo IDs**, in the header, is where you look after the shared sign-in:
 
 - **Search** by email, name or username. Each ID's page shows its state, the forums it
   joined and what the audit log holds about it.
-- **Lock** an Idejo ID for abuse (give a reason; it is kept in the audit log). Its holder can
-  then sign in neither to any forum through Idejo ID nor to their Idejo ID page. A session
+- **Lock** an idejo ID for abuse (give a reason; it is kept in the audit log). Its holder can
+  then sign in neither to any forum through idejo ID nor to their idejo ID page. A session
   already open on a forum is that forum's own: its moderators ban there. **Unlock** undoes it.
-- **Deletion requests**: members delete their Idejo ID themselves from their page; the list
+- **Deletion requests**: members delete their idejo ID themselves from their page; the list
   shows those under way, stopped (with why, for example a forum's last owner, and **Retry**)
   and finished. When someone asks *you* (by email, by letter), open their ID, type its email
   again and say who asked and how: their account on every forum they joined is deleted as
@@ -271,12 +271,12 @@ brought this name, operators sign in again once.
 ## The audit log (SC-07)
 
 **Audit log**, in the header, lists everything done to the Hub and its forums: who did it
-(an operator, a scheduled job, a member through Idejo ID), what, to which forum, when and how
+(an operator, a scheduled job, a member through idejo ID), what, to which forum, when and how
 it ended. Filter by forum, action (for example `forum.backup`), outcome or who; each forum's
 page links to its own entries. Entries hold no secrets and are never changed or deleted.
 
-A forum's owner sees what was done to their forum on their Idejo ID page (`/account`, under
-**Forums you own**), once they sign in there with an Idejo ID whose email, verified, is the
+A forum's owner sees what was done to their forum on their idejo ID page (`/account`, under
+**Forums you own**), once they sign in there with an idejo ID whose email, verified, is the
 owner email the forum was created with. Members who acted are shown only as "a member".
 
 ## Alerts by email (OP-08)
@@ -350,34 +350,34 @@ To read a copy, download it with any S3 tool and decrypt it on a computer that h
 age --decrypt -i idejo-backups.key -o idejo-20261104-020000.tar idejo-20261104-020000.tar.age
 ```
 
-The result is the same file as the backup on the server: a standard Idejo backup (restore
-it as in "Moving a forum to a standalone Idejo" below, or put it back in the `exports`
+The result is the same file as the backup on the server: a standard idejo backup (restore
+it as in "Moving a forum to a standalone idejo" below, or put it back in the `exports`
 volume), or a Hub dump (restore it as above).
 
-## Moving a forum to a standalone Idejo (FL-06)
+## Moving a forum to a standalone idejo (FL-06)
 
-A forum's export is a standard Idejo backup. To run it on its own server:
+A forum's export is a standard idejo backup. To run it on its own server:
 
 1. On the forum's page in the Hub: **Export**, then **Download** the export.
-2. Still there: **Show the key for a standalone restore** (recorded in the audit log). Idejo
+2. Still there: **Show the key for a standalone restore** (recorded in the audit log). idejo
    encrypts its push keys, and an SMTP password set in the forum's Admin → Email, with
    `SECRET_KEY_BASE`: without the same key they cannot be read.
-3. Install Idejo on the new server (Idejo's own `docs/deploying.md`), and put that key in its
+3. Install idejo on the new server (idejo's own `docs/deploying.md`), and put that key in its
    `deploy/.env` as `SECRET_KEY_BASE` before the first start.
 4. Copy the export into its backups volume and restore it with the app stopped:
-   `bin/idejo-admin restore FILE --yes` (Idejo after 0.1.0 restores onto a new install
+   `bin/idejo-admin restore FILE --yes` (idejo after 0.1.0 restores onto a new install
    directly; with 0.1.0, start the app once first so its database is migrated).
 
 Without the key the forum's data still restores; push notifications then need
 `bin/idejo-admin rotate-push-keys` and an SMTP password set in the forum must be entered again.
 
-## Bringing a standalone Idejo forum to the Hub (FL-07)
+## Bringing a standalone idejo forum to the Hub (FL-07)
 
 A standalone install's backup becomes a new forum on the Hub, with its members, messages,
 uploads and settings:
 
 1. On the standalone server, make a backup and copy it out of the app's container (with
-   Idejo's `idejo` shortcut from its deployment guide):
+   idejo's `idejo` shortcut from its deployment guide):
 
    ```sh
    idejo exec app bin/idejo-admin backup        # prints "Backup written to /data/backups/idejo-….tar"
@@ -391,13 +391,13 @@ uploads and settings:
    gets its own key and new push keys (browsers subscribe again on their next visit), and an
    SMTP password set in the forum must be entered again.
 3. In the Hub: **Forums → Import a standalone backup**. Choose the file, a subdomain, the
-   name, the owner's email and an Idejo version at least as new as the standalone's (an older
+   name, the owner's email and an idejo version at least as new as the standalone's (an older
    one refuses the backup), then **Import**.
 
-The Hub checks that the file is an Idejo backup, creates the forum behind the maintenance
+The Hub checks that the file is an idejo backup, creates the forum behind the maintenance
 page (no setup: the backup brings its owner), restores the backup and starts it; the forum's
 page shows each step. The file stays in the forum's archives as kind `import`. Members keep
-signing in with their passwords (local accounts stay allowed) and can link an Idejo ID from
+signing in with their passwords (local accounts stay allowed) and can link an idejo ID from
 their profile. The forum now answers at its Hub address only: links to the old address,
 including those inside messages, reach the old server.
 
@@ -408,4 +408,4 @@ while importing, the server needs about twice the file's size free.
 
 A forum's container gets its environment when it is made. After changing email settings in
 the Hub (**Settings**), use **Apply to all forums now** there, or **Recreate (apply settings)**
-on one forum's page: the container is made again on the same Idejo version, with its data.
+on one forum's page: the container is made again on the same idejo version, with its data.

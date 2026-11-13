@@ -8,8 +8,8 @@ defmodule IdejoHubWeb.DirectoryHTML do
   embed_templates "directory_html/*"
 
   @doc """
-  A forum's card: its logo, name and host link to it; **Join** (Idejo's yellow) opens its
-  sign-in with Idejo ID, or **Open** (green) for a forum the visitor joined.
+  A forum's card: its logo, name and host link to it; **Join** (idejo's yellow) opens its
+  sign-in with idejo ID, or **Open** (green) for a forum the visitor joined.
   """
   attr :forum, :map, required: true
   attr :id_prefix, :string, required: true

@@ -1,28 +1,28 @@
-Idejo Hub — © Mariano Pictet and contributors — AGPL-3.0
+idejo Hub — © Mariano Pictet and contributors — AGPL-3.0
 https://idejo.org
 
-Idejo Hub is free software: you can redistribute it and/or modify it under the
+idejo Hub is free software: you can redistribute it and/or modify it under the
 terms of the GNU Affero General Public License, version 3 only
 (AGPL-3.0-only), as published by the Free Software Foundation. See LICENSE.
 
 This licence is provisional: the steward may choose a different licence for
-the Hub after legal review (Idejo Hub spec, LB-02).
+the Hub after legal review (idejo Hub spec, LB-02).
 
 Copyright steward: Mariano Pictet, until an organisation is formed, to which
 the rights will then transfer.
 
-Idejo Hub drives Idejo (https://idejo.org, AGPL-3.0-only) only through
+idejo Hub drives idejo (https://idejo.org, AGPL-3.0-only) only through
 containers, its command-line tool, HTTP and OpenID Connect. Every forum it runs
-keeps Idejo's own "Source code" link and attribution notice.
+keeps idejo's own "Source code" link and attribution notice.
 
-Members' pages use Idejo's look:
+Members' pages use idejo's look:
 
-  The Idejo logos (priv/static/images/logo.svg, logo-small.svg, logo.png,
+  The idejo logos (priv/static/images/logo.svg, logo-small.svg, logo.png,
   logo-small.png; the PNGs also brand the identity provider's sign-in screens),
   © Mariano Pictet, licensed under CC-BY 4.0; see LICENSES/CC-BY-4.0.txt.
 
   Fraunces (priv/static/fonts/fraunces-*), Copyright 2020 The Fraunces Project
   Authors (github.com/undercasetype/Fraunces), and Rubik (priv/static/fonts/rubik-*),
   Copyright 2015 The Rubik Project Authors (github.com/googlefonts/rubik), licensed
-  under the SIL Open Font License 1.1; see LICENSES/OFL-1.1.txt. Copied from Idejo
+  under the SIL Open Font License 1.1; see LICENSES/OFL-1.1.txt. Copied from idejo
   (Fontsource 5.3.0, Google Fonts builds).

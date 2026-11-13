@@ -8,7 +8,7 @@ defmodule IdejoHubWeb.DirectoryController do
   with each forum's logo; a search at the top of All Forums (steward request 2026-11-09);
   past ten, pages. `search/2` answers the same search as JSON.
 
-  Each card has **Join** (the forum's sign-in with Idejo ID, `/users/oidc`) or, for a forum
+  Each card has **Join** (the forum's sign-in with idejo ID, `/users/oidc`) or, for a forum
   the visitor joined, **Open** (steward request 2026-11-06). The directory learns who is
   looking from the sign-in host (`sign_in/2` → `AccountController.directory/2` →
   `signed_in/2`: a token signed by the Hub, two minutes, bound to this session's `state`),
@@ -59,7 +59,7 @@ defmodule IdejoHubWeb.DirectoryController do
   @doc """
   `GET /api/forums?q=` (steward request 2026-11-09): the first #{@search_limit} listed
   forums matching `q` (as the page's search; all of them without one), by name, as JSON
-  `{"forums": [{"name", "url", "logo", "join"}]}`, for Idejo's `!forum` plugin. Public, like
+  `{"forums": [{"name", "url", "logo", "join"}]}`, for idejo's `!forum` plugin. Public, like
   the page; nobody's own forums, no counts.
   """
   def search(conn, params) do
@@ -79,7 +79,7 @@ defmodule IdejoHubWeb.DirectoryController do
 
   @doc """
   `GET /api/v1/forums?q=&page=` (HA-10; steward decision 2026-11-10): the directory as JSON
-  for the official Idejo app, which finds it at `<IDEJO_COMMUNITY_DIRECTORY_URL>api/v1/forums`.
+  for the official idejo app, which finds it at `<IDEJO_COMMUNITY_DIRECTORY_URL>api/v1/forums`.
   The same listed, running forums as the page, the same search, #{@app_page_size} a page:
   `{"forums": [{"name", "url", "host", "description", "logo_url", "members"}], "page",
   "pages", "total"}`. `description` is null (forums have none here yet); `members` from the
@@ -133,7 +133,7 @@ defmodule IdejoHubWeb.DirectoryController do
     end
   end
 
-  # The forum's logo at Idejo's fixed address (0.2.9); Join is its sign-in with Idejo ID.
+  # The forum's logo at idejo's fixed address (0.2.9); Join is its sign-in with idejo ID.
   defp card(%{name: name, host: host} = entry, joined) do
     %{
       name: name,

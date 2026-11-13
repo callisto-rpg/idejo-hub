@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.InboxHostTest do
   @moduledoc """
-  The members' inbox (steward requests 2026-11-10): an Idejo container in inbox mode at
+  The members' inbox (steward requests 2026-11-10): an idejo container in inbox mode at
   my.<forum domain>, set up by the operator; forums sent there; the Hub relaying the
   inbox's questions to the forums with tickets, and the forums' unread counts to the inbox.
   """
@@ -51,7 +51,7 @@ defmodule IdejoHubWeb.InboxHostTest do
     )
   end
 
-  defp inbox!, do: forum!("inbox", %{kind: "inbox", display_name: "Idejo", listed: false})
+  defp inbox!, do: forum!("inbox", %{kind: "inbox", display_name: "idejo", listed: false})
 
   defp join!(subject, forum) do
     now = DateTime.utc_now(:second)
@@ -85,7 +85,7 @@ defmodule IdejoHubWeb.InboxHostTest do
     assert inbox.kind == "inbox" and inbox.subdomain == "inbox" and not inbox.listed
     assert Forums.host(inbox) == "my.idejo.test"
     assert Forums.for_host("my.idejo.test").id == inbox.id
-    assert inbox.display_name == "Idejo" and not inbox.local_accounts
+    assert inbox.display_name == "idejo" and not inbox.local_accounts
     assert Forums.inbox().id == inbox.id
     assert Forums.create_inbox("op@x.test", "op@x.test") == {:error, :exists}
 
@@ -206,7 +206,7 @@ defmodule IdejoHubWeb.InboxHostTest do
     join!("ada", inbox)
     test = self()
 
-    # The kitchen runs an Idejo before 0.3.7: its address does not exist.
+    # The kitchen runs an idejo before 0.3.7: its address does not exist.
     Req.Test.stub(ForumLink, fn conn ->
       assert conn.request_path == "/community/settings"
       ticket = conn.body_params["ticket"]
@@ -337,7 +337,7 @@ defmodule IdejoHubWeb.InboxHostTest do
     assert json_response(conn, 401)
   end
 
-  test "the inbox reads any Idejo ID's profile, never fills one" do
+  test "the inbox reads any idejo ID's profile, never fills one" do
     inbox!()
     Repo.insert!(%Profile{subject: "bo", username: "bo_garden"})
 

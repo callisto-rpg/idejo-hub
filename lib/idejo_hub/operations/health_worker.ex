@@ -4,7 +4,7 @@
 defmodule IdejoHub.Operations.HealthWorker do
   @moduledoc """
   OP-07: every minute (Oban cron, its own queue so a long backup never delays it), asks each
-  running forum for its `/health` (Idejo AD-15) and its container for its memory use, and
+  running forum for its `/health` (idejo AD-15) and its container for its memory use, and
   keeps both on the forum: `health` (`ok` or `down`), when, `down_since` (the first check
   that found it down, for OP-08's alerts; cleared when it answers again), and memory in use
   and its limit. Forums are checked side by side, each within a few seconds.

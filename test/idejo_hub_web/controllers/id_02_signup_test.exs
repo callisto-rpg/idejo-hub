@@ -23,14 +23,14 @@ defmodule IdejoHubWeb.ID02SignupTest do
     %{conn: %{conn | host: "id.idejo.test"}}
   end
 
-  # A username of its own unless the test gives one (they are unique among Idejo IDs).
+  # A username of its own unless the test gives one (they are unique among idejo IDs).
   defp sign_up(conn, params) do
     params = Map.put_new(params, "username", "user_#{System.unique_integer([:positive])}")
     post(conn, ~p"/account/sign-up", %{"signup" => params})
   end
 
   test "ID-02 the page is on the identity host only", %{conn: conn} do
-    assert html_response(get(conn, ~p"/account/sign-up"), 200) =~ "Create your Idejo ID"
+    assert html_response(get(conn, ~p"/account/sign-up"), 200) =~ "Create your idejo ID"
     assert get(%{build_conn() | host: "hub.idejo.test"}, ~p"/account/sign-up").status == 404
   end
 
@@ -116,7 +116,7 @@ defmodule IdejoHubWeb.ID02SignupTest do
     assert smtp[:host] == "smtp.hub.test"
   end
 
-  test "ID-02 the username chosen is the Idejo ID's public name; never twice, never an email", %{
+  test "ID-02 the username chosen is the idejo ID's public name; never twice, never an email", %{
     conn: conn
   } do
     # An address of its own: sign-ups are limited per address.
@@ -135,6 +135,6 @@ defmodule IdejoHubWeb.ID02SignupTest do
     assert html_response(
              sign_up(conn, %{"email" => "u2@x.test", "display_name" => "U", "username" => "ada_l"}),
              422
-           ) =~ "Another Idejo ID already has that username."
+           ) =~ "Another idejo ID already has that username."
   end
 end

@@ -3,7 +3,7 @@
 
 import Config
 
-# The Idejo image forums may run, and the Docker network forum containers must join.
+# The idejo image forums may run, and the Docker network forum containers must join.
 config :docker_guard,
   port: 2375,
   image: "ghcr.io/callisto-rpg/idejo",

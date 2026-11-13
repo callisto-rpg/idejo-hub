@@ -8,7 +8,7 @@ defmodule IdejoHub.Community do
   * `directory/0`: every running forum the operator has not hidden (`forums.listed`), by
     name, for the public page at `forums.<IDEJO_FORUM_DOMAIN>` (the subdomain `forums` is
     reserved, FL-03, so no forum can take it).
-  * `joined/3`: answers a forum's `IDEJO_COMMUNITY_URL` request (Idejo's community menu): the
+  * `joined/3`: answers a forum's `IDEJO_COMMUNITY_URL` request (idejo's community menu): the
     other running forums a person joined (`identity_joins`, ID-05), asked by a forum that
     proves itself with its own OpenID Connect client id and secret (ID-01), and only about a
     person who joined that forum. Nothing else about the person leaves the Hub.
@@ -214,7 +214,7 @@ defmodule IdejoHub.Community do
 
   @doc """
   Whether the forum whose client is `client_id` with `secret` (hosted or outside) may see
-  and fill `subject`'s Idejo ID profile: that person signed in there. Sign-ins are read
+  and fill `subject`'s idejo ID profile: that person signed in there. Sign-ins are read
   again once when not found (a first sign-in moments ago).
   """
   @spec member_of_client?(term(), term(), term()) :: boolean()

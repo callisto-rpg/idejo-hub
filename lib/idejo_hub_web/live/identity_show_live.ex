@@ -3,7 +3,7 @@
 
 defmodule IdejoHubWeb.IdentityShowLive do
   @moduledoc """
-  HA-06: one Idejo ID, at `/identities/:id` (the provider's id): its email, state, the forums
+  HA-06: one idejo ID, at `/identities/:id` (the provider's id): its email, state, the forums
   it joined, and what the audit log holds about it. The operator locks it for abuse (a reason
   required) or unlocks it, and deletes it when its owner asked them to (the email typed
   again, and who asked and how), which runs as the member's own deletion does (ID-06).
@@ -14,7 +14,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
 
   @impl true
   def mount(%{"id" => subject}, _session, socket) do
-    {:ok, socket |> assign(subject: subject, page_title: "Idejo ID") |> load()}
+    {:ok, socket |> assign(subject: subject, page_title: "idejo ID") |> load()}
   end
 
   defp load(socket) do
@@ -23,7 +23,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
         assign(socket, person: person, log: Admin.log(socket.assigns.subject), error: nil)
 
       {:error, :not_found} ->
-        assign(socket, person: nil, log: [], error: "No such Idejo ID.")
+        assign(socket, person: nil, log: [], error: "No such idejo ID.")
 
       {:error, _} ->
         assign(socket, person: nil, log: [], error: "The identity provider did not answer.")
@@ -34,7 +34,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
   def handle_event("lock", %{"reason" => reason}, socket) do
     socket =
       case Admin.lock(socket.assigns.subject, reason, operator(socket)) do
-        :ok -> put_flash(socket, :info, "Locked: this Idejo ID can no longer sign in.")
+        :ok -> put_flash(socket, :info, "Locked: this idejo ID can no longer sign in.")
         {:error, :reason} -> put_flash(socket, :error, "Give a reason: it goes in the audit log.")
         {:error, _} -> put_flash(socket, :error, "The identity provider refused. Try again.")
       end
@@ -45,7 +45,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
   def handle_event("unlock", _params, socket) do
     socket =
       case Admin.unlock(socket.assigns.subject, operator(socket)) do
-        :ok -> put_flash(socket, :info, "Unlocked: this Idejo ID can sign in again.")
+        :ok -> put_flash(socket, :info, "Unlocked: this idejo ID can sign in again.")
         {:error, _} -> put_flash(socket, :error, "The identity provider refused. Try again.")
       end
 
@@ -56,16 +56,16 @@ defmodule IdejoHubWeb.IdentityShowLive do
     socket =
       case Admin.delete(socket.assigns.subject, email, reason, operator(socket)) do
         {:ok, _} ->
-          put_flash(socket, :info, "Deleting: the forum accounts first, then the Idejo ID.")
+          put_flash(socket, :info, "Deleting: the forum accounts first, then the idejo ID.")
 
         {:error, :email} ->
-          put_flash(socket, :error, "That is not this Idejo ID's email: nothing was deleted.")
+          put_flash(socket, :error, "That is not this idejo ID's email: nothing was deleted.")
 
         {:error, :reason} ->
           put_flash(socket, :error, "Say who asked and how: it goes in the audit log.")
 
         {:error, :deleting} ->
-          put_flash(socket, :error, "A deletion of this Idejo ID is already under way.")
+          put_flash(socket, :error, "A deletion of this idejo ID is already under way.")
 
         {:error, _} ->
           put_flash(socket, :error, "The identity provider did not answer. Try again.")
@@ -90,12 +90,12 @@ defmodule IdejoHubWeb.IdentityShowLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_operator={@current_operator}>
-      <.link navigate={~p"/identities"} class="text-sm">← Idejo IDs</.link>
+      <.link navigate={~p"/identities"} class="text-sm">← idejo IDs</.link>
       <p :if={@error} id="identity-error" class="text-error">{@error}</p>
 
       <div :if={@person} class="space-y-6">
         <h1 class="text-2xl font-semibold">
-          {if @person[:gone?], do: "Deleted Idejo ID", else: @person.display_name || @person.email}
+          {if @person[:gone?], do: "Deleted idejo ID", else: @person.display_name || @person.email}
         </h1>
         <dl :if={!@person[:gone?]} id="identity-facts" class="grid grid-cols-[auto_1fr] gap-x-4">
           <dt>Email</dt>
@@ -128,7 +128,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
           <div :if={@person.state != "locked"}>
             <p class="text-sm">
               The identity provider then refuses this person's sign-ins to every forum and to
-              their Idejo ID page. Sessions already open on a forum are the forum's own: its
+              their idejo ID page. Sessions already open on a forum are the forum's own: its
               moderators ban there.
             </p>
             <form id="lock-form" phx-submit="lock" class="flex items-end gap-2">
@@ -140,7 +140,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
             </form>
           </div>
           <div :if={@person.state == "locked"}>
-            <p>Locked: this Idejo ID cannot sign in.</p>
+            <p>Locked: this idejo ID cannot sign in.</p>
             <button id="unlock" phx-click="unlock" class="btn btn-sm">Unlock</button>
           </div>
         </section>
@@ -151,7 +151,7 @@ defmodule IdejoHubWeb.IdentityShowLive do
             Deleted {Calendar.strftime(@person.deletion.finished_at, "%Y-%m-%d %H:%M")} UTC.
           </p>
           <p :if={deleting?(@person)} id="deletion-running">
-            Being deleted: the forum accounts first, then the Idejo ID.
+            Being deleted: the forum accounts first, then the idejo ID.
           </p>
           <p
             :if={@person.deletion && @person.deletion.error && !@person.deletion.finished_at}
@@ -161,20 +161,20 @@ defmodule IdejoHubWeb.IdentityShowLive do
           </p>
           <div :if={!@person[:gone?] and !deleting?(@person)}>
             <p class="text-sm">
-              When this person asks you to delete their Idejo ID (they can also do it
+              When this person asks you to delete their idejo ID (they can also do it
               themselves from their page): their account on every forum they joined is deleted
               as that forum's rules say, then the ID. This cannot be undone.
             </p>
             <form id="delete-form" phx-submit="delete" class="space-y-2">
               <label class="flex flex-col text-sm">
-                Type this Idejo ID's email to confirm
+                Type this idejo ID's email to confirm
                 <input type="email" name="email" class="input input-sm" required autocomplete="off" />
               </label>
               <label class="flex flex-col text-sm">
                 Who asked, and how (kept in the audit log)
                 <input type="text" name="reason" class="input input-sm" required maxlength="500" />
               </label>
-              <button class="btn btn-sm btn-error">Delete this Idejo ID</button>
+              <button class="btn btn-sm btn-error">Delete this idejo ID</button>
             </form>
           </div>
         </section>

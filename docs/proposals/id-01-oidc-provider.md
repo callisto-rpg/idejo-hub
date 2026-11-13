@@ -6,7 +6,7 @@ least resource-intensive open-source option, after the comparison below), at
 
 ## What the provider must do
 
-Idejo forums are already OIDC clients (Idejo AC-09: code flow with PKCE, `state`, `nonce`,
+idejo forums are already OIDC clients (idejo AC-09: code flow with PKCE, `state`, `nonce`,
 scopes `openid email profile`). The provider must give each forum, and only after the person
 consents on first join (ID-09), a stable subject, an email and a display name; hold an
 identity of email, password or passkey, display name and language (ID-02); offer two factor
@@ -29,7 +29,7 @@ the Hub builds them itself.
 | Consent on first join (ID-09) | ours: one screen, the three claims named | to check (not shown by default in its hosted login) | built in |
 | Forum clients (ID-01) | rows in the Hub's database, made in FL-01's job | through its management API, with a service account | through its admin API |
 | Joined forums, leave, delete (ID-05, ID-06) | in the identity page we build anyway | Hub pages beside Zitadel's account pages: two places for one person | same as B |
-| Maintenance | **we own security-critical protocol code**: kept to the one flow Idejo uses, and run against the OpenID Foundation's conformance suite in CI | upgrades of a second product, its API and its login UI | same, heavier |
+| Maintenance | **we own security-critical protocol code**: kept to the one flow idejo uses, and run against the OpenID Foundation's conformance suite in CI | upgrades of a second product, its API and its login UI | same, heavier |
 | Moving parts | none new | one service (and its login UI), its own upgrades and backups | one heavy service |
 
 Also looked at: **Authelia** (Apache-2.0, OpenID certified, passkeys since 4.39) and
@@ -40,7 +40,7 @@ Keycloak. **boruta** (MIT, the Elixir provider library): its 3.0 is still in bet
 
 ## Recommendation: A, built into the Hub
 
-- **It is the smallest thing that meets all nine requirements.** Idejo uses one flow; the
+- **It is the smallest thing that meets all nine requirements.** idejo uses one flow; the
   provider implements that flow only (authorization code with PKCE required, `nonce`,
   RS256 ID tokens, discovery, JWKS, userinfo), not the whole of OAuth.
 - **ID-05, ID-06 and ID-09 are Hub features anyway.** With A they live in one identity page,
@@ -55,13 +55,13 @@ Keycloak. **boruta** (MIT, the Elixir provider library): its 3.0 is still in bet
 If you would rather not own that code, **B (Zitadel)** is the choice: small, maintained, and
 its AGPL matches the Hub's. Keycloak (C) is ruled out by memory.
 
-## Needed from Idejo, whatever the choice
+## Needed from idejo, whatever the choice
 
-The milestone says to stop and ask before touching a forum's data. Two Idejo interfaces do
+The milestone says to stop and ask before touching a forum's data. Two idejo interfaces do
 not exist yet:
 
 1. **ID-06**: delete the account linked to an identity, following the forum's own deletion
-   rules (Idejo AC-07): for example `bin/idejo-admin delete-account --oidc-subject SUB`.
+   rules (idejo AC-07): for example `bin/idejo-admin delete-account --oidc-subject SUB`.
 2. **ID-05** "leave a forum": the same command (leaving deletes the forum account), or a
    lighter "unlink" that keeps the account but ends the link; which one is your call.
 
@@ -72,9 +72,9 @@ not exist yet:
    (A) or a JVM at 552 MiB (C).
 2. **Address**: `id.<hub domain>`, its own host behind the bundle's Caddy.
 3. **Leaving a forum (ID-05)**: the person chooses. **Delete** their account there (their
-   messages then show "Deleted user", Idejo's AC-07), or **leave**: the account and its
+   messages then show "Deleted user", idejo's AC-07), or **leave**: the account and its
    messages stay theirs, and joining again with the same identity gets them back.
-4. **Idejo commands** for both are agreed (contract additions, reviewed in Idejo).
+4. **idejo commands** for both are agreed (contract additions, reviewed in idejo).
 
 Measured again with Zitadel v4's separate login container (its sign-in pages run apart since
 v4): **core 78 MiB + login 93 MiB = about 171 MiB** idle, plus its tables in the shared

@@ -3,8 +3,8 @@
 
 defmodule IdejoHubWeb.ID02SignupReturnTest do
   @moduledoc """
-  ID-02 (steward decision 2026-11-06): someone without an Idejo ID who comes from a forum's
-  "No Idejo ID yet? Create one" (Idejo 0.2.6's IDEJO_OIDC_SIGN_UP_URL) signs up on the Hub's
+  ID-02 (steward decision 2026-11-06): someone without an idejo ID who comes from a forum's
+  "No idejo ID yet? Create one" (idejo 0.2.6's IDEJO_OIDC_SIGN_UP_URL) signs up on the Hub's
   page and is led back to that forum. Only a running forum's own address is ever followed.
   """
   use IdejoHubWeb.ConnCase, async: false

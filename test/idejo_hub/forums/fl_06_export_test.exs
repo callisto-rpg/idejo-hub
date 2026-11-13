@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 defmodule IdejoHub.Forums.FL06ExportTest do
-  @moduledoc "FL-06: exporting a forum as a standard Idejo backup, kept by the Hub."
+  @moduledoc "FL-06: exporting a forum as a standard idejo backup, kept by the Hub."
   use IdejoHub.DataCase, async: false
   use Oban.Testing, repo: IdejoHub.Repo
 

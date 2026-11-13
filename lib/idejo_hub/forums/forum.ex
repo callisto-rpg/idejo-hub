@@ -52,7 +52,7 @@ defmodule IdejoHub.Forums.Forum do
     field :pinned, :boolean, default: false
     # The forums directory (steward decision 2026-11-06): listed while running, unless hidden.
     field :listed, :boolean, default: true
-    # "forum", or "inbox": the members' inbox (steward request 2026-11-10), Idejo in inbox
+    # "forum", or "inbox": the members' inbox (steward request 2026-11-10), idejo in inbox
     # mode at my.<forum domain>.
     field :kind, :string, default: "forum"
 

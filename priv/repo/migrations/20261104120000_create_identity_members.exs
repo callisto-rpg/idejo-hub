@@ -4,7 +4,7 @@
 defmodule IdejoHub.Repo.Migrations.CreateIdentityMembers do
   use Ecto.Migration
 
-  # ID-05, ID-06: which forums each Idejo ID has signed in to (read from the provider's
+  # ID-05, ID-06: which forums each idejo ID has signed in to (read from the provider's
   # sign-in events, never a forum's database), what they chose, and identity deletions.
   def change do
     create table(:identity_joins) do

@@ -7,10 +7,10 @@ defmodule IdejoHub.Forums.CreateWorker do
   `forums.step` while it runs:
 
   1. `database`: its database and role (HN-05); the password is stored encrypted (SC-04).
-  2. `container`: its volumes and container from the exact Idejo version (HN-04, SC-05).
-  3. `starting`: starts it; the image's command runs Idejo's migrations, then the server.
-  4. `health`: waits for `GET /health` to answer 200 (Idejo AD-15).
-  5. `setup`: `bin/idejo-admin setup --name … --owner-email …` (Idejo AD-14). The owner gets
+  2. `container`: its volumes and container from the exact idejo version (HN-04, SC-05).
+  3. `starting`: starts it; the image's command runs idejo's migrations, then the server.
+  4. `health`: waits for `GET /health` to answer 200 (idejo AD-15).
+  5. `setup`: `bin/idejo-admin setup --name … --owner-email …` (idejo AD-14). The owner gets
      an email with a link to choose a password (FL-02, `owner_invite: "emailed"`), or, when
      the forum cannot send email, the job keeps that link encrypted for the operator
      (`owner_invite: "operator"`, `Forums.take_owner_link/2`). The output is never logged.
@@ -143,7 +143,7 @@ defmodule IdejoHub.Forums.CreateWorker do
     end
   end
 
-  # The members' inbox (steward request 2026-11-10): anyone with an Idejo ID may come in.
+  # The members' inbox (steward request 2026-11-10): anyone with an idejo ID may come in.
   defp registration(%{kind: "inbox"}), do: ["--registration", "open"]
   defp registration(_forum), do: []
 

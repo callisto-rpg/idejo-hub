@@ -2,8 +2,8 @@
 SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 SPDX-License-Identifier: AGPL-3.0-only
 --%>
-<Layouts.app flash={@flash} title="Idejo ID">
-  <h1 class="text-2xl font-semibold">Your Idejo ID</h1>
+<Layouts.app flash={@flash} title="idejo ID">
+  <h1 class="text-2xl font-semibold">Your idejo ID</h1>
   <p :if={@person} id="account-person">
     Signed in as <strong>{@person.display_name}</strong> ({@person.email}).
   </p>
@@ -12,12 +12,12 @@ SPDX-License-Identifier: AGPL-3.0-only
     <button class="btn btn-sm">Sign out</button>
   </form>
 
-  <%!-- The Idejo ID's public face (steward decisions 2026-11-06): what forums give a new
+  <%!-- The idejo ID's public face (steward decisions 2026-11-06): what forums give a new
        member. Never the email. --%>
   <section id="account-profile" class="mt-6 space-y-3" aria-labelledby="account-profile-heading">
     <h2 id="account-profile-heading" class="text-xl font-semibold">Public profile</h2>
     <p class="text-sm">
-      Forums you join with your Idejo ID start your account there with this username and
+      Forums you join with your idejo ID start your account there with this username and
       picture. Others see them; your email stays private.
     </p>
     <div class="flex items-center gap-3">
@@ -68,7 +68,7 @@ SPDX-License-Identifier: AGPL-3.0-only
   </section>
 
   <section :if={@deletion && @deletion.finished_at} id="account-deleted" class="mt-6">
-    <h2 class="text-xl font-semibold">Your Idejo ID is deleted</h2>
+    <h2 class="text-xl font-semibold">Your idejo ID is deleted</h2>
     <p>Your accounts on the forums below were deleted as each forum's rules say.</p>
   </section>
 
@@ -94,7 +94,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
   <section id="account-forums" class="mt-6" aria-labelledby="account-forums-heading">
     <h2 id="account-forums-heading" class="text-xl font-semibold">Forums you have joined</h2>
-    <p :if={@joins == []}>None yet. Sign in to a forum with "Idejo ID" to join it.</p>
+    <p :if={@joins == []}>None yet. Sign in to a forum with "idejo ID" to join it.</p>
     <ul class="space-y-4">
       <li
         :for={join <- @joins}
@@ -134,9 +134,9 @@ SPDX-License-Identifier: AGPL-3.0-only
     class="mt-8"
     aria-labelledby="delete-heading"
   >
-    <h2 id="delete-heading" class="text-xl font-semibold">Delete my Idejo ID</h2>
+    <h2 id="delete-heading" class="text-xl font-semibold">Delete my idejo ID</h2>
     <p :if={@deletion && is_nil(@deletion.error)} id="account-deleting">
-      Your Idejo ID is being deleted: your forum accounts first, then the ID itself.
+      Your idejo ID is being deleted: your forum accounts first, then the ID itself.
     </p>
     <p :if={@deletion && @deletion.error} id="account-delete-error" class="text-error">
       Deleting stopped at {@deletion.error}. Deal with it, then try again.
@@ -144,7 +144,7 @@ SPDX-License-Identifier: AGPL-3.0-only
     <div :if={!@deletion || @deletion.error}>
       <p>
         Your account on every forum above is deleted as each forum's rules say, then your
-        Idejo ID itself. This cannot be undone.
+        idejo ID itself. This cannot be undone.
       </p>
       <p :if={!@fresh?}>
         <a href={~p"/account/sign-in?fresh=1"} id="account-reauth" class="btn btn-sm">
@@ -157,7 +157,7 @@ SPDX-License-Identifier: AGPL-3.0-only
           <span class="block">Type your email address to confirm</span>
           <input type="email" name="email" required autocomplete="off" class="input" />
         </label>
-        <button class="btn btn-error">Delete my Idejo ID</button>
+        <button class="btn btn-error">Delete my idejo ID</button>
       </form>
     </div>
   </section>

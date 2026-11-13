@@ -154,7 +154,7 @@ defmodule IdejoHub.Forums.HN07FL02MailTest do
     end
 
     @tag req: "HN-07"
-    test "empty shared settings are left out, so Idejo's defaults apply" do
+    test "empty shared settings are left out, so idejo's defaults apply" do
       Application.put_env(:idejo_hub, Mail,
         shared_smtp: [host: "smtp.example.test", port: "", security: ""]
       )

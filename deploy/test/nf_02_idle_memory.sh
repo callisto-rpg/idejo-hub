@@ -6,7 +6,7 @@
 # runs them (the version new forums start on, POOL_SIZE 5, the default memory and CPU
 # limits: all read from the Hub's config), sets it up, loads what a visitor loads once, leaves
 # it idle, then reads its memory as `docker stats` does (usage less inactive page cache) and
-# fails if any reading reaches 200 MB. Idejo's own method (its docs/load-testing.md, NF-12).
+# fails if any reading reaches 200 MB. idejo's own method (its docs/load-testing.md, NF-12).
 #
 # Needs Docker; about 12 minutes. IDEJO_IMAGE overrides the image (default
 # ghcr.io/callisto-rpg/idejo:<IDEJO_DEFAULT_VERSION's default>); IDLE_SECONDS (300) and
@@ -39,7 +39,7 @@ env=(-e "DATABASE_URL=ecto://forum:pw@$n-db/forum" -e "SECRET_KEY_BASE=$(openssl
 docker run -d --name "$n-app" --network "$n" --memory "${memory_mb}m" --cpus "$cpus" "${env[@]}" "$image" \
   sh -c "/app/bin/migrate && /app/bin/server" >/dev/null
 
-# As Caddy sends them: Idejo redirects plain http to https unless a trusted proxy (a private
+# As Caddy sends them: idejo redirects plain http to https unless a trusted proxy (a private
 # address, as here) says the visit came over https.
 get() {
   docker run --rm --network "$n" curlimages/curl:8.11.1 -s -o /dev/null -w '%{http_code}' \
@@ -49,7 +49,7 @@ for _ in $(seq 1 90); do [ "$(get /health)" = 200 ] && break; sleep 2; done
 [ "$(get /health)" = 200 ] || { docker logs --tail 30 "$n-app"; echo "the forum never answered /health"; exit 1; }
 docker exec "$n-app" /app/bin/idejo-admin setup --name "Idle Club" --owner-email owner@nf02.test >/dev/null
 
-# What a visitor loads once (Idejo NF-12's list).
+# What a visitor loads once (idejo NF-12's list).
 for path in / /users/sign-in /users/sign-up /help /rules "/search?q=hello" /privacy \
   /manifest.webmanifest /theme.css /emoji-index.json /sitemap.xml /robots.txt; do
   code=$(get "$path")

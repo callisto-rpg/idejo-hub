@@ -14,7 +14,7 @@ config :idejo_hub, IdejoHub.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  # The root docker-compose.yml publishes PostgreSQL on 5433, so it can run beside Idejo's
+  # The root docker-compose.yml publishes PostgreSQL on 5433, so it can run beside idejo's
   # development database on 5432.
   port: 5433,
   database: "idejo_hub_test#{System.get_env("MIX_TEST_PARTITION")}",

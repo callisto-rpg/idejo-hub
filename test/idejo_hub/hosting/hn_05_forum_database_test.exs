@@ -65,7 +65,7 @@ defmodule IdejoHub.Hosting.HN05ForumDatabaseTest do
     assert creds.username == "forum_hn05_tennis"
     assert byte_size(creds.password) >= 40
 
-    # What Idejo's first migrations need: a trusted extension and tables, as the owner.
+    # What idejo's first migrations need: a trusted extension and tables, as the owner.
     assert {:ok, _} =
              as(creds.username, creds.password, creds.database, [
                "CREATE EXTENSION IF NOT EXISTS citext",

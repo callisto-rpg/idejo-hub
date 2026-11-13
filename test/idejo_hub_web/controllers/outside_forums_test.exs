@@ -3,8 +3,8 @@
 
 defmodule IdejoHubWeb.OutsideForumsTest do
   @moduledoc """
-  Outside forums (steward decisions 2026-11-06): an Idejo server hosted elsewhere registers
-  for an Idejo ID client by proving it controls its address, asks to be in the directory with
+  Outside forums (steward decisions 2026-11-06): an idejo server hosted elsewhere registers
+  for an idejo ID client by proving it controls its address, asks to be in the directory with
   that client's credentials, and appears there once an operator approves.
   """
   use IdejoHubWeb.ConnCase, async: false
@@ -83,7 +83,7 @@ defmodule IdejoHubWeb.OutsideForumsTest do
     |> json_response(200)
   end
 
-  test "a forum proves its address and gets its Idejo ID client, once" do
+  test "a forum proves its address and gets its idejo ID client, once" do
     started =
       api(:post, "/account/api/registrations", %{
         "host" => "Club.Example.org",
@@ -109,7 +109,7 @@ defmodule IdejoHubWeb.OutsideForumsTest do
              "issuer" => "https://id.idejo.test",
              "client_id" => client_id,
              "client_secret" => secret,
-             "label" => "Idejo ID",
+             "label" => "idejo ID",
              "sign_up_url" => "https://id.idejo.test/account/sign-up",
              "directory_url" => "https://forums.idejo.test/"
            } = json_response(verified, 200)

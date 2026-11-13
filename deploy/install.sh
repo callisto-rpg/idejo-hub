@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# Installs Idejo Hub on a server (HN-08): Debian 13 (trixie), like Idejo. Run it from a clone
+# Installs idejo Hub on a server (HN-08): Debian 13 (trixie), like idejo. Run it from a clone
 # of this repository, as root (with sudo), or as a user who can already run Docker:
 #
 #   sudo deploy/install.sh
@@ -88,7 +88,7 @@ say "Checking the server"
 if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ]; then
   echo "Debian 13: supported."
 else
-  echo "Warning: Idejo Hub is supported on Debian 13 (trixie); this is ${PRETTY_NAME:-unknown}. Going on."
+  echo "Warning: idejo Hub is supported on Debian 13 (trixie); this is ${PRETTY_NAME:-unknown}. Going on."
 fi
 
 # Tools this script needs; a minimal Debian install may lack some of them.
@@ -197,7 +197,7 @@ if [ -z "$hub_ip" ] || [ -z "$id_ip" ] || [ -z "$wild_ip" ]; then
   printf '    %-28s A (and AAAA)\n' "*.$forum_domain"
 fi
 
-say "Starting Idejo Hub"
+say "Starting idejo Hub"
 # ID-01: an install from before Zitadel has a database without its role: add it (new volumes
 # get it from postgres-init/04-zitadel.sh).
 "${COMPOSE[@]}" up -d --wait db
@@ -236,7 +236,7 @@ fi
 
 say "Done"
 cat <<DONE
-Idejo Hub is running at https://$hub_domain
+idejo Hub is running at https://$hub_domain
   - Sign in with the operator's email and the password shown above; you set up two-factor
     sign-in with an authenticator app the first time.
   - Keep a copy of $ENV_FILE somewhere safe, away from this server. HUB_SECRETS_KEY above all:

@@ -3,7 +3,7 @@
 
 defmodule IdejoHub.Identity.Proof do
   @moduledoc """
-  Proof that a server asking for an Idejo ID client controls its address (steward decisions
+  Proof that a server asking for an idejo ID client controls its address (steward decisions
   2026-11-06; extra review: DV-06): the Hub fetches
   `https://<host>/.well-known/idejo-id-registration`, which must answer the proof the Hub
   gave. Only public addresses are asked (never the Hub's own networks: every address the
@@ -83,7 +83,7 @@ defmodule IdejoHub.Identity.Proof do
     end
   end
 
-  @doc "Whether an address is on a public network (as Idejo's push endpoint check)."
+  @doc "Whether an address is on a public network (as idejo's push endpoint check)."
   @spec public?(:inet.ip_address()) :: boolean()
   def public?({a, b, c, d} = address)
       when a in 0..255 and b in 0..255 and c in 0..255 and d in 0..255,

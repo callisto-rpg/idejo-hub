@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# Idejo Hub's command line, inside the Hub's container:
+# idejo Hub's command line, inside the Hub's container:
 #   docker compose -f deploy/docker-compose.yml exec hub bin/hub-admin create-operator EMAIL
 set -eu
 cd -P -- "$(dirname -- "$0")"

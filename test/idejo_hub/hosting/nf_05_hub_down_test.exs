@@ -83,7 +83,7 @@ defmodule IdejoHub.Hosting.NF05HubDownTest do
 
     # Docker restarts it by itself; it reaches no Hub address.
     assert spec["HostConfig"]["RestartPolicy"] == %{"Name" => "unless-stopped"}
-    # The one Hub address a forum holds is Idejo's community menu (steward decision
+    # The one Hub address a forum holds is idejo's community menu (steward decision
     # 2026-11-06), which the browser fills only when it is opened, gives up after two seconds
     # and keeps an empty answer: with the Hub down, the menu lists nothing, the forum runs.
     hub_addresses =

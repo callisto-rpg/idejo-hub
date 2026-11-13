@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 #
 # Hub milestone 3 exit check (deploy/test/m3/README.md): nightly and on demand. Needs an
-# Idejo image with AC-09's consent and the leave/delete-account commands (0.2.0).
+# idejo image with AC-09's consent and the leave/delete-account commands (0.2.0).
 
 name: M3 exit check
 
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       idejo_image:
-        description: Idejo image for the forums
+        description: idejo image for the forums
         default: ghcr.io/callisto-rpg/idejo:0.2.0
 
 permissions:
