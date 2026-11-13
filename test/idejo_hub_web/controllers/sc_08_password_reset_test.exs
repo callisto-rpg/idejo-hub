@@ -30,6 +30,7 @@ defmodule IdejoHubWeb.SC08PasswordResetTest do
 
   defp emailed_token do
     assert_received {:email, email}
+
     [token] =
       Regex.run(~r{/sign-in/reset/([A-Za-z0-9_-]+)}, email.text_body, capture: :all_but_first)
 

@@ -303,6 +303,40 @@ defmodule IdejoHubWeb.InboxHostTest do
     assert json_response(conn, 401)
   end
 
+  test "a forum's logo dot: what is new in the member's other forums, summed" do
+    club = forum!("ib-dot")
+    other = forum!("ib-dot2")
+    join!("cy", club)
+    join!("cy", other)
+
+    Req.Test.stub(ForumLink, fn conn ->
+      # The asking forum is left out.
+      assert conn.host == "idejo-forum-ib-dot2"
+      assert conn.request_path == "/community/topics"
+      ticket = conn.query_params["ticket"]
+      assert {:ok, %{subject: "cy"}} = Tickets.redeem(ticket, "forum:#{other.id}")
+
+      Req.Test.json(conn, %{
+        "topics" => [
+          %{"id" => "t1", "title" => "Dice", "unread" => 4, "mentions" => 1},
+          %{"id" => "t2", "title" => "Maps", "unread" => 2},
+          %{"id" => "t3", "title" => "Old", "unread" => 0, "mentions" => 0}
+        ]
+      })
+    end)
+
+    conn = build_conn() |> basic("ib-dot") |> get("/internal/community/chats/activity?subject=cy")
+    assert json_response(conn, 200) == %{"unread" => 6, "mentions" => 1}
+
+    # Only about someone who joined the asking forum.
+    conn =
+      build_conn() |> basic("ib-dot") |> get("/internal/community/chats/activity?subject=zed")
+
+    assert json_response(conn, 401)
+    conn = build_conn() |> get("/internal/community/chats/activity?subject=cy")
+    assert json_response(conn, 401)
+  end
+
   test "the inbox reads any Idejo ID's profile, never fills one" do
     inbox!()
     Repo.insert!(%Profile{subject: "bo", username: "bo_garden"})

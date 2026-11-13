@@ -12,7 +12,10 @@ defmodule IdejoHubWeb.ChatServiceController do
       that forum names (`IdejoHub.Chats.Tickets`); 404 for any other;
     * `GET …/unread?subject=` → `{"unread"}`: how many of that member's chats have
       something new in the members' inbox (asked of it), only about someone who joined that
-      forum.
+      forum;
+    * `GET …/activity?subject=` → `{"unread", "mentions"}`: what is new for that member in
+      the topics they follow in their other forums (steward request 2026-11-13: the dot on
+      the forum's logo), summed, about someone who joined that forum (`ForumLink.activity/2`).
 
   401 without a forum's credentials.
   """
@@ -42,6 +45,20 @@ defmodule IdejoHubWeb.ChatServiceController do
   end
 
   def unread(conn, _params), do: unauthorized(conn)
+
+  def activity(conn, %{"subject" => subject}) when is_binary(subject) and subject != "" do
+    with {client_id, secret} <- Plug.BasicAuth.parse_basic_auth(conn),
+         true <- Community.member_of_client?(client_id, secret, subject),
+         key when is_binary(key) <- Community.client_key(client_id, secret) do
+      conn
+      |> put_resp_header("cache-control", "no-store")
+      |> json(ForumLink.activity(subject, key))
+    else
+      _ -> unauthorized(conn)
+    end
+  end
+
+  def activity(conn, _params), do: unauthorized(conn)
 
   defp client(conn) do
     with {client_id, secret} <- Plug.BasicAuth.parse_basic_auth(conn),

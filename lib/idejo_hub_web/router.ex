@@ -68,6 +68,7 @@ defmodule IdejoHubWeb.Router do
     # Idejo's chat service (steward request 2026-11-10).
     post "/chats/tickets", ChatServiceController, :ticket
     get "/chats/unread", ChatServiceController, :unread
+    get "/chats/activity", ChatServiceController, :activity
   end
 
   # An Idejo ID's picture, public (steward decisions 2026-11-06).
@@ -166,6 +167,7 @@ defmodule IdejoHubWeb.Router do
     # Idejo's chat service, asked by hosted forums (steward request 2026-11-10).
     post "/community/chats/tickets", ChatServiceController, :ticket
     get "/community/chats/unread", ChatServiceController, :unread
+    get "/community/chats/activity", ChatServiceController, :activity
     # The members' inbox (Idejo's inbox mode), with its own client credentials.
     get "/community/inbox/topics", InboxServiceController, :topics
     get "/community/inbox/conversations", InboxServiceController, :conversations

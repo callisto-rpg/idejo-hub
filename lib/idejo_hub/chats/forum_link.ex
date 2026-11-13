@@ -11,6 +11,7 @@ defmodule IdejoHub.Chats.ForumLink do
     * `forums/1`: the running hosted forums they joined (`identity_joins`; the inbox itself
       left out) and the outside forums they signed in to, by name;
     * `topics/1`: each one's `GET /community/topics?ticket=` (the topics they follow);
+      `activity/2`, their sums in all but the asking forum (the forum logo's dot);
     * `conversations/1`: each one's `GET /community/conversations?ticket=` (their private
       conversations the inbox copies), and `moved/3`, `POST /community/conversations/moved`;
     * `save_settings/2`: each one's `POST /community/settings` (Idejo 0.3.7; steward request
@@ -84,10 +85,11 @@ defmodule IdejoHub.Chats.ForumLink do
   The topics `subject` follows, forum by forum: `[%{forum:, topics: [map]}]`, forums with
   none (or no answer) left out. Topics are the forums' JSON as they sent it.
   """
-  @spec topics(String.t()) :: [map()]
-  def topics(subject) do
+  @spec topics(String.t(), [String.t()]) :: [map()]
+  def topics(subject, except \\ []) do
     subject
     |> forums()
+    |> Enum.reject(&(&1.client in except))
     |> each(fn forum ->
       ticket = Tickets.issue(subject, "topics", forum.client)
 
@@ -99,6 +101,29 @@ defmodule IdejoHub.Chats.ForumLink do
           nil
       end
     end)
+  end
+
+  @doc """
+  What is new for `subject` in the topics they follow in their forums but the one asking
+  (`client`, `"forum:<id>"` or `"outside:<id>"`; steward request 2026-11-13: the dot on a
+  forum's logo): `%{unread:, mentions:}`, the forums' own counts summed. Counts only, never
+  which forum or topic.
+  """
+  @spec activity(String.t(), String.t()) :: %{
+          unread: non_neg_integer(),
+          mentions: non_neg_integer()
+        }
+  def activity(subject, client) do
+    topics = for %{topics: topics} <- topics(subject, [client]), topic <- topics, do: topic
+
+    %{unread: sum(topics, "unread"), mentions: sum(topics, "mentions")}
+  end
+
+  defp sum(topics, key) do
+    topics
+    |> Enum.map(&Map.get(&1, key))
+    |> Enum.filter(&(is_integer(&1) and &1 > 0))
+    |> Enum.sum()
   end
 
   @doc """
