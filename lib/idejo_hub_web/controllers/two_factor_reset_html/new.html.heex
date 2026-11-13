@@ -1,0 +1,30 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Lost your two-factor app?</h1>
+  <%= if @email_ready do %>
+    <p>
+      Enter your operator email and password. We send a link that removes your two-factor
+      setup; you then sign in with your password and set it up again on your new device.
+    </p>
+    <.form for={@form} id="two-factor-reset" action={~p"/sign-in/two-factor-reset"} method="post">
+      <.input field={@form[:email]} type="email" label="Email" autocomplete="username" required />
+      <.input
+        field={@form[:password]}
+        type="password"
+        label="Password"
+        autocomplete="current-password"
+        required
+      />
+      <.button>Send the link</.button>
+    </.form>
+  <% else %>
+    <p id="two-factor-reset-no-smtp">
+      This Hub has no email server set up, so it cannot send the link. Ask an owner to reset
+      your two-factor from the Operators page.
+    </p>
+  <% end %>
+  <p><.link href={~p"/sign-in"}>Back to sign in</.link></p>
+</Layouts.app>

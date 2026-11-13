@@ -114,6 +114,11 @@ defmodule IdejoHubWeb.Router do
     post "/sign-in/reset", PasswordResetController, :create
     get "/sign-in/reset/:token", PasswordResetController, :edit
     post "/sign-in/reset/:token", PasswordResetController, :update
+    # Steward request 2026-11-13: a lost two-factor app, with the password and a link by email.
+    get "/sign-in/two-factor-reset", TwoFactorResetController, :new
+    post "/sign-in/two-factor-reset", TwoFactorResetController, :create
+    get "/sign-in/two-factor-reset/:token", TwoFactorResetController, :edit
+    post "/sign-in/two-factor-reset/:token", TwoFactorResetController, :update
     delete "/sign-out", SessionController, :delete
   end
 

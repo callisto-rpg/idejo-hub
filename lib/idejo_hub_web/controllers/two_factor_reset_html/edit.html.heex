@@ -1,0 +1,21 @@
+<%!--
+SPDX-FileCopyrightText: 2026 Mariano Pictet and contributors
+SPDX-License-Identifier: AGPL-3.0-only
+--%>
+<Layouts.app flash={@flash}>
+  <h1 class="text-2xl font-semibold">Remove your two-factor setup</h1>
+  <p>
+    This removes the two-factor setup of <strong>{@email}</strong> and signs it out everywhere.
+    At your next sign-in, after your password, you set up two-factor again with your
+    authenticator app.
+  </p>
+  <.form
+    for={%{}}
+    id="two-factor-reset-confirm"
+    action={~p"/sign-in/two-factor-reset/#{@token}"}
+    method="post"
+  >
+    <.button>Remove two-factor</.button>
+  </.form>
+  <p><.link href={~p"/sign-in"}>Cancel</.link></p>
+</Layouts.app>
