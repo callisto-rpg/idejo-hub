@@ -12,8 +12,8 @@ Each Hub release states the idejo versions it supports (Hub NF-06). This one: **
 
 ## Read first
 
-- [Idejo Hub — Spec Sheet](idejo%20Hub%20—%20Spec%20Sheet.md): what the Hub does, with requirement IDs.
-- [Idejo Hub — Implementation Prompt](idejo%20Hub%20—%20Implementation%20Prompt.md): decisions, ground rules and the order of work.
+- [Idejo Hub — Spec Sheet](Idejo%20Hub%20—%20Spec%20Sheet.md): what the Hub does, with requirement IDs.
+- [Idejo Hub — Implementation Prompt](Idejo%20Hub%20—%20Implementation%20Prompt.md): decisions, ground rules and the order of work.
 - [CLAUDE.md](CLAUDE.md): how this repository is built.
 
 ## Licence
