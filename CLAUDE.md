@@ -151,7 +151,10 @@ forums": `ForumLink.save_settings/2` passes the inbox's JSON as it is to each jo
 "answered", "saved", "failed"}]}`, a forum before 0.3.7 `answered: false`); it reads any Idejo ID's
 profile (`/internal/community/profile`, never fills one). Forums' sidebar counts
 (`…/chats/unread?subject=`) are asked of the inbox (`ForumLink.inbox_unread/1`:
-`/community/inbox-unread`, with the inbox's client credentials). `ForumLink` asks hosted
+`/community/inbox-unread`, with the inbox's client credentials). The dot on a forum's logo
+(steward request 2026-11-13; Idejo 0.3.10): `…/chats/activity?subject=` answers
+`{"unread", "mentions"}`, the member's followed topics in their other forums summed
+(`ForumLink.activity/2`, the asking forum left out), counts only. `ForumLink` asks hosted
 forums at `http://idejo-forum-<slug>:4000`, outside ones at their public address only
 (resolved, `Proof.public?/1`, pinned, no redirects), four seconds each. The Hub's own chat
 tables from 2026-11-10 (`chats`, `chat_members`, `chat_messages`, `chat_reactions`,

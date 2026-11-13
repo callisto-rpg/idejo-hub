@@ -89,6 +89,7 @@ defmodule IdejoHub.SCIsolationTest do
       # Idejo's chat service and the members' inbox: a forum's (or the inbox's) client
       # credentials, not a sign-in (tested in inbox_host_test.exs).
       "/internal/community/chats/unread",
+      "/internal/community/chats/activity",
       "/internal/community/inbox/topics",
       "/internal/community/inbox/conversations"
     ]
@@ -122,7 +123,8 @@ defmodule IdejoHub.SCIsolationTest do
       # community_directory_test.exs).
       "/api/v1/forums",
       # Idejo's chat service, for outside forums (tested in inbox_host_test.exs).
-      "/account/api/chats/unread"
+      "/account/api/chats/unread",
+      "/account/api/chats/activity"
     ]
 
     for path <- members do
