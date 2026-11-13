@@ -161,7 +161,8 @@ defmodule IdejoHubWeb.SC08TwoFactorResetTest do
     assert redirected_to(ask(conn, operator.email, password)) == ~p"/sign-in"
     refute_received {:email, _}
 
-    # One more from the same address reaches its limit of five.
+    # The fifth from the same address is its last; the sixth is refused.
+    assert redirected_to(ask(conn, "nobody@hub.idejo.test", "x")) == ~p"/sign-in"
     assert html_response(ask(conn, "nobody@hub.idejo.test", "x"), 429) =~ "Too many requests"
   end
 end
