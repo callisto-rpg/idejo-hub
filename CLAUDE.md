@@ -55,8 +55,8 @@ database query, a patched image or a Hub-only code path inside idejo. The Hub mu
 working across idejo minor versions without code changes, and each Hub release states the
 idejo versions it supports (Hub NF-06).
 
-Supported idejo versions (Hub NF-06): **0.3.6**, the default for new forums (steward
-request 2026-11-13; 0.3.5 since 2026-11-10, the members' inbox)
+Supported idejo versions (Hub NF-06): **0.3.12**, the default for new forums (steward
+request 2026-11-14; 0.3.6 since 2026-11-13, 0.3.5 since 2026-11-10, the members' inbox)
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (idejo NF-12; Hub NF-02, below), 0.2.5
@@ -74,7 +74,7 @@ its list: before it, the menu's script got 406 from the forum's `/community`). F
 their own private conversations and show no topics in the inbox); the inbox needs 0.3.5
 (idejo's inbox mode). 0.3.6 adds, in the inbox's topic cards, each forum's logo and its
 unread mentions and new reactions (the forums send them from 0.3.6; before, only new
-messages), and makes a forum's logo its favicon. idejo 0.3.7 (next) takes the inbox's
+messages), and makes a forum's logo its favicon. idejo 0.3.7 takes the inbox's
 "Save for all forums" (below); forums before it answer nothing there and the inbox names them.
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
