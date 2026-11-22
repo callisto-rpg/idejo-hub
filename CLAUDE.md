@@ -256,7 +256,7 @@ same as idejo's, pinned in `.tool-versions` (DV-04).
 
 As built by Foundations:
 
-- Phoenix 1.8.15, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
+- Phoenix 1.8.17, LiveView 1.2, Bandit, Tailwind 4 + daisyUI (vendored by the generator, no
   Node). Swoosh (MIT) with gen_smtp (BSD-2-Clause; ranch ISC, idna MIT) for the Hub's own
   email, OP-08's alerts (`IdejoHub.Mailer`, added 2026-11-06).
 - Req (Apache-2.0) for HTTP to docker-guard. `docker_guard` is a path dependency in tests

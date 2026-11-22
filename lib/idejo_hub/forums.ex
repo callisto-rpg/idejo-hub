@@ -14,6 +14,7 @@ defmodule IdejoHub.Forums do
 
   alias IdejoHub.{Audit, Repo, Secrets}
   alias IdejoHub.Hosting.Postgres
+  alias IdejoHub.Identity.SetupWorker
   alias IdejoHub.Operations.{BackupWorker, RestoreWorker, UpgradeWorker}
 
   alias IdejoHub.Forums.{
@@ -92,7 +93,7 @@ defmodule IdejoHub.Forums do
 
       with {:ok, inbox} <- create_forum(changeset, actor) do
         # Zitadel's login then goes to the inbox (steward request 2026-11-22).
-        IdejoHub.Identity.SetupWorker.queue()
+        SetupWorker.queue()
         {:ok, inbox}
       end
     end
