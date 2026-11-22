@@ -40,11 +40,10 @@ defmodule IdejoHubWeb.ID02SignupTest do
 
     assert html =~ "Check your email"
 
-    assert [{id, person}] = Map.to_list(Fake.people())
+    assert [{_id, person}] = Map.to_list(Fake.people())
     assert person.email == "ana@example.test"
     assert person.display_name == "Ana"
     assert {person.given_name, person.family_name} == {"Sennoma", "Ulo"}
-    assert Fake.invites() == [id]
   end
 
   test "ID-02 first and last name, when given, are used", %{conn: conn} do
@@ -112,7 +111,8 @@ defmodule IdejoHubWeb.ID02SignupTest do
     assert :ok = perform_job(SetupWorker, %{})
     # The Hub's one sender (steward request 2026-11-06).
     sender = IdejoHub.Settings.sender()
-    assert [{smtp, ^sender}] = Fake.configured()
+    # No members' inbox here: Zitadel's login keeps its own page after a sign-in.
+    assert [{smtp, ^sender, nil}] = Fake.configured()
     assert smtp[:host] == "smtp.hub.test"
   end
 

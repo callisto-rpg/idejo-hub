@@ -90,7 +90,11 @@ defmodule IdejoHub.Forums do
         |> struct(Map.merge(defaults(), %{kind: "inbox", listed: false}))
         |> Forum.create_changeset(attrs)
 
-      create_forum(changeset, actor)
+      with {:ok, inbox} <- create_forum(changeset, actor) do
+        # Zitadel's login then goes to the inbox (steward request 2026-11-22).
+        IdejoHub.Identity.SetupWorker.queue()
+        {:ok, inbox}
+      end
     end
   end
 

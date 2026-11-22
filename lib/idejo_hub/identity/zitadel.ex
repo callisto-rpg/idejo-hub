@@ -80,7 +80,7 @@ defmodule IdejoHub.Identity.Zitadel do
         "displayName" => person.display_name,
         "preferredLanguage" => person.language
       },
-      "email" => %{"email" => person.email}
+      "email" => %{"email" => person.email, "sendCode" => %{"urlTemplate" => verify_template()}}
     }
 
     case request(:post, "/v2/users/human", body) do
@@ -99,23 +99,20 @@ defmodule IdejoHub.Identity.Zitadel do
     end
   end
 
-  # Zitadel's invite: verify the email, then choose a password or a passkey, on its login pages.
-  @impl true
-  def send_invite(user_id) do
-    template =
-      "https://#{Identity.config(:domain)}/ui/v2/login/verify" <>
-        "?code={{.Code}}&userId={{.UserID}}&organization={{.OrgID}}&invite=true"
-
-    with {:ok, _} <-
-           request(:post, "/v2/users/#{user_id}/invite_code", %{
-             "sendCode" => %{"urlTemplate" => template, "applicationName" => Identity.label()}
-           }),
-         do: :ok
+  # ID-02: one email, Zitadel's "Verify email" (steward request 2026-11-22: no invite as
+  # well). Its link verifies the address and, the person having no password or passkey yet,
+  # goes on to choose one (Zitadel's login v2, `sendVerification`, checked on v4.20.1).
+  defp verify_template do
+    "https://#{Identity.config(:domain)}/ui/v2/login/verify" <>
+      "?code={{.Code}}&userId={{.UserID}}&organization={{.OrgID}}"
   end
 
   @impl true
-  def configure(smtp, sender) do
-    with :ok <- login_policy(), :ok <- branding(), do: smtp(smtp, sender)
+  def configure(smtp, sender, redirect) do
+    with :ok <- login_policy(redirect),
+         :ok <- notification_policy(),
+         :ok <- branding(),
+         do: smtp(smtp, sender)
   end
 
   # Zitadel's sign-in screens in idejo's look (steward request 2026-11-06), like the Hub's
@@ -202,9 +199,12 @@ defmodule IdejoHub.Identity.Zitadel do
   end
 
   # ID-02: only the Hub's sign-up page makes people (Zitadel's own form off); ID-08: passkeys
-  # allowed, one-time codes and security keys as second factors.
-  defp login_policy do
+  # allowed, one-time codes and security keys as second factors. With a `redirect` (the
+  # members' inbox), where Zitadel's login goes once no forum asked for the sign-in: after
+  # choosing the first password, above all (steward request 2026-11-22).
+  defp login_policy(redirect) do
     wanted = %{"allowRegister" => false, "passwordlessType" => "PASSWORDLESS_TYPE_ALLOWED"}
+    wanted = if redirect, do: Map.put(wanted, "defaultRedirectUri", redirect), else: wanted
 
     with {:ok, %{"policy" => policy}} <- request(:get, "/admin/v1/policies/login", nil),
          :ok <- put_policy_if_needed(policy, wanted) do
@@ -240,6 +240,22 @@ defmodule IdejoHub.Identity.Zitadel do
         error -> {:halt, error}
       end
     end)
+  end
+
+  # Zitadel's "Password of user has changed" goes out for the first password too, and its
+  # button leads to Zitadel's console: off, the Hub sending its own for later changes
+  # (`Identity.PasswordNotices`; steward request 2026-11-22).
+  defp notification_policy do
+    with {:ok, answer} <- request(:get, "/admin/v1/policies/notification", nil) do
+      if is_map(answer) and get_in(answer, ["policy", "passwordChange"]) == true,
+        do: put_notification_policy(),
+        else: :ok
+    end
+  end
+
+  defp put_notification_policy do
+    body = %{"passwordChange" => false}
+    with {:ok, _} <- request(:put, "/admin/v1/policies/notification", body), do: :ok
   end
 
   @description "Idejo Hub"
@@ -309,6 +325,65 @@ defmodule IdejoHub.Identity.Zitadel do
 
     with {:ok, result} <- request(:post, "/admin/v1/events/_search", body) do
       {:ok, Enum.flat_map(result["events"] || [], &sign_in/1)}
+    end
+  end
+
+  @password_changed "user.human.password.changed"
+
+  # Steward request 2026-11-22: passwords set, oldest first, for the Hub's own notice;
+  # `first` when it was the person's first (chosen after verifying their email).
+  @impl true
+  def password_changes_since(since) do
+    body = %{"limit" => 1000, "asc" => true, "eventTypes" => [@password_changed]}
+
+    body =
+      if since,
+        do: Map.put(body, "creationDateRange", %{"since" => DateTime.to_iso8601(since)}),
+        else: body
+
+    with {:ok, result} <- request(:post, "/admin/v1/events/_search", body) do
+      result["events"]
+      |> List.wrap()
+      |> Enum.flat_map(&password_change/1)
+      |> Enum.reduce_while({:ok, []}, &first_or_not/2)
+      |> then(fn
+        {:ok, changes} -> {:ok, Enum.reverse(changes)}
+        error -> error
+      end)
+    end
+  end
+
+  defp password_change(%{"aggregate" => %{"id" => user}, "creationDate" => date}) do
+    case DateTime.from_iso8601(date) do
+      {:ok, at, _offset} -> [%{user_id: user, at: at, date: date}]
+      _bad -> []
+    end
+  end
+
+  defp password_change(_other), do: []
+
+  defp first_or_not(change, {:ok, acc}) do
+    case first_password_date(change.user_id) do
+      {:ok, first} ->
+        change = %{user_id: change.user_id, at: change.at, first: first == change.date}
+        {:cont, {:ok, [change | acc]}}
+
+      error ->
+        {:halt, error}
+    end
+  end
+
+  defp first_password_date(user_id) do
+    body = %{
+      "limit" => 1,
+      "asc" => true,
+      "eventTypes" => [@password_changed],
+      "aggregateTypes" => ["user"],
+      "aggregateId" => user_id
+    }
+
+    with {:ok, result} <- request(:post, "/admin/v1/events/_search", body) do
+      {:ok, result |> Map.get("events", []) |> List.first(%{}) |> Map.get("creationDate")}
     end
   end
 

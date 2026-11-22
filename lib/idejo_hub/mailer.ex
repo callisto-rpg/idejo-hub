@@ -24,6 +24,24 @@ defmodule IdejoHub.Mailer do
     end
   end
 
+  @doc """
+  Sends an email to a member, as the idejo ID (`Identity.label/0`) from the Hub's sender, in
+  HTML with a plain-text part. `{:error, :no_smtp}` when the Hub has no SMTP server.
+  """
+  @spec send_member(String.t(), String.t(), String.t(), String.t()) ::
+          {:ok, term()} | {:error, term()}
+  def send_member(to, subject, text, html) do
+    with {:ok, config} <- smtp_config() do
+      new()
+      |> to(to)
+      |> from({IdejoHub.Identity.label(), from_address()})
+      |> subject(subject)
+      |> text_body(text)
+      |> html_body(html)
+      |> deliver(config)
+    end
+  end
+
   @doc "Whether the Hub can send email at all (an SMTP server set, or a test adapter)."
   @spec configured?() :: boolean()
   def configured?, do: match?({:ok, _}, smtp_config())

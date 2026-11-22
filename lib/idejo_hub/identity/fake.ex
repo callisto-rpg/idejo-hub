@@ -15,7 +15,7 @@ defmodule IdejoHub.Identity.Fake do
           clients: %{},
           failures: %{},
           people: %{},
-          invites: [],
+          password_changes: [],
           configured: [],
           sign_ins: [],
           deleted: [],
@@ -33,9 +33,8 @@ defmodule IdejoHub.Identity.Fake do
   @doc "The clients registered, by app id."
   def clients, do: Agent.get(server(), & &1.clients)
 
-  @doc "People made, by user id; invites sent (user ids); configurations applied."
+  @doc "People made, by user id; configurations applied (`{smtp, sender, redirect}`)."
   def people, do: Agent.get(server(), & &1.people)
-  def invites, do: Agent.get(server(), & &1.invites)
   def configured, do: Agent.get(server(), & &1.configured)
 
   @impl true
@@ -51,12 +50,11 @@ defmodule IdejoHub.Identity.Fake do
   end
 
   @impl true
-  def send_invite(user_id),
-    do: call(:send_invite, fn s -> {:ok, %{s | invites: s.invites ++ [user_id]}} end)
-
-  @impl true
-  def configure(smtp, sender),
-    do: call(:configure, fn s -> {:ok, %{s | configured: s.configured ++ [{smtp, sender}]}} end)
+  def configure(smtp, sender, redirect) do
+    call(:configure, fn s ->
+      {:ok, %{s | configured: s.configured ++ [{smtp, sender, redirect}]}}
+    end)
+  end
 
   @impl true
   def create_client(host) do
@@ -95,6 +93,24 @@ defmodule IdejoHub.Identity.Fake do
     call(:sign_ins_since, fn s ->
       {{:ok, Enum.filter(s.sign_ins, &(since == nil or DateTime.compare(&1.at, since) != :lt))},
        s}
+    end)
+  end
+
+  @doc "Records that `user_id` set a password at `at`; `first` for their first one."
+  def password_changed(user_id, first, at \\ DateTime.utc_now()) do
+    Agent.update(server(), fn s ->
+      change = %{user_id: user_id, at: at, first: first}
+      %{s | password_changes: s.password_changes ++ [change]}
+    end)
+  end
+
+  @impl true
+  def password_changes_since(since) do
+    call(:password_changes_since, fn s ->
+      changes =
+        Enum.filter(s.password_changes, &(since == nil or DateTime.compare(&1.at, since) != :lt))
+
+      {{:ok, changes}, s}
     end)
   end
 
