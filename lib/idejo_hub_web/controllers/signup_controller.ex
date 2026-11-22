@@ -6,8 +6,9 @@ defmodule IdejoHubWeb.SignupController do
   ID-02: sign up for an idejo ID on the Hub's own page, at `https://id.<hub domain>/account/sign-up`
   (steward decision 2026-11-04). Email and display name are required; a checkbox reveals first
   and last name, optional (Zitadel requires them: "Sennoma" and "Ulo" stand in). The Hub makes
-  the person at the provider, which then emails a link to verify the address and choose a
-  password or a passkey: the Hub never sees one. Five sign-ups per address an hour. Plain
+  the person at the provider, which then emails one link to verify the address and choose a
+  password or a passkey (Zitadel's "Verify email"; no invite as well, steward request
+  2026-11-22): the Hub never sees one. Five sign-ups per address an hour. Plain
   HTML, no JavaScript needed (the checkbox reveals the names with CSS).
   """
   use IdejoHubWeb, :controller
@@ -35,8 +36,7 @@ defmodule IdejoHubWeb.SignupController do
          {:ok, person} <- validate(params),
          :ok <- RateLimit.hit({:signup, client_ip(conn)}, @limit, @window),
          {:ok, user_id} <- Identity.create_person(Map.delete(person, :username)),
-         {:ok, _profile} <- Profiles.set_username(user_id, person.username),
-         :ok <- Identity.send_invite(user_id) do
+         {:ok, _profile} <- Profiles.set_username(user_id, person.username) do
       render(conn, :sent, email: person.email)
     else
       {:error, errors} when is_map(errors) ->

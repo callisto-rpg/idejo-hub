@@ -630,17 +630,28 @@ Design points (Implementation Prompt, Part B, milestone 2):
   JavaScript) asks email and display name; a CSS-only checkbox reveals optional first and
   last name, else "Sennoma" and "Ulo" (`Identity.placeholder_names/0`). It makes the person
   (`Identity.create_person/1`, username = email; `:exists` for a used email) and Zitadel
-  emails the invite (`send_invite/1`: verify, then password or passkey on its login pages);
-  the Hub never sees a password. Five per address an hour (`IdejoHub.RateLimit`, ETS);
+  sends one email, its "Verify email" (`sendCode` with a login v2 `/verify` link): verifying
+  goes on to choosing a password or passkey, as the person has none (steward request
+  2026-11-22: no invite as well, it was a second email); the Hub never sees a password. Five per address an hour (`IdejoHub.RateLimit`, ETS);
   closed while the Hub has no SMTP. Forums lead there (steward decision 2026-11-06): Zitadel's own sign-in
   screen cannot link to it, so each forum gets idejo's `IDEJO_OIDC_SIGN_UP_URL` (0.2.6:
   "No idejo ID yet? Create one" under its button), this page with `return_to` its own
   `https://<host>/`; the page names that forum and, once sent, links back to its sign-in
   (`#signup-back`). Only a running forum's own `https://<host>/` is followed (no path,
-  query, port or user), anything else ignored. `Identity.SetupWorker` (at boot and after an SMTP
-  setting changes, retried) applies `Identity.configure/2`: Zitadel's own registration off,
-  passkeys allowed, one-time codes and security keys as second factors, and the Hub's SMTP
-  as its config "idejo Hub" (sender `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none).
+  query, port or user), anything else ignored. `Identity.SetupWorker` (at boot, after an SMTP
+  setting changes and once the members' inbox is set up; retried) applies
+  `Identity.configure/3`: Zitadel's own registration off, passkeys allowed, one-time codes
+  and security keys as second factors, the Hub's SMTP as its config "idejo Hub" (sender
+  `noreply@IDEJO_ID_DOMAIN`; removed when the Hub has none), its own "Password of user has
+  changed" notice off, and, with the inbox, the login policy's `defaultRedirectUri` its
+  `https://my.<forum domain>/`, where Zitadel's login goes when no forum asked (right after
+  the first password, above all). **Password notices** (steward request 2026-11-22;
+  `Identity.PasswordNotices`, run by `SyncWorker` after the sign-ins): Zitadel's notice went
+  out for the first password too and linked to its console, so the Hub reads
+  `user.human.password.changed` events (`Identity.password_changes_since/1`, from
+  `identity_state.password_events_since`; the first run only starts there) and emails each
+  later change, never a person's first, as "idejo ID" (`Mailer.send_member/4`) with a
+  button to the inbox (the idejo ID page while there is none).
 - **Member's page** (ID-05, ID-06; `IdejoHub.Identity.Members`, `AccountController`;
   extra review: DV-06): `https://IDEJO_ID_DOMAIN/account`, signed in through Zitadel as the
   Hub's own client ("idejo ID account", `/account/callback`, registered by `SetupWorker`,
@@ -682,7 +693,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   small idejo logo by the title and the full one above the sign-up form
   (`priv/static/images/logo*.svg`, CC-BY-4.0; NOTICE, REUSE.toml). Operators' pages keep
   the Hub's theme. A change to idejo's default colours or fonts is copied here. Zitadel's
-  sign-in screens too: `Identity.configure/2` (`SetupWorker`, at boot) sets the instance's
+  sign-in screens too: `Identity.configure/3` (`SetupWorker`, at boot) sets the instance's
   branding (label policy: idejo's colours, light and dark, `THEME_MODE_AUTO`; the warning
   colours, login-name suffix and watermark left as they are), uploads `logo.png` /
   `logo-small.png` as its logo and icon in both themes, and activates it, only when a colour

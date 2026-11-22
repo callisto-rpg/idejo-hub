@@ -94,7 +94,7 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
       "hideLoginNameSuffix" => true
     })
 
-    assert :ok = Zitadel.configure(nil, "noreply@id.idejo.test")
+    assert :ok = Zitadel.configure(nil, "noreply@id.idejo.test", nil)
     sent = requests()
 
     {"PUT", _, _, body} = Enum.find(sent, &match?({"PUT", "/admin/v1/policies/label", _, _}, &1))
@@ -139,7 +139,7 @@ defmodule IdejoHub.Identity.ZitadelBrandingTest do
       "iconUrlDark" => "https://id.idejo.test/assets/v1/x/icon-dark"
     })
 
-    assert :ok = Zitadel.configure(nil, "noreply@id.idejo.test")
+    assert :ok = Zitadel.configure(nil, "noreply@id.idejo.test", nil)
     paths = requests() |> Enum.map(&elem(&1, 1))
     refute Enum.any?(paths, &String.starts_with?(&1, "/assets/"))
     refute "/admin/v1/policies/label/_activate" in paths

@@ -27,13 +27,21 @@ defmodule IdejoHub.Identity do
         }
 
   @callback create_person(person()) :: {:ok, String.t()} | {:error, :exists | term()}
-  @callback send_invite(user_id :: String.t()) :: :ok | {:error, term()}
-  @callback configure(smtp :: keyword() | nil, sender :: String.t()) :: :ok | {:error, term()}
+  @callback configure(
+              smtp :: keyword() | nil,
+              sender :: String.t(),
+              redirect :: String.t() | nil
+            ) :: :ok | {:error, term()}
 
   @type sign_in :: %{user_id: String.t(), client_id: String.t(), at: DateTime.t()}
 
   @callback create_account_client(host :: String.t()) :: {:ok, client()} | {:error, term()}
   @callback sign_ins_since(DateTime.t() | nil) :: {:ok, [sign_in()]} | {:error, term()}
+
+  @type password_change :: %{user_id: String.t(), at: DateTime.t(), first: boolean()}
+
+  @callback password_changes_since(DateTime.t() | nil) ::
+              {:ok, [password_change()]} | {:error, term()}
   @callback person(user_id :: String.t()) ::
               {:ok, %{email: String.t(), display_name: String.t()}}
               | {:error, :not_found | term()}
@@ -74,11 +82,15 @@ defmodule IdejoHub.Identity do
   """
   def create_person(person), do: config(:adapter).create_person(person)
 
-  @doc "ID-02: the provider emails the person a link to verify the address and choose a password or passkey."
-  def send_invite(user_id), do: config(:adapter).send_invite(user_id)
+  @doc """
+  ID-02, ID-08: the provider's settings (its own sign-up off, passkeys and 2FA on, the Hub's
+  SMTP, its own password notice off), and where its login goes when no forum asked: `redirect`
+  (the members' inbox), or as it is when nil.
+  """
+  def configure(smtp, sender, redirect), do: config(:adapter).configure(smtp, sender, redirect)
 
-  @doc "ID-02, ID-08: the provider's settings (its own sign-up off, passkeys and 2FA on, the Hub's SMTP)."
-  def configure(smtp, sender), do: config(:adapter).configure(smtp, sender)
+  @doc "Passwords set since `since` (nil: all), oldest first; `first` for a person's first one."
+  def password_changes_since(since), do: config(:adapter).password_changes_since(since)
 
   @doc "ID-05: the Hub's own client, for the members' pages at `https://<id host>/account`."
   def create_account_client(host), do: config(:adapter).create_account_client(host)
