@@ -165,7 +165,9 @@ defmodule IdejoHubWeb.CommunityDirectoryTest do
     response = ask("cm-tennis", "secret-cm-tennis", "ada")
 
     assert json_response(response, 200) == %{
-             "communities" => [%{"name" => "Chess", "url" => "https://cm-chess.idejo.test/"}]
+             "communities" => [
+               %{"name" => "Chess", "url" => "https://cm-chess.idejo.test/", "favourite" => false}
+             ]
            }
 
     # A wrong secret, another forum's credentials, no credentials, or a person who never

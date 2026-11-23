@@ -32,7 +32,9 @@ config :idejo_hub, IdejoHubWeb.Endpoint,
         "/internal/community/inbox/topics",
         "/internal/community/inbox/conversations",
         "/internal/community/inbox/conversations/moved",
-        "/internal/community/inbox/settings"
+        "/internal/community/inbox/settings",
+        "/internal/community/inbox/favourite",
+        "/internal/community/inbox/leave"
       ],
       hosts: ["localhost", "127.0.0.1"]
     ]
