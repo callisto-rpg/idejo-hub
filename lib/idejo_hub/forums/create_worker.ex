@@ -16,7 +16,7 @@ defmodule IdejoHub.Forums.CreateWorker do
      (`owner_invite: "operator"`, `Forums.take_owner_link/2`). The output is never logged.
      A forum given to an existing idejo ID (`owner_subject`, steward request 2026-11-23)
      passes `--owner-oidc-subject` with the ID's display name and username: idejo (from
-     0.3.27) makes the owner already linked to it, who signs in with idejo ID and chooses no
+     0.3.26) makes the owner already linked to it, who signs in with idejo ID and chooses no
      password (`owner_invite: "idejo_id"`).
 
   Then the forum is `running`. If any step fails, everything this job made is removed
