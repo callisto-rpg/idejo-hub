@@ -43,7 +43,7 @@ idejo Hub; never read or write a forum's database.** That contract is:
   `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`, `POOL_SIZE` (NF-01),
   and since idejo 0.2.5 `IDEJO_COMMUNITY_URL`, `IDEJO_COMMUNITY_DIRECTORY_URL` (its community
   menu, below);
-- `bin/idejo-admin` (idejo AD-09, AD-14): `setup` (from idejo 0.3.27 also
+- `bin/idejo-admin` (idejo AD-09, AD-14): `setup` (from idejo 0.3.26 also
   `--owner-oidc-subject`, `--owner-name`, `--owner-username`), `backup`, `restore FILE --yes`,
   `health`, `stats` (JSON counts and sizes; idejo after 0.1.0), `rotate-push-keys --yes`, with
   exit codes;
@@ -57,8 +57,8 @@ database query, a patched image or a Hub-only code path inside idejo. The Hub mu
 working across idejo minor versions without code changes, and each Hub release states the
 idejo versions it supports (Hub NF-06).
 
-Supported idejo versions (Hub NF-06): **0.3.14**, the default for new forums (steward
-request 2026-11-14; 0.3.12 earlier that day, 0.3.6 since 2026-11-13, 0.3.5 since 2026-11-10, the members' inbox)
+Supported idejo versions (Hub NF-06): **0.3.26**, the default for new forums (steward
+request 2026-11-23; 0.3.14 since 2026-11-14, 0.3.12 earlier that day, 0.3.6 since 2026-11-13, 0.3.5 since 2026-11-10, the members' inbox)
 (`IDEJO_DEFAULT_VERSION`); 0.2.0 was the first with the shared-identity commands and OIDC
 client (AC-09), 0.2.2 the first whose stylesheet is checked (idejo AD-11, for SC-03), 0.2.4
 the first whose image runs in interactive release mode (idejo NF-12; Hub NF-02, below), 0.2.5
@@ -80,7 +80,9 @@ messages), and makes a forum's logo its favicon. idejo 0.3.7 takes the inbox's
 "Save for all forums" (below); forums before it answer nothing there and the inbox names them. idejo
 0.3.14 signs a member in on arrival from another forum's menu or the inbox (links marked
 `sso=1`, a silent `prompt=none` request to the provider); both forums need 0.3.14, else
-the arriving visitor sees "Log in with idejo ID" as before.
+the arriving visitor sees "Log in with idejo ID" as before. idejo 0.3.26 takes a forum's owner as an
+existing idejo ID (setup's `--owner-oidc-subject`, below) and gives the inbox's Forums tab
+its favourites and **Leave forum** (`inbox/favourite`, `inbox/leave`, below).
 
 **Forums directory and community menu** (steward decisions 2026-11-06; `IdejoHub.Community`):
 `https://forums.<IDEJO_FORUM_DOMAIN>/` (`DirectoryController`, `Plugs.DirectoryHost`, a
@@ -749,7 +751,7 @@ Design points (Implementation Prompt, Part B, milestone 2):
   active, email verified). `forums.owner_subject` keeps it; `Forums.create_forum/3` takes
   its email from the provider (`Identity.person/1`), never the form's, and refuses an ID
   that is unknown, not active or unverified, or an idejo older than
-  `Forum.owner_subject_since/0` (0.3.27). Setup adds `--owner-oidc-subject SUB`, and
+  `Forum.owner_subject_since/0` (0.3.26). Setup adds `--owner-oidc-subject SUB`, and
   `--owner-name` (the ID's display name) and `--owner-username` (its `Identity.Profiles`
   username) when known (idejo AD-14, PR callisto-rpg/Idejo#389): the owner is made already
   linked, gets no password link, and `owner_invite` is `"idejo_id"`.
@@ -861,7 +863,7 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
   standalone's `SECRET_KEY_BASE` optional (given, it moves with the data).
 - 2026-11-23 — A new forum can be given to an existing idejo ID (FL-02): idejo's `setup`
   gains `--owner-oidc-subject`, `--owner-name` and `--owner-username` (a contract addition,
-  idejo AD-14), used only from idejo 0.3.27.
+  idejo AD-14), used only from idejo 0.3.26.
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)

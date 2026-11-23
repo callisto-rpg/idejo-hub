@@ -63,7 +63,7 @@ defmodule IdejoHub.Forums.Forum do
   end
 
   # The first idejo whose `idejo-admin setup` takes `--owner-oidc-subject` (AD-14).
-  @owner_subject_since "0.3.27"
+  @owner_subject_since "0.3.26"
 
   @doc "The statuses a forum goes through."
   def statuses, do: @statuses
