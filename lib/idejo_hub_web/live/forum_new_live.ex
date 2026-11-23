@@ -164,8 +164,7 @@ defmodule IdejoHubWeb.ForumNewLive do
               value="email"
               class="radio radio-sm"
               checked={@owner_kind == "email"}
-            />
-            An email address, invited to choose a password
+            /> An email address, invited to choose a password
           </label>
           <label class="label">
             <input
@@ -174,8 +173,7 @@ defmodule IdejoHubWeb.ForumNewLive do
               value="idejo_id"
               class="radio radio-sm"
               checked={@owner_kind == "idejo_id"}
-            />
-            An existing idejo ID, who signs in with it (idejo {@owner_since} or later)
+            /> An existing idejo ID, who signs in with it (idejo {@owner_since} or later)
           </label>
         </fieldset>
         <.input

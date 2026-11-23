@@ -126,7 +126,7 @@ defmodule IdejoHub.Forums.FL02IdejoIdOwnerTest do
     assert forum.owner_invite == "idejo_id"
     assert forum.owner_link_enc == nil
 
-    assert [cmd] = for {_c, [_, "setup" | _] = cmd} <- Docker.state().execs, do: cmd
+    assert [cmd] = for({_c, [_, "setup" | _] = cmd} <- Docker.state().execs, do: cmd)
 
     assert cmd == [
              "/app/bin/idejo-admin",
@@ -148,7 +148,7 @@ defmodule IdejoHub.Forums.FL02IdejoIdOwnerTest do
     {:ok, forum} = Forums.create_forum(attrs(ada), "operator")
     :ok = perform_job(CreateWorker, %{"forum_id" => forum.id, "actor" => "operator"})
 
-    assert [cmd] = for {_c, [_, "setup" | _] = cmd} <- Docker.state().execs, do: cmd
+    assert [cmd] = for({_c, [_, "setup" | _] = cmd} <- Docker.state().execs, do: cmd)
     assert Enum.take(cmd, -4) == ["--owner-oidc-subject", ada, "--owner-name", "Ada Lovelace"]
   end
 end
