@@ -120,7 +120,7 @@ defmodule IdejoHub.Forums do
     changeset =
       case attrs do
         %Ecto.Changeset{} = changeset -> changeset
-        attrs -> change_new_forum(attrs)
+        attrs -> new_forum_changeset(attrs)
       end
 
     secret_key_base = Keyword.get_lazy(opts, :secret_key_base, &Secrets.new_secret_key_base/0)
@@ -163,11 +163,74 @@ defmodule IdejoHub.Forums do
   end
 
   defp audit_request(forum, actor) do
-    Audit.changeset(actor, "forum.create", "requested", forum, %{
-      "display_name" => forum.display_name,
-      "owner_email" => forum.owner_email,
-      "idejo_version" => forum.idejo_version
-    })
+    Audit.changeset(
+      actor,
+      "forum.create",
+      "requested",
+      forum,
+      %{
+        "display_name" => forum.display_name,
+        "owner_email" => forum.owner_email,
+        "idejo_version" => forum.idejo_version
+      }
+      |> owner_subject_detail(forum)
+    )
+  end
+
+  # The audit names an idejo ID owner by subject, as identity entries do.
+  defp owner_subject_detail(details, %Forum{owner_subject: nil}), do: details
+
+  defp owner_subject_detail(details, %Forum{owner_subject: subject}),
+    do: Map.put(details, "owner_subject", subject)
+
+  # FL-02 (steward request 2026-11-23): a forum given to an existing idejo ID. Its owner's
+  # email is the provider's, verified, never what the form sent; an ID that cannot own it
+  # (unknown, not active, its email not verified) is refused on `owner_subject`.
+  defp new_forum_changeset(attrs) do
+    {attrs, problem} = owner_from_identity(attrs)
+    changeset = change_new_forum(attrs)
+    if problem, do: Ecto.Changeset.add_error(changeset, :owner_subject, problem), else: changeset
+  end
+
+  defp owner_from_identity(attrs) do
+    {key, email_key} =
+      if Map.has_key?(attrs, :owner_subject),
+        do: {:owner_subject, :owner_email},
+        else: {"owner_subject", "owner_email"}
+
+    case String.trim(attrs[key] || "") do
+      "" ->
+        {Map.delete(attrs, key), nil}
+
+      subject ->
+        case identity_owner(subject) do
+          {:ok, email} -> {attrs |> Map.put(key, subject) |> Map.put(email_key, email), nil}
+          {:error, message} -> {Map.put(attrs, key, subject), message}
+        end
+    end
+  end
+
+  defp identity_owner(subject) do
+    if IdejoHub.Identity.enabled?() do
+      case IdejoHub.Identity.person(subject) do
+        {:ok, %{state: state}} when state != "active" ->
+          {:error, "is #{state} at the identity provider"}
+
+        {:ok, %{email: email, email_verified: true}} ->
+          {:ok, email}
+
+        {:ok, _person} ->
+          {:error, "has not verified their email yet"}
+
+        {:error, :not_found} ->
+          {:error, "is not an idejo ID"}
+
+        {:error, _reason} ->
+          {:error, "could not be checked: the identity provider did not answer"}
+      end
+    else
+      {:error, "needs an identity provider: this Hub has none"}
+    end
   end
 
   @doc """

@@ -14,6 +14,10 @@ defmodule IdejoHub.Forums.CreateWorker do
      an email with a link to choose a password (FL-02, `owner_invite: "emailed"`), or, when
      the forum cannot send email, the job keeps that link encrypted for the operator
      (`owner_invite: "operator"`, `Forums.take_owner_link/2`). The output is never logged.
+     A forum given to an existing idejo ID (`owner_subject`, steward request 2026-11-23)
+     passes `--owner-oidc-subject` with the ID's display name and username: idejo (from
+     0.3.27) makes the owner already linked to it, who signs in with idejo ID and chooses no
+     password (`owner_invite: "idejo_id"`).
 
   Then the forum is `running`. If any step fails, everything this job made is removed
   (container, volumes, database, role; never something that was there before), the forum becomes `failed` with a short error, and
@@ -27,7 +31,7 @@ defmodule IdejoHub.Forums.CreateWorker do
 
   require Logger
 
-  alias IdejoHub.{Audit, Forums, Repo}
+  alias IdejoHub.{Audit, Forums, Identity, Repo}
   alias IdejoHub.Forums.{Errors, Export, Forum}
   alias IdejoHub.Hosting.{Docker, ForumContainer, Health, Maintenance, Postgres}
 
@@ -134,7 +138,7 @@ defmodule IdejoHub.Forums.CreateWorker do
         forum.display_name,
         "--owner-email",
         forum.owner_email
-      ] ++ registration(forum)
+      ] ++ registration(forum) ++ owner_identity(forum)
 
     case Docker.exec(ForumContainer.name(forum.subdomain), cmd) do
       {:ok, %{exit_code: 0, output: output}} -> owner_invite(forum, output)
@@ -147,9 +151,34 @@ defmodule IdejoHub.Forums.CreateWorker do
   defp registration(%{kind: "inbox"}), do: ["--registration", "open"]
   defp registration(_forum), do: []
 
+  # FL-02: an idejo ID as owner, named as the ID is (its display name, its idejo ID
+  # username), never after its email; what the provider does not say is left to idejo.
+  defp owner_identity(%{owner_subject: nil}), do: []
+
+  defp owner_identity(%{owner_subject: subject}) do
+    name =
+      case Identity.person(subject) do
+        {:ok, %{display_name: name}} when is_binary(name) and name != "" -> name
+        _other -> nil
+      end
+
+    username = Identity.Profiles.get(subject).username
+
+    names =
+      Enum.flat_map([{"--owner-name", name}, {"--owner-username", username}], fn
+        {_flag, nil} -> []
+        {flag, value} -> [flag, value]
+      end)
+
+    ["--owner-oidc-subject", subject | names]
+  end
+
   # FL-02. Setup prints the owner's link only when the forum could not email it; then the
   # Hub keeps it, encrypted, for the operator (Forums.take_owner_link/2). The link is matched
   # on the forum's own address only, and nothing else of the output is kept.
+  defp owner_invite(%{owner_subject: subject} = forum, _output) when is_binary(subject),
+    do: Forums.update_state(forum, %{owner_invite: "idejo_id"})
+
   defp owner_invite(forum, output) do
     link = ~r{https://#{Regex.escape(Forums.host(forum))}/users/reset-password/[A-Za-z0-9_\-]+}
 

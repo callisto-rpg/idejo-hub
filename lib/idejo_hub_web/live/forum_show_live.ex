@@ -213,7 +213,15 @@ defmodule IdejoHubWeb.ForumShowLive do
       <h1 class="text-2xl font-semibold">{@forum.display_name}</h1>
       <p>
         <a href={"https://" <> Forums.host(@forum)} rel="noopener">{Forums.host(@forum)}</a>
-        · owner {@forum.owner_email} · idejo {@forum.idejo_version}
+        · owner {@forum.owner_email}
+        <.link
+          :if={@forum.owner_subject}
+          id="owner-identity"
+          navigate={~p"/identities/#{@forum.owner_subject}"}
+        >
+          (idejo ID)
+        </.link>
+        · idejo {@forum.idejo_version}
       </p>
 
       <section id="state" aria-labelledby="state-title">

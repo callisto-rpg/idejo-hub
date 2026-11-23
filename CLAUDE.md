@@ -43,8 +43,10 @@ idejo Hub; never read or write a forum's database.** That contract is:
   `IDEJO_TRUSTED_PROXIES`, `IDEJO_OIDC_*`, `IDEJO_LOCAL_ACCOUNTS`, `POOL_SIZE` (NF-01),
   and since idejo 0.2.5 `IDEJO_COMMUNITY_URL`, `IDEJO_COMMUNITY_DIRECTORY_URL` (its community
   menu, below);
-- `bin/idejo-admin` (idejo AD-09, AD-14): `setup`, `backup`, `restore FILE --yes`, `health`,
-  `stats` (JSON counts and sizes; idejo after 0.1.0), `rotate-push-keys --yes`, with exit codes;
+- `bin/idejo-admin` (idejo AD-09, AD-14): `setup` (from idejo 0.3.27 also
+  `--owner-oidc-subject`, `--owner-name`, `--owner-username`), `backup`, `restore FILE --yes`,
+  `health`, `stats` (JSON counts and sizes; idejo after 0.1.0), `rotate-push-keys --yes`, with
+  exit codes;
 - `GET /health` (idejo AD-15): 200 or 503 with `{status, version, checks}`;
 - OpenID Connect (idejo AC-09), with the Hub as provider;
 - Docker: the official idejo image, one container per forum.
@@ -736,6 +738,15 @@ Design points (Implementation Prompt, Part B, milestone 2):
   kept encrypted (`forum:<subdomain>:owner_link`) with `owner_invite: "operator"`, and
   handed out once by `Forums.take_owner_link/2` (audited `forum.owner_link.take`). The Hub
   operator is never made owner.
+- **Owner as an idejo ID** (FL-02, steward request 2026-11-23): with a provider, the create
+  form also offers an existing idejo ID (searched with `Identity.search_people/1`; only
+  active, email verified). `forums.owner_subject` keeps it; `Forums.create_forum/3` takes
+  its email from the provider (`Identity.person/1`), never the form's, and refuses an ID
+  that is unknown, not active or unverified, or an idejo older than
+  `Forum.owner_subject_since/0` (0.3.27). Setup adds `--owner-oidc-subject SUB`, and
+  `--owner-name` (the ID's display name) and `--owner-username` (its `Identity.Profiles`
+  username) when known (idejo AD-14, PR callisto-rpg/Idejo#389): the owner is made already
+  linked, gets no password link, and `owner_invite` is `"idejo_id"`.
 - Per-forum memory and CPU limits on every container (SC-05).
 
 ## Conventions
@@ -842,6 +853,9 @@ setting the installer should fill goes into its `env_fill` list and `docs/deploy
 - 2026-11-05 — FL-07 (import a standalone backup as a new forum) built ahead of "Later", at
   the steward's request: uploaded from the operator's browser; local accounts stay on; the
   standalone's `SECRET_KEY_BASE` optional (given, it moves with the data).
+- 2026-11-23 — A new forum can be given to an existing idejo ID (FL-02): idejo's `setup`
+  gains `--owner-oidc-subject`, `--owner-name` and `--owner-username` (a contract addition,
+  idejo AD-14), used only from idejo 0.3.27.
 - Open: production domain (LB-05); read-only backup and health view for forum owners.
 
 ## Milestones (Hub spec §12)
