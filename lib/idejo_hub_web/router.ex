@@ -178,6 +178,8 @@ defmodule IdejoHubWeb.Router do
     get "/community/inbox/conversations", InboxServiceController, :conversations
     post "/community/inbox/conversations/moved", InboxServiceController, :moved
     post "/community/inbox/settings", InboxServiceController, :settings
+    post "/community/inbox/favourite", InboxServiceController, :favourite
+    post "/community/inbox/leave", InboxServiceController, :leave
   end
 
   # Other scopes may use custom stacks.

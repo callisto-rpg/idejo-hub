@@ -16,6 +16,12 @@ defmodule IdejoHub.Identity.Members do
   (`delete-account`: anonymised, messages shown as "Deleted user"). Deleting the identity
   (ID-06) deletes the account on every forum joined, then the person at the provider; a
   forum that refuses (its last owner) stops it, with the reason shown.
+
+  Favourites (steward request 2026-11-23): the forums the member marks in the inbox
+  (`set_favourite/3`), shown first there with a heart. A forum joined while the member is
+  in 3 forums or fewer is a favourite at once; a member in 2 forums or fewer with no
+  favourite has all of them made favourites (`fill_favourites/1`, when the list is read).
+  Only forums, never the inbox itself.
   """
   import Ecto.Query
 
@@ -93,15 +99,83 @@ defmodule IdejoHub.Identity.Members do
     case Repo.get_by(Join, subject: subject, forum_id: forum_id) do
       nil ->
         %Join{}
-        |> Join.changeset(%{subject: subject, forum_id: forum_id, first_at: at, last_at: at})
+        |> Join.changeset(%{
+          subject: subject,
+          forum_id: forum_id,
+          first_at: at,
+          last_at: at,
+          favourite: new_favourite?(subject, forum_id)
+        })
         |> Repo.insert(on_conflict: :nothing, conflict_target: [:subject, :forum_id])
 
       %Join{} = join ->
         rejoined? = join.state in ["left", "deleted"] and after?(at, join.changed_at)
         last = if DateTime.compare(at, join.last_at) == :gt, do: at, else: join.last_at
         attrs = %{last_at: last}
-        attrs = if rejoined?, do: Map.merge(attrs, %{state: "joined", error: nil}), else: attrs
+
+        attrs =
+          if rejoined?,
+            do:
+              Map.merge(attrs, %{
+                state: "joined",
+                error: nil,
+                favourite: join.favourite or new_favourite?(subject, forum_id)
+              }),
+            else: attrs
+
         join |> Join.changeset(attrs) |> Repo.update()
+    end
+  end
+
+  ## Favourites (steward request 2026-11-23)
+
+  @auto_favourite_max 3
+  @fill_favourites_max 2
+
+  # A forum newly joined is a favourite while the member is in 3 forums or fewer.
+  defp new_favourite?(subject, forum_id) do
+    Repo.exists?(from f in Forum, where: f.id == ^forum_id and f.kind == "forum") and
+      Repo.aggregate(where(joined_forums(subject), [j], j.forum_id != ^forum_id), :count) <=
+        @auto_favourite_max
+  end
+
+  # The forums (never the inbox) `subject` is a member of.
+  defp joined_forums(subject) do
+    from j in Join,
+      join: f in assoc(j, :forum),
+      where:
+        j.subject == ^subject and j.state == "joined" and f.kind == "forum" and
+          f.status != "deleted"
+  end
+
+  @doc """
+  A member of 2 forums or fewer with no favourite gets all of them as favourites. Returns
+  how many joins it marked.
+  """
+  @spec fill_favourites(String.t()) :: non_neg_integer()
+  def fill_favourites(subject) do
+    joins = Repo.all(select(joined_forums(subject), [j], {j.id, j.favourite}))
+
+    if joins != [] and length(joins) <= @fill_favourites_max and
+         not Enum.any?(joins, &elem(&1, 1)) do
+      ids = Enum.map(joins, &elem(&1, 0))
+      {count, _} = Repo.update_all(from(j in Join, where: j.id in ^ids), set: [favourite: true])
+      count
+    else
+      0
+    end
+  end
+
+  @doc """
+  Marks a forum `subject` is a member of as a favourite, or not: `{:ok, join}`, or
+  `{:error, :not_joined}`.
+  """
+  @spec set_favourite(String.t(), integer(), boolean()) ::
+          {:ok, Join.t()} | {:error, :not_joined | Ecto.Changeset.t()}
+  def set_favourite(subject, forum_id, favourite) when is_boolean(favourite) do
+    case Repo.one(where(joined_forums(subject), [j], j.forum_id == ^forum_id)) do
+      nil -> {:error, :not_joined}
+      join -> join |> Join.changeset(%{favourite: favourite}) |> Repo.update()
     end
   end
 

@@ -182,11 +182,13 @@ defmodule IdejoHub.Community do
 
   @doc """
   The other running forums `subject` joined, for the forum whose client is `client_id` with
-  `secret`: `{:ok, [%{name:, url:}]}`, or `{:error, :unauthorized}` when the credentials are
-  not a forum's, or the person never joined it.
+  `secret`: `{:ok, [%{name:, url:, favourite:}]}`, or `{:error, :unauthorized}` when the
+  credentials are not a forum's, or the person never joined it. `favourite` is the inbox's
+  (steward request 2026-11-23; `Members.fill_favourites/1` first).
   """
   @spec joined(String.t(), String.t(), String.t()) ::
-          {:ok, [%{name: String.t(), url: String.t()}]} | {:error, :unauthorized}
+          {:ok, [%{name: String.t(), url: String.t(), favourite: boolean()}]}
+          | {:error, :unauthorized}
   def joined(client_id, secret, subject) do
     with %Forum{} = forum <- forum_of_client(client_id),
          {:ok, stored} <- Forums.secret(forum, :oidc_client_secret),
@@ -194,6 +196,8 @@ defmodule IdejoHub.Community do
          # A first sign-in moments ago is read once more (the inbox asks at once).
          true <-
            joined?(subject, forum.id) or (Members.sync() == :ok and joined?(subject, forum.id)) do
+      Members.fill_favourites(subject)
+
       forums =
         Repo.all(
           from j in Join,
@@ -202,11 +206,13 @@ defmodule IdejoHub.Community do
               j.subject == ^subject and j.state == "joined" and f.id != ^forum.id and
                 f.status == "running" and f.kind == "forum",
             order_by: [asc: fragment("lower(?)", f.display_name)],
-            select: f
+            select: {f, j.favourite}
         )
 
       {:ok,
-       Enum.map(forums, &%{name: &1.display_name, url: "https://" <> Forums.host(&1) <> "/"})}
+       for {f, favourite} <- forums do
+         %{name: f.display_name, url: "https://" <> Forums.host(f) <> "/", favourite: favourite}
+       end}
     else
       _ -> {:error, :unauthorized}
     end

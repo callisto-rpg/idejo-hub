@@ -154,7 +154,13 @@ client; forums check them at `/internal/community/chats/tickets` or
 forums": `ForumLink.save_settings/2` passes the inbox's JSON as it is to each joined forum's
 `POST /community/settings` with a `settings` ticket and answers `{"forums": [{"name", "host",
 "answered", "saved", "failed"}]}`, a forum before 0.3.7 `answered: false`); it reads any idejo ID's
-profile (`/internal/community/profile`, never fills one). Forums' sidebar counts
+profile (`/internal/community/profile`, never fills one). The Forums tab's menu (steward
+request 2026-11-23): `inbox/favourite` (`{subject, host, favourite}`) and `inbox/leave`
+(`{subject, host}`, `Members.leave/3` with `:leave`), 404 `not_joined` for a forum the
+member is not in. Favourites are `identity_joins.favourite`: a forum joined while in 3
+forums or fewer is one at once, and a member in 2 forums or fewer with none gets them all
+(`Members.fill_favourites/1`, when `/internal/community` is read, which answers each
+forum's `favourite`). Forums' sidebar counts
 (`…/chats/unread?subject=`) are asked of the inbox (`ForumLink.inbox_unread/1`:
 `/community/inbox-unread`, with the inbox's client credentials). The dot on a forum's logo
 (steward request 2026-11-13; idejo 0.3.10): `…/chats/activity?subject=` answers

@@ -17,13 +17,24 @@ defmodule IdejoHub.Identity.Join do
     field :last_at, :utc_datetime
     field :changed_at, :utc_datetime
     field :error, :string
+    # The inbox's favourites (steward request 2026-11-23; `Members.set_favourite/3`).
+    field :favourite, :boolean, default: false
     belongs_to :forum, IdejoHub.Forums.Forum
     timestamps(type: :utc_datetime)
   end
 
   def changeset(join, attrs) do
     join
-    |> cast(attrs, [:subject, :forum_id, :state, :first_at, :last_at, :changed_at, :error])
+    |> cast(attrs, [
+      :subject,
+      :forum_id,
+      :state,
+      :first_at,
+      :last_at,
+      :changed_at,
+      :error,
+      :favourite
+    ])
     |> validate_required([:subject, :forum_id, :state, :first_at, :last_at])
     |> validate_inclusion(:state, @states)
   end
