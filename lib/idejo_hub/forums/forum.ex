@@ -20,6 +20,9 @@ defmodule IdejoHub.Forums.Forum do
     field :subdomain, :string
     field :display_name, :string
     field :owner_email, :string
+    # FL-02 (steward request 2026-11-23): an existing idejo ID's subject when the forum is
+    # given to it; its verified email is then `owner_email`. Nil for an email invite.
+    field :owner_subject, :string
     field :idejo_version, :string
     field :memory_mb, :integer
     field :cpus, :float
@@ -59,8 +62,14 @@ defmodule IdejoHub.Forums.Forum do
     timestamps(type: :utc_datetime)
   end
 
+  # The first idejo whose `idejo-admin setup` takes `--owner-oidc-subject` (AD-14).
+  @owner_subject_since "0.3.27"
+
   @doc "The statuses a forum goes through."
   def statuses, do: @statuses
+
+  @doc "The first idejo version that can make an idejo ID a new forum's owner (FL-02)."
+  def owner_subject_since, do: @owner_subject_since
 
   @doc "What the operator gives to create a forum (FL-01)."
   def create_changeset(forum, attrs) do
@@ -69,6 +78,7 @@ defmodule IdejoHub.Forums.Forum do
       :subdomain,
       :display_name,
       :owner_email,
+      :owner_subject,
       :idejo_version,
       :memory_mb,
       :cpus,
@@ -102,10 +112,28 @@ defmodule IdejoHub.Forums.Forum do
     )
     |> validate_number(:memory_mb, greater_than_or_equal_to: 256, less_than_or_equal_to: 8192)
     |> validate_number(:cpus, greater_than: 0, less_than_or_equal_to: 8)
+    |> validate_length(:owner_subject, max: 255)
+    |> validate_owner_version()
     |> unique_constraint(:subdomain,
       name: :forums_subdomain_index,
       message: "is already used by another forum"
     )
+  end
+
+  # An idejo ID as owner needs an idejo whose setup takes it (FL-02).
+  defp validate_owner_version(changeset) do
+    with subject when is_binary(subject) <- get_field(changeset, :owner_subject),
+         version when is_binary(version) <- get_field(changeset, :idejo_version),
+         {:ok, version} <- Version.parse(version),
+         :lt <- Version.compare(version, Version.parse!(@owner_subject_since)) do
+      add_error(
+        changeset,
+        :owner_subject,
+        "needs idejo #{@owner_subject_since} or later: choose that version, or an email"
+      )
+    else
+      _ -> changeset
+    end
   end
 
   @doc "Lifecycle changes, made by the Hub itself."

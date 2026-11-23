@@ -9,8 +9,9 @@ defmodule IdejoHubWeb.HA02CreateFormTest do
   import IdejoHub.OperatorFixtures
   import Phoenix.LiveViewTest
 
-  alias IdejoHub.{Audit, Forums}
-  alias IdejoHub.Forums.CreateWorker
+  alias IdejoHub.{Audit, Forums, Identity}
+  alias IdejoHub.Forums.{CreateWorker, Forum}
+  alias IdejoHub.Identity.Fake, as: Provider
 
   @moduletag req: "HA-02"
 
@@ -86,5 +87,102 @@ defmodule IdejoHubWeb.HA02CreateFormTest do
 
     assert html =~ "must be an email address"
     assert Forums.get_by_subdomain("ha02-x") == nil
+  end
+
+  describe "an existing idejo ID as owner (FL-02, steward request 2026-11-23)" do
+    setup do
+      Provider.start()
+      original = Application.get_env(:idejo_hub, Identity)
+      Application.put_env(:idejo_hub, Identity, Keyword.put(original, :adapter, Provider))
+      on_exit(fn -> Application.put_env(:idejo_hub, Identity, original) end)
+
+      {:ok, ada} =
+        Provider.create_person(%{
+          email: "ada@x.test",
+          email_verified: true,
+          display_name: "Ada Lovelace"
+        })
+
+      {:ok, bob} =
+        Provider.create_person(%{
+          email: "bob@x.test",
+          email_verified: false,
+          display_name: "Bob Lovelace"
+        })
+
+      %{ada: ada, bob: bob}
+    end
+
+    defp choose_idejo_id(view),
+      do: view |> form("#new-forum", owner_kind: "idejo_id") |> render_change()
+
+    test "searches the IDs, picks one and creates the forum it owns", %{
+      conn: conn,
+      ada: ada,
+      bob: bob
+    } do
+      {:ok, view, _} = live(conn, ~p"/forums/new")
+      choose_idejo_id(view)
+      refute has_element?(view, "#forum_owner_email")
+
+      view |> form("#new-forum", owner_search: "LOVE") |> render_change()
+      assert has_element?(view, "#owner-result-#{ada} button", "Ada Lovelace")
+      refute has_element?(view, "#owner-result-#{bob} button")
+      assert has_element?(view, "#owner-result-#{bob}", "email not verified")
+
+      view |> element("#owner-result-#{ada} button") |> render_click()
+      assert has_element?(view, "#owner-picked", "ada@x.test")
+
+      {:ok, _list, _html} =
+        view
+        |> form("#new-forum",
+          forum: %{
+            subdomain: "ha02-ada",
+            display_name: "Ada's",
+            idejo_version: Forum.owner_subject_since()
+          }
+        )
+        |> render_submit()
+        |> follow_redirect(conn, ~p"/")
+
+      forum = Forums.get_by_subdomain("ha02-ada")
+      assert forum.owner_subject == ada
+      assert forum.owner_email == "ada@x.test"
+    end
+
+    test "asks for an ID when none is picked, and for a recent enough idejo", %{
+      conn: conn,
+      ada: ada
+    } do
+      {:ok, view, _} = live(conn, ~p"/forums/new")
+      choose_idejo_id(view)
+
+      html =
+        view
+        |> form("#new-forum", forum: %{subdomain: "ha02-none", display_name: "None"})
+        |> render_submit()
+
+      assert html =~ "pick the idejo ID that owns the forum"
+      assert Forums.get_by_subdomain("ha02-none") == nil
+
+      view |> form("#new-forum", owner_search: "ada") |> render_change()
+      view |> element("#owner-result-#{ada} button") |> render_click()
+
+      html =
+        view
+        |> form("#new-forum",
+          forum: %{subdomain: "ha02-old", display_name: "Old", idejo_version: "0.3.25"}
+        )
+        |> render_submit()
+
+      assert html =~ "needs idejo #{Forum.owner_subject_since()} or later"
+      assert Forums.get_by_subdomain("ha02-old") == nil
+    end
+  end
+
+  test "without an identity provider, the owner is an email only", %{conn: conn} do
+    {:ok, view, _} = live(conn, ~p"/forums/new")
+    refute has_element?(view, "#owner-kind")
+    assert has_element?(view, "#forum_owner_email")
   end
 end

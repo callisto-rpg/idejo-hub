@@ -14,11 +14,20 @@ defmodule IdejoHubWeb.InboxServiceController do
       "conversations"}]}`;
     * `POST conversations/moved` `{"subject", "host", "ids"}` → `{"moved"}`;
     * `POST settings` `{"subject", "settings"}` → `{"forums": [{"name", "host", "answered",
-      "saved", "failed"}]}`: "Save for all forums" (steward request 2026-11-13).
+      "saved", "failed"}]}`: "Save for all forums" (steward request 2026-11-13);
+    * `POST favourite` `{"subject", "host", "favourite"}` → `{"favourite"}`: the Forums
+      tab's "Mark as favourite" (steward request 2026-11-23; `Members.set_favourite/3`);
+    * `POST leave` `{"subject", "host"}` → `{"state": "leaving"}`: its "Leave forum", the
+      account and messages kept (`Members.leave/3`, `:leave`).
+
+  A forum the member is not in answers 404 `{"error": "not_joined"}`.
   """
   use IdejoHubWeb, :controller
 
   alias IdejoHub.Chats.ForumLink
+  alias IdejoHub.Forums
+  alias IdejoHub.Forums.Forum
+  alias IdejoHub.Identity.Members
 
   plug :inbox_only
 
@@ -75,6 +84,36 @@ defmodule IdejoHubWeb.InboxServiceController do
   end
 
   def settings(conn, _params), do: bad_request(conn)
+
+  def favourite(conn, %{"subject" => subject, "host" => host, "favourite" => favourite})
+      when is_binary(subject) and subject != "" and is_binary(host) and is_boolean(favourite) do
+    with %Forum{kind: "forum"} = forum <- Forums.for_host(host),
+         {:ok, join} <- Members.set_favourite(subject, forum.id, favourite) do
+      json(conn, %{favourite: join.favourite})
+    else
+      _ -> not_joined(conn)
+    end
+  end
+
+  def favourite(conn, _params), do: bad_request(conn)
+
+  def leave(conn, %{"subject" => subject, "host" => host})
+      when is_binary(subject) and subject != "" and is_binary(host) do
+    with %Forum{kind: "forum"} = forum <- Forums.for_host(host),
+         {:ok, join} <- Members.leave(subject, forum.id, :leave) do
+      json(conn, %{state: join.state})
+    else
+      {:error, reason} when reason in [:busy, :deleting] ->
+        conn |> put_status(409) |> json(%{error: to_string(reason)})
+
+      _ ->
+        not_joined(conn)
+    end
+  end
+
+  def leave(conn, _params), do: bad_request(conn)
+
+  defp not_joined(conn), do: conn |> put_status(404) |> json(%{error: "not_joined"})
 
   defp bad_request(conn), do: conn |> put_status(400) |> json(%{error: "bad request"})
 end
